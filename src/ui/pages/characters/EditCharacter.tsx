@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Loader2,
+  RefreshCw,
   Plus,
   X,
   Sparkles,
@@ -64,7 +65,10 @@ import {
   APP_GROUP_CHAT_TEMPLATE_ID,
 } from "../../../core/prompts/constants";
 import { generateCompanionSoulDraft } from "../../../core/companion/soul";
+import { recalculateGradient } from "../../../core/storage/avatars";
 import { useImageData } from "../../hooks/useImageData";
+import { useAvatarGradient } from "../../hooks/useAvatarGradient";
+import { toast } from "../../components/toast";
 import { processBackgroundImage } from "../../../core/utils/image";
 
 const wordCount = (text: string) => {
@@ -115,6 +119,7 @@ export function EditCharacterPage() {
   const [showVoiceMenu, setShowVoiceMenu] = React.useState(false);
   const [voiceSearchQuery, setVoiceSearchQuery] = React.useState("");
   const [exportMenuOpen, setExportMenuOpen] = React.useState(false);
+  const [recalculatingGradient, setRecalculatingGradient] = React.useState(false);
   const [sceneBackgroundLibraryTarget, setSceneBackgroundLibraryTarget] = React.useState<
     "new" | "edit" | null
   >(null);
@@ -211,6 +216,36 @@ export function EditCharacterPage() {
     (template) =>
       template.promptType === "companionChat" && template.id !== APP_COMPANION_TEMPLATE_ID,
   );
+  const { colors: autoGradientColors } = useAvatarGradient(
+    "character",
+    characterId ?? "",
+    avatarPath ?? undefined,
+    false,
+  );
+  const suggestedCustomGradientColors = React.useMemo(() => {
+    if (customGradientColors.length > 0) return customGradientColors;
+
+    const detected = autoGradientColors
+      .map((color) => color.hex)
+      .filter((hex): hex is string => typeof hex === "string" && hex.length > 0)
+      .slice(0, 3);
+
+    return detected.length >= 2 ? detected : ["#4f46e5", "#7c3aed"];
+  }, [autoGradientColors, customGradientColors]);
+  const handleRecalculateGradient = React.useCallback(async () => {
+    if (!characterId || !avatarPath || recalculatingGradient) return;
+
+    setRecalculatingGradient(true);
+    try {
+      await recalculateGradient("character", characterId);
+      toast.success("Gradient recalculated", "Avatar colors were regenerated.");
+    } catch (error) {
+      console.error("Failed to recalculate avatar gradient:", error);
+      toast.error("Failed to recalculate gradient", "Try again in a moment.");
+    } finally {
+      setRecalculatingGradient(false);
+    }
+  }, [avatarPath, characterId, recalculatingGradient]);
   const tabItems = React.useMemo(
     () =>
       [
@@ -666,7 +701,26 @@ export function EditCharacterPage() {
                           Generate colorful gradients from avatar colors
                         </p>
                       </div>
-                      <div className="ml-3">
+                      <div className="ml-3 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleRecalculateGradient}
+                          disabled={recalculatingGradient}
+                          className={cn(
+                            "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-fg/10 bg-fg/5 text-fg/65 transition",
+                            recalculatingGradient
+                              ? "cursor-wait opacity-70"
+                              : "hover:bg-fg/10 hover:text-fg active:scale-95",
+                          )}
+                          aria-label="Recalculate avatar gradient"
+                          title="Recalculate avatar gradient"
+                        >
+                          {recalculatingGradient ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          )}
+                        </button>
                         <Switch
                           checked={!disableAvatarGradient}
                           onChange={(next) => setFields({ disableAvatarGradient: !next })}
@@ -711,13 +765,9 @@ export function EditCharacterPage() {
                             checked={customGradientEnabled}
                             onChange={(next) => {
                               if (next) {
-                                const colors =
-                                  customGradientColors.length > 0
-                                    ? customGradientColors
-                                    : ["#4f46e5", "#7c3aed"];
                                 setFields({
                                   customGradientEnabled: true,
-                                  customGradientColors: colors,
+                                  customGradientColors: suggestedCustomGradientColors,
                                 });
                               } else {
                                 setFields({ customGradientEnabled: false });
@@ -733,11 +783,11 @@ export function EditCharacterPage() {
                             className="h-16 w-full rounded-lg"
                             style={{
                               background:
-                                customGradientColors.length >= 3
-                                  ? `linear-gradient(135deg, ${customGradientColors[0]}, ${customGradientColors[2]}, ${customGradientColors[1]})`
-                                  : customGradientColors.length >= 2
-                                    ? `linear-gradient(135deg, ${customGradientColors[0]}, ${customGradientColors[1]})`
-                                    : customGradientColors[0],
+                                suggestedCustomGradientColors.length >= 3
+                                  ? `linear-gradient(135deg, ${suggestedCustomGradientColors[0]}, ${suggestedCustomGradientColors[2]}, ${suggestedCustomGradientColors[1]})`
+                                  : suggestedCustomGradientColors.length >= 2
+                                    ? `linear-gradient(135deg, ${suggestedCustomGradientColors[0]}, ${suggestedCustomGradientColors[1]})`
+                                    : suggestedCustomGradientColors[0],
                             }}
                           />
 
@@ -746,21 +796,23 @@ export function EditCharacterPage() {
                             <div className="relative shrink-0">
                               <input
                                 type="color"
-                                value={customGradientColors[0] || "#4f46e5"}
+                                value={suggestedCustomGradientColors[0] || "#4f46e5"}
                                 onChange={(e) => {
-                                  const newColors = [...customGradientColors];
+                                  const newColors = [...suggestedCustomGradientColors];
                                   newColors[0] = e.target.value;
                                   setFields({ customGradientColors: newColors });
                                 }}
                                 className="h-10 w-10 cursor-pointer rounded-lg border-2 border-fg/20 p-0.5"
-                                style={{ backgroundColor: customGradientColors[0] || "#4f46e5" }}
+                                style={{
+                                  backgroundColor: suggestedCustomGradientColors[0] || "#4f46e5",
+                                }}
                               />
                             </div>
                             <input
                               type="text"
-                              value={customGradientColors[0] || ""}
+                              value={suggestedCustomGradientColors[0] || ""}
                               onChange={(e) => {
-                                const newColors = [...customGradientColors];
+                                const newColors = [...suggestedCustomGradientColors];
                                 newColors[0] = e.target.value;
                                 setFields({ customGradientColors: newColors });
                               }}
@@ -769,27 +821,30 @@ export function EditCharacterPage() {
                             />
                           </div>
 
-                          {customGradientColors.length >= 3 ? (
+                          {suggestedCustomGradientColors.length >= 3 ? (
                             <div className="flex items-center gap-3">
                               <label className="w-12 text-xs text-fg/50">Mid</label>
                               <div className="relative shrink-0">
                                 <input
                                   type="color"
-                                  value={customGradientColors[2] || "#a855f7"}
+                                  value={suggestedCustomGradientColors[2] || "#a855f7"}
                                   onChange={(e) => {
-                                    const newColors = [...customGradientColors];
+                                    const newColors = [...suggestedCustomGradientColors];
                                     newColors[2] = e.target.value;
                                     setFields({ customGradientColors: newColors });
                                   }}
                                   className="h-10 w-10 cursor-pointer rounded-lg border-2 border-fg/20 p-0.5"
-                                  style={{ backgroundColor: customGradientColors[2] || "#a855f7" }}
+                                  style={{
+                                    backgroundColor:
+                                      suggestedCustomGradientColors[2] || "#a855f7",
+                                  }}
                                 />
                               </div>
                               <input
                                 type="text"
-                                value={customGradientColors[2] || ""}
+                                value={suggestedCustomGradientColors[2] || ""}
                                 onChange={(e) => {
-                                  const newColors = [...customGradientColors];
+                                  const newColors = [...suggestedCustomGradientColors];
                                   newColors[2] = e.target.value;
                                   setFields({ customGradientColors: newColors });
                                 }}
@@ -800,8 +855,8 @@ export function EditCharacterPage() {
                                 type="button"
                                 onClick={() => {
                                   const newColors = [
-                                    customGradientColors[0],
-                                    customGradientColors[1],
+                                    suggestedCustomGradientColors[0],
+                                    suggestedCustomGradientColors[1],
                                   ];
                                   setFields({ customGradientColors: newColors });
                                 }}
@@ -815,8 +870,8 @@ export function EditCharacterPage() {
                               type="button"
                               onClick={() => {
                                 const newColors = [
-                                  customGradientColors[0],
-                                  customGradientColors[1],
+                                  suggestedCustomGradientColors[0],
+                                  suggestedCustomGradientColors[1],
                                   "#a855f7",
                                 ];
                                 setFields({ customGradientColors: newColors });
@@ -832,21 +887,23 @@ export function EditCharacterPage() {
                             <div className="relative shrink-0">
                               <input
                                 type="color"
-                                value={customGradientColors[1] || "#7c3aed"}
+                                value={suggestedCustomGradientColors[1] || "#7c3aed"}
                                 onChange={(e) => {
-                                  const newColors = [...customGradientColors];
+                                  const newColors = [...suggestedCustomGradientColors];
                                   newColors[1] = e.target.value;
                                   setFields({ customGradientColors: newColors });
                                 }}
                                 className="h-10 w-10 cursor-pointer rounded-lg border-2 p-0.5"
-                                style={{ backgroundColor: customGradientColors[1] || "#7c3aed" }}
+                                style={{
+                                  backgroundColor: suggestedCustomGradientColors[1] || "#7c3aed",
+                                }}
                               />
                             </div>
                             <input
                               type="text"
-                              value={customGradientColors[1] || ""}
+                              value={suggestedCustomGradientColors[1] || ""}
                               onChange={(e) => {
-                                const newColors = [...customGradientColors];
+                                const newColors = [...suggestedCustomGradientColors];
                                 newColors[1] = e.target.value;
                                 setFields({ customGradientColors: newColors });
                               }}

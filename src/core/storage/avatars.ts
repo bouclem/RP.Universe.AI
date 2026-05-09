@@ -215,6 +215,7 @@ export async function generateGradientFromAvatar(
   type: EntityType,
   entityId: string,
   avatarFilename: string | undefined,
+  force = false,
 ): Promise<AvatarGradient | undefined> {
   if (!entityId || !avatarFilename) {
     return undefined;
@@ -225,6 +226,7 @@ export async function generateGradientFromAvatar(
     const gradient = await invoke<AvatarGradient>("generate_avatar_gradient", {
       entityId: prefixedId,
       filename: avatarFilename,
+      force,
     });
 
     console.log(`[generateGradientFromAvatar] Generated gradient for ${prefixedId}:`, gradient);
@@ -252,33 +254,45 @@ export async function getCachedGradient(
   type: EntityType,
   entityId: string,
   avatarFilename: string | undefined,
+  force = false,
 ): Promise<AvatarGradient | undefined> {
   if (!entityId) {
     return undefined;
   }
 
-  // Use just the entityId as cache key since filename is stable
   const cacheKey = `${type}-${entityId}`;
 
-  // Check cache first
-  if (gradientCache.has(cacheKey)) {
+  if (!force && gradientCache.has(cacheKey)) {
     console.log(`[getCachedGradient] Using cached gradient for ${cacheKey}`);
     return gradientCache.get(cacheKey);
   }
 
-  // Generate new gradient using the base avatar
-  const gradient = await generateGradientFromAvatar(type, entityId, AVATAR_BASE_FILENAME);
+  const gradient = await generateGradientFromAvatar(
+    type,
+    entityId,
+    AVATAR_BASE_FILENAME,
+    force,
+  );
 
-  // Cache the result
   if (gradient) {
     console.log(`[getCachedGradient] Cached new gradient for ${cacheKey}`);
     gradientCache.set(cacheKey, gradient);
   }
 
-  // Keep avatarFilename parameter for interface compatibility, even though it's not used
   void avatarFilename;
 
   return gradient;
+}
+
+/**
+ * Forces a fresh gradient calculation and updates the in-memory cache.
+ */
+export async function recalculateGradient(
+  type: EntityType,
+  entityId: string,
+): Promise<AvatarGradient | undefined> {
+  clearEntityGradientCache(type, entityId);
+  return getCachedGradient(type, entityId, AVATAR_BASE_FILENAME, true);
 }
 
 /**

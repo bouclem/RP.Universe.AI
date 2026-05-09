@@ -1038,7 +1038,12 @@ pub async fn discovery_import_character(app: AppHandle, path: String) -> Result<
         )?;
 
     if let Err(err) =
-        generate_avatar_gradient(app.clone(), avatar_entity_id, "avatar_base.webp".into())
+        generate_avatar_gradient(
+            app.clone(),
+            avatar_entity_id,
+            "avatar_base.webp".into(),
+            Some(false),
+        )
     {
         log_error(
             &app,

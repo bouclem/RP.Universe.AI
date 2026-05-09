@@ -903,8 +903,10 @@ pub fn generate_avatar_gradient(
     app: tauri::AppHandle,
     entity_id: String,
     _filename: String,
+    force: Option<bool>,
 ) -> Result<AvatarGradient, String> {
     let entity_id = validate_simple_id(&entity_id, "entity ID")?;
+    let force = force.unwrap_or(false);
     let avatars_dir = storage_root(&app)?.join("avatars").join(entity_id);
     let base_path = avatars_dir.join("avatar_base.webp");
     let legacy_path = avatars_dir.join("avatar.webp");
@@ -921,7 +923,7 @@ pub fn generate_avatar_gradient(
             format!("Avatar not found for {}", entity_id),
         ));
     }
-    if gradient_cache_path.exists() {
+    if !force && gradient_cache_path.exists() {
         if let Ok(avatar_meta) = fs::metadata(&avatar_path) {
             if let Ok(cache_meta) = fs::metadata(&gradient_cache_path) {
                 if let (Ok(avatar_time), Ok(cache_time)) =
@@ -1169,8 +1171,7 @@ fn generate_gradient_colors(
     for color in colors.iter() {
         let (h, s, v) = rgb_to_hsv(color.0, color.1, color.2);
         let boosted_s = (s * 1.2).min(0.85);
-        let boosted_v = (v * 1.15).min(0.95);
-        let (r, g, b) = hsv_to_rgb(h, boosted_s, boosted_v);
+        let (r, g, b) = hsv_to_rgb(h, boosted_s, v);
         let hex = format!("#{:02x}{:02x}{:02x}", r, g, b);
         gradient_colors.push(GradientColor { r, g, b, hex });
     }
