@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Lock, Database, Power, Search, ScrollText, Trash2 } from "lucide-react";
-import { isAnalyticsAvailable, readSettings } from "../../../core/storage/repo";
+import { Shield, Lock, Database, Power, ScrollText, Trash2, FilePlus2, FileBadge2 } from "lucide-react";
+import { isAnalyticsAvailable, readSettings, setAppState } from "../../../core/storage/repo";
 import {
   setAnalyticsEnabled,
   setAutoDownloadCharacterCardAvatars,
   setPureModeLevel,
 } from "../../../core/storage/appState";
-import type { PureModeLevel } from "../../../core/storage/schemas";
+import type { PureModeLevel, TrustedCertificate } from "../../../core/storage/schemas";
 import { invoke } from "@tauri-apps/api/core";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { open } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { BottomMenu, MenuButton, MenuButtonGroup } from "../../components/BottomMenu";
 import { useI18n } from "../../../core/i18n/context";
 import { Switch } from "../../components/Switch";
@@ -74,22 +76,10 @@ export function SecurityPage() {
   const [isAnalyticsAvailableState, setIsAnalyticsAvailableState] = useState(true);
   const [showRestartMenu, setShowRestartMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [debugInput, setDebugInput] = useState("");
-  const [debugResult, setDebugResult] = useState<Record<string, unknown> | null>(null);
   const [filterLog, setFilterLog] = useState<FilterLogEntry[]>([]);
-
-  const handleDebugFilter = useCallback(async (text: string) => {
-    if (!text.trim()) {
-      setDebugResult(null);
-      return;
-    }
-    try {
-      const result = await invoke<Record<string, unknown>>("debug_content_filter", { text });
-      setDebugResult(result);
-    } catch (err) {
-      console.error("debug_content_filter failed:", err);
-    }
-  }, []);
+  const [trustedCertificates, setTrustedCertificates] = useState<TrustedCertificate[]>([]);
+  const [certificateError, setCertificateError] = useState<string | null>(null);
+  const [isImportingCertificate, setIsImportingCertificate] = useState(false);
 
   const refreshFilterLog = useCallback(async () => {
     try {
@@ -138,6 +128,7 @@ export function SecurityPage() {
         setAutoDownloadCharacterCardAvatarsState(autoDownloadAvatars);
         setIsAnalyticsEnabled(settings.appState.analyticsEnabled ?? true);
         setIsAnalyticsAvailableState(available);
+        setTrustedCertificates(settings.appState.trustedCertificates ?? []);
         if (!available) {
           setIsAnalyticsEnabled(false);
         }
@@ -186,6 +177,69 @@ export function SecurityPage() {
       setAutoDownloadCharacterCardAvatarsState(!newValue);
     }
   };
+
+  const persistTrustedCertificates = useCallback(async (next: TrustedCertificate[]) => {
+    const settings = await readSettings();
+    await setAppState({
+      ...settings.appState,
+      trustedCertificates: next,
+    });
+    setTrustedCertificates(next);
+  }, []);
+
+  const handleImportCertificate = useCallback(async () => {
+    setCertificateError(null);
+    setIsImportingCertificate(true);
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "Certificates", extensions: ["pem", "crt", "cer"] }],
+      });
+      if (!selected || typeof selected !== "string") {
+        return;
+      }
+
+      const pem = (await readTextFile(selected)).trim();
+      if (!pem.includes("BEGIN CERTIFICATE") || !pem.includes("END CERTIFICATE")) {
+        setCertificateError("The selected file is not a PEM certificate.");
+        return;
+      }
+
+      if (trustedCertificates.some((certificate) => certificate.pem.trim() === pem)) {
+        setCertificateError("That certificate is already imported.");
+        return;
+      }
+
+      const filename = selected.split("/").pop() || "certificate.pem";
+      const nextEntry: TrustedCertificate = {
+        id: crypto.randomUUID(),
+        name: filename,
+        pem,
+        importedAt: Date.now(),
+      };
+      await persistTrustedCertificates([...trustedCertificates, nextEntry]);
+    } catch (error) {
+      console.error("Failed to import certificate:", error);
+      setCertificateError(String(error));
+    } finally {
+      setIsImportingCertificate(false);
+    }
+  }, [persistTrustedCertificates, trustedCertificates]);
+
+  const handleDeleteCertificate = useCallback(
+    async (id: string) => {
+      setCertificateError(null);
+      try {
+        await persistTrustedCertificates(
+          trustedCertificates.filter((certificate) => certificate.id !== id),
+        );
+      } catch (error) {
+        console.error("Failed to delete certificate:", error);
+        setCertificateError(String(error));
+      }
+    },
+    [persistTrustedCertificates, trustedCertificates],
+  );
 
   if (isLoading) {
     return null;
@@ -384,6 +438,91 @@ export function SecurityPage() {
             </div>
           </div>
         </div>
+
+        <div>
+          <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
+            Trusted Certificates
+          </h2>
+          <div className="space-y-2">
+            <div className="rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-fg/10 bg-fg/10">
+                  <Lock className="h-4 w-4 text-fg/70" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-fg">Custom Root CAs</span>
+                        <span className="rounded-md border border-fg/10 bg-fg/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-fg/70">
+                          {trustedCertificates.length}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-fg/50">
+                        Import PEM certificates for self-hosted HTTPS endpoints such as Ollama
+                        behind Caddy or a private CA
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => void handleImportCertificate()}
+                      disabled={isImportingCertificate}
+                      className="inline-flex items-center gap-2 rounded-lg border border-accent/35 bg-accent/15 px-3 py-2 text-[11px] font-medium text-accent transition hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <FilePlus2 className="h-3.5 w-3.5" />
+                      {isImportingCertificate ? "Importing..." : "Import"}
+                    </button>
+                  </div>
+                  <div className="mt-2 text-[11px] text-fg/45 leading-relaxed">
+                    These certificates are added to the app trust store. They do not disable TLS
+                    verification.
+                  </div>
+                  {certificateError && (
+                    <div className="mt-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[11px] text-danger">
+                      {certificateError}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {trustedCertificates.length === 0 ? (
+              <div className="rounded-xl border border-fg/10 bg-fg/5 px-4 py-3 text-[11px] text-fg/45">
+                No custom certificates imported.
+              </div>
+            ) : (
+              trustedCertificates.map((certificate) => (
+                <div
+                  key={certificate.id}
+                  className="rounded-xl border border-fg/10 bg-fg/5 px-4 py-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-fg/10 bg-fg/10">
+                      <FileBadge2 className="h-4 w-4 text-fg/70" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-fg">
+                            {certificate.name}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-fg/45">
+                            Imported {new Date(certificate.importedAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => void handleDeleteCertificate(certificate.id)}
+                          className="rounded-lg border border-danger/25 bg-danger/10 px-2.5 py-2 text-[11px] font-medium text-danger transition hover:bg-danger/15"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
         {FILTER_DEBUG_ENABLED && (
           <div>
             <div className="mb-2 flex items-center justify-between px-1">
@@ -475,101 +614,6 @@ export function SecurityPage() {
           </div>
         )}
 
-        {/* Section: Filter Debug (TEMP) */}
-        {FILTER_DEBUG_ENABLED && (
-          <div>
-            <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-              Filter Pipeline Debug
-            </h2>
-            <div className="rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-warning/70" />
-                <span className="text-[10px] font-medium uppercase tracking-widest text-warning/60">
-                  Temp — tokenization inspector
-                </span>
-              </div>
-              <input
-                type="text"
-                value={debugInput}
-                onChange={(e) => {
-                  setDebugInput(e.target.value);
-                  void handleDebugFilter(e.target.value);
-                }}
-                placeholder="Type a sentence to see how it gets processed..."
-                className="w-full rounded-lg border border-fg/10 bg-surface-el/30 px-3 py-2 text-sm text-fg placeholder-fg/30 outline-none focus:border-warning/40"
-              />
-              {debugResult && (
-                <div className="space-y-2 text-[11px] font-mono">
-                  {(() => {
-                    const pipeline = debugResult.pipeline as Record<string, unknown>;
-                    const result = debugResult.result as Record<string, unknown>;
-                    const steps: [string, string][] = [
-                      ["stripped", String(pipeline.stripped)],
-                      ["lowercase", String(pipeline.lowercased)],
-                      ["unicode norm", String(pipeline.unicode_normalized)],
-                      ["leet norm", String(pipeline.leet_normalized)],
-                      ["tokens", (pipeline.tokens as string[]).join(" | ")],
-                      ["collapsed", String(pipeline.collapsed)],
-                      ["collapsed tokens", (pipeline.collapsed_tokens as string[]).join(" | ")],
-                    ];
-                    // Hide steps that are identical to previous
-                    const visible = steps.filter((s, i) => i === 0 || s[1] !== steps[i - 1][1]);
-                    return (
-                      <>
-                        {visible.map(([label, value]) => (
-                          <div key={label} className="flex gap-2">
-                            <span className="shrink-0 w-28 text-right text-fg/30">{label}</span>
-                            <span className="text-fg/80 break-all">{value}</span>
-                          </div>
-                        ))}
-                        <div className="mt-1 border-t border-fg/10 pt-2 flex flex-wrap gap-x-4 gap-y-1">
-                          <span className="text-fg/40">
-                            level:{" "}
-                            <span className="text-fg/70">{String(debugResult.level)}</span>
-                          </span>
-                          <span className="text-fg/40">
-                            context:{" "}
-                            <span className="text-fg/70">
-                              {debugResult.context_allowlist_hit ? "yes" : "no"}
-                            </span>
-                          </span>
-                          <span className="text-fg/40">
-                            score:{" "}
-                            <span
-                              className={
-                                (result.score as number) > 0 ? "text-danger/80" : "text-accent/80"
-                              }
-                            >
-                              {(result.score as number).toFixed(2)}
-                            </span>
-                          </span>
-                          <span className="text-fg/40">
-                            blocked:{" "}
-                            <span className={result.blocked ? "text-danger/80" : "text-accent/80"}>
-                              {result.blocked ? "yes" : "no"}
-                            </span>
-                          </span>
-                        </div>
-                        {(result.matched_terms as string[]).length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-1">
-                            {(result.matched_terms as string[]).map((term, i) => (
-                              <span
-                                key={i}
-                                className="rounded-md border border-danger/30 bg-danger/15 px-1.5 py-0.5 text-[10px] text-danger"
-                              >
-                                {term}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </section>
       <BottomMenu
         isOpen={showRestartMenu}

@@ -1,4 +1,3 @@
-
 use serde_json::{json, Value};
 use tauri::AppHandle;
 use uuid::Uuid;
@@ -252,14 +251,16 @@ pub async fn run_agent_turn(
                 extra: outcome.extra.clone(),
             });
 
-            let mut result_payload: serde_json::Map<String, Value> =
-                match outcome.extra.clone() {
-                    Value::Object(m) => m,
-                    _ => serde_json::Map::new(),
-                };
+            let mut result_payload: serde_json::Map<String, Value> = match outcome.extra.clone() {
+                Value::Object(m) => m,
+                _ => serde_json::Map::new(),
+            };
             result_payload.insert("success".to_string(), Value::Bool(outcome.success));
             if !result_payload.contains_key("message") {
-                result_payload.insert("message".to_string(), Value::String(outcome.summary.clone()));
+                result_payload.insert(
+                    "message".to_string(),
+                    Value::String(outcome.summary.clone()),
+                );
             }
             if let Some(err) = &outcome.error {
                 result_payload
@@ -289,7 +290,11 @@ pub async fn run_agent_turn(
                 step_index,
                 &tc.name,
                 &tc.arguments,
-                if outcome.success { "completed" } else { "failed" },
+                if outcome.success {
+                    "completed"
+                } else {
+                    "failed"
+                },
                 Some(&result_value),
             );
 
@@ -367,7 +372,11 @@ fn json_args_to_argstring(args: &Value) -> String {
             Value::Null => continue,
             Value::Array(arr) => arr
                 .iter()
-                .filter_map(|x| x.as_str().map(|s| s.to_string()).or_else(|| Some(x.to_string())))
+                .filter_map(|x| {
+                    x.as_str()
+                        .map(|s| s.to_string())
+                        .or_else(|| Some(x.to_string()))
+                })
                 .collect::<Vec<_>>()
                 .join(","),
             Value::Object(_) => v.to_string(),
@@ -396,7 +405,8 @@ fn build_initial_messages(
     let mut messages = Vec::new();
     let view = build_draft_view(session);
 
-    let mut system = crate::chat_manager::prompting::prompt_engine::default_creation_helper_system_prompt();
+    let mut system =
+        crate::chat_manager::prompting::prompt_engine::default_creation_helper_system_prompt();
     system = system
         .replace("{{target_label}}", target.label())
         .replace("{{draft_state}}", &view.rendered);

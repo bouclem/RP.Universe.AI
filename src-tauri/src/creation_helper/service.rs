@@ -188,11 +188,7 @@ pub(crate) fn emit_creation_helper_step(
     );
 }
 
-pub(crate) fn emit_creation_helper_turn_start(
-    app: &AppHandle,
-    session_id: &str,
-    request_id: &str,
-) {
+pub(crate) fn emit_creation_helper_turn_start(app: &AppHandle, session_id: &str, request_id: &str) {
     let _ = app.emit(
         "creation-helper-turn-start",
         json!({
@@ -430,8 +426,8 @@ pub fn get_latest_resumable_session(
                 return None;
             }
         };
-        let images: HashMap<String, UploadedImage> = serde_json::from_str(&images_json)
-            .unwrap_or_default();
+        let images: HashMap<String, UploadedImage> =
+            serde_json::from_str(&images_json).unwrap_or_default();
         hydrate_session_cache(&session, images).ok()?;
         Some(session)
     };
@@ -443,11 +439,9 @@ pub fn get_latest_resumable_session(
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
         .collect()
     } else {
-        stmt.query_map([], |r| {
-            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
-        })
-        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .collect()
+        stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+            .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
+            .collect()
     };
 
     for row in rows {
@@ -1151,17 +1145,13 @@ fn build_creation_turn_plan(
                 }
             }
             CreationTurnStage::Preview => push_tool_name(&mut tool_names, "show_preview"),
-            CreationTurnStage::Finalize => {
-                push_tool_name(&mut tool_names, "request_confirmation")
-            }
+            CreationTurnStage::Finalize => push_tool_name(&mut tool_names, "request_confirmation"),
         },
         CreationGoal::Persona => match stage {
             CreationTurnStage::Discovery => {}
             CreationTurnStage::Drafting => push_tool_name(&mut tool_names, "upsert_persona"),
             CreationTurnStage::Preview => push_tool_name(&mut tool_names, "show_preview"),
-            CreationTurnStage::Finalize => {
-                push_tool_name(&mut tool_names, "request_confirmation")
-            }
+            CreationTurnStage::Finalize => push_tool_name(&mut tool_names, "request_confirmation"),
         },
         CreationGoal::Lorebook => match stage {
             CreationTurnStage::Discovery => {}
@@ -1173,9 +1163,7 @@ fn build_creation_turn_plan(
                 }
             }
             CreationTurnStage::Preview => push_tool_name(&mut tool_names, "show_preview"),
-            CreationTurnStage::Finalize => {
-                push_tool_name(&mut tool_names, "request_confirmation")
-            }
+            CreationTurnStage::Finalize => push_tool_name(&mut tool_names, "request_confirmation"),
         },
     }
 
@@ -2394,33 +2382,31 @@ pub(crate) async fn run_avatar_edit(
         source_image.data.clone()
     };
 
-    let (mut request, meta) =
-        build_image_request(app, &polished_prompt, &serde_json::Value::Null)?;
+    let (mut request, meta) = build_image_request(app, &polished_prompt, &serde_json::Value::Null)?;
 
     let supports_image_input = image_model_supports_image_input(app, &meta.model_id);
     if supports_image_input {
         request.input_images = Some(vec![source_data_url]);
     }
 
-    let response = match crate::image_generator::commands::generate_image(app.clone(), request)
-        .await
-    {
-        Ok(r) => r,
-        Err(err) => {
-            record_image_generation_usage(
-                app,
-                session_id,
-                &meta.model_id,
-                &meta.model_name,
-                &meta.provider_id,
-                &meta.provider_label,
-                character_name,
-                false,
-                Some(err.clone()),
-            );
-            return Err(err);
-        }
-    };
+    let response =
+        match crate::image_generator::commands::generate_image(app.clone(), request).await {
+            Ok(r) => r,
+            Err(err) => {
+                record_image_generation_usage(
+                    app,
+                    session_id,
+                    &meta.model_id,
+                    &meta.model_name,
+                    &meta.provider_id,
+                    &meta.provider_label,
+                    character_name,
+                    false,
+                    Some(err.clone()),
+                );
+                return Err(err);
+            }
+        };
 
     let Some(image) = response.images.into_iter().next() else {
         record_image_generation_usage(
@@ -2479,9 +2465,11 @@ fn image_model_supports_image_input(app: &AppHandle, model_id: &str) -> bool {
         .find(|m| m.get("id").and_then(|v| v.as_str()) == Some(model_id))
         .and_then(|m| m.get("inputScopes").and_then(|v| v.as_array()))
         .map(|scopes| {
-            scopes
-                .iter()
-                .any(|s| s.as_str().map(|x| x.eq_ignore_ascii_case("image")).unwrap_or(false))
+            scopes.iter().any(|s| {
+                s.as_str()
+                    .map(|x| x.eq_ignore_ascii_case("image"))
+                    .unwrap_or(false)
+            })
         })
         .unwrap_or(false)
 }
@@ -2692,20 +2680,23 @@ async fn process_assistant_turn(
 
     let fallback_format = read_creation_helper_fallback_format(&app);
 
-    let turn_result =
-        crate::creation_helper::agent::run_agent_turn(
-            &app,
-            &mut session,
-            &user_message,
-            &stream_request_id,
-            fallback_format,
-        )
-            .await;
+    let turn_result = crate::creation_helper::agent::run_agent_turn(
+        &app,
+        &mut session,
+        &user_message,
+        &stream_request_id,
+        fallback_format,
+    )
+    .await;
 
     let turn = match turn_result {
         Ok(t) => t,
         Err(err) => {
-            log_error(&app, "creation_helper", format!("agent turn failed: {}", err));
+            log_error(
+                &app,
+                "creation_helper",
+                format!("agent turn failed: {}", err),
+            );
             return Err(err);
         }
     };

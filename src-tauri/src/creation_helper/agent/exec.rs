@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 
 use serde_json::{json, Value};
@@ -192,11 +191,8 @@ pub async fn dispatch_tool(
             let Some(entry_id) = args.get("id") else {
                 return StepResult::failed("EDIT_LORE_ENTRY requires args: id=<entry_id>");
             };
-            let Some(lorebook_id) = args.get("lorebook_id").or(session.target_id.as_ref())
-            else {
-                return StepResult::failed(
-                    "EDIT_LORE_ENTRY requires lorebook_id (no target_id)",
-                );
+            let Some(lorebook_id) = args.get("lorebook_id").or(session.target_id.as_ref()) else {
+                return StepResult::failed("EDIT_LORE_ENTRY requires lorebook_id (no target_id)");
             };
             let Some(title) = args.get("title") else {
                 return StepResult::failed("EDIT_LORE_ENTRY requires title=<text>");
@@ -262,9 +258,7 @@ pub async fn dispatch_tool(
         }
         Tool::ReorderLoreEntries => {
             let Some(order) = args.get("order") else {
-                return StepResult::failed(
-                    "REORDER_LORE_ENTRIES requires args: order=<id,id,...>",
-                );
+                return StepResult::failed("REORDER_LORE_ENTRIES requires args: order=<id,id,...>");
             };
             let updates: Vec<Value> = order
                 .split(',')
@@ -309,9 +303,7 @@ pub async fn dispatch_tool(
             );
             if result.success {
                 if let Some(image_id) =
-                    crate::creation_helper::service::last_generated_image_for_session(
-                        &session.id,
-                    )
+                    crate::creation_helper::service::last_generated_image_for_session(&session.id)
                 {
                     let mut extra = match result.extra.clone() {
                         Value::Object(m) => m,
@@ -388,17 +380,10 @@ pub async fn dispatch_tool(
                         "persona_avatar" => "use_uploaded_image_as_persona_avatar",
                         _ => "use_uploaded_image_as_avatar",
                     };
-                    let apply =
-                        execute_tool(app, session, &call_id, tool_name, &use_payload).await;
+                    let apply = execute_tool(app, session, &call_id, tool_name, &use_payload).await;
                     let mut extra = serde_json::Map::new();
-                    extra.insert(
-                        "image_id".to_string(),
-                        Value::String(new_image_id.clone()),
-                    );
-                    extra.insert(
-                        "rendered_prompt".to_string(),
-                        Value::String(polished),
-                    );
+                    extra.insert("image_id".to_string(), Value::String(new_image_id.clone()));
+                    extra.insert("rendered_prompt".to_string(), Value::String(polished));
                     extra.insert(
                         "source_image_id".to_string(),
                         Value::String(image_id.clone()),
@@ -536,11 +521,8 @@ pub async fn dispatch_tool(
                 .get("title")
                 .cloned()
                 .unwrap_or_else(|| "New entry".to_string());
-            let Some(lorebook_id) = args.get("lorebook_id").or(session.target_id.as_ref())
-            else {
-                return StepResult::failed(
-                    "write_lore_entry requires lorebook_id (no target_id)",
-                );
+            let Some(lorebook_id) = args.get("lorebook_id").or(session.target_id.as_ref()) else {
+                return StepResult::failed("write_lore_entry requires lorebook_id (no target_id)");
             };
             let payload = json!({
                 "lorebook_id": lorebook_id,
@@ -568,7 +550,6 @@ fn read_to_step(result: CreationToolResult, summary: &str) -> StepResult {
         StepResult::failed(err)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

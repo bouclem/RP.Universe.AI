@@ -36,9 +36,11 @@ pub async fn list_models(
     )?;
     let url = format!("{}api/tags", base_url);
     let client = build_http_client(
+        app,
         Some(&credential_runtime_headers(credential)),
         Some(DEFAULT_REQUEST_TIMEOUT_MS),
         false,
+        credential_allows_invalid_tls(credential),
     )?;
 
     let request = client.get(&url);
@@ -71,7 +73,13 @@ pub async fn execute_chat_request(
         .as_ref()
         .ok_or_else(|| "Ollama request body is required".to_string())?;
     let chat_body = normalize_request_body(body).await?;
-    let client = build_http_client(req.headers.as_ref(), req.timeout_ms, stream)?;
+    let client = build_http_client(
+        app,
+        req.headers.as_ref(),
+        req.timeout_ms,
+        stream,
+        request_allows_invalid_tls(app, req),
+    )?;
 
     if stream {
         let request_id = req.request_id.clone().unwrap_or_default();
@@ -95,9 +103,11 @@ fn credential_runtime_headers(credential: &ProviderCredential) -> HashMap<String
 }
 
 fn build_http_client(
+    app: &tauri::AppHandle,
     headers: Option<&HashMap<String, String>>,
     timeout_ms: Option<u64>,
     stream: bool,
+    allow_invalid_tls: bool,
 ) -> Result<reqwest::Client, String> {
     let mut builder = reqwest::Client::builder();
     if !stream {
@@ -111,10 +121,27 @@ fn build_http_client(
     if !header_map.is_empty() {
         builder = builder.default_headers(header_map);
     }
+    builder = crate::tls::apply_trusted_certificates(app, builder);
+    if allow_invalid_tls {
+        builder = builder.danger_accept_invalid_certs(true);
+    }
 
     builder
         .build()
         .map_err(|err| crate::utils::err_to_string(module_path!(), line!(), err))
+}
+
+fn credential_allows_invalid_tls(credential: &ProviderCredential) -> bool {
+    credential
+        .config
+        .as_ref()
+        .and_then(|config| config.get("allowInvalidTls"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
+fn request_allows_invalid_tls(app: &tauri::AppHandle, req: &ApiRequest) -> bool {
+    crate::tls::allow_invalid_tls_for_request(app, Some("ollama"), &req.url)
 }
 
 fn normalize_base_url(raw: &str) -> Result<String, String> {

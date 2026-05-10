@@ -118,7 +118,13 @@ pub async fn api_request(app: tauri::AppHandle, req: ApiRequest) -> Result<ApiRe
     let stream = req.stream.unwrap_or(false);
     let request_id = req.request_id.clone();
 
-    let client = match transport::build_client(req.timeout_ms, stream) {
+    let client = match transport::build_client(
+        &app,
+        req.timeout_ms,
+        stream,
+        req.provider_id.as_deref(),
+        Some(&req.url),
+    ) {
         Ok(c) => c,
         Err(e) => {
             log_error(&app, "api_request", format!("client build error: {}", e));

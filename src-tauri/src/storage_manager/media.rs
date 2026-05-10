@@ -1473,20 +1473,16 @@ fn generate_gradient_colors(
         .or_else(|| select_swatch_for_target(colors, dark_vibrant_target, max_population))
         .unwrap_or_else(|| colors[0].clone());
 
-    let companion = select_distinct_swatch_for_target(
-        colors,
-        &[base.clone()],
-        muted_target,
-        max_population,
-    )
-    .or_else(|| {
-        select_distinct_swatch_for_target(
-            colors,
-            &[base.clone()],
-            dark_muted_target,
-            max_population,
-        )
-    });
+    let companion =
+        select_distinct_swatch_for_target(colors, &[base.clone()], muted_target, max_population)
+            .or_else(|| {
+                select_distinct_swatch_for_target(
+                    colors,
+                    &[base.clone()],
+                    dark_muted_target,
+                    max_population,
+                )
+            });
 
     let accent = select_distinct_swatch_for_target(
         colors,
@@ -1581,7 +1577,11 @@ fn select_distinct_swatch_for_target(
 ) -> Option<ClusterColor> {
     colors
         .iter()
-        .filter(|entry| selected.iter().all(|chosen| color_distance(entry, chosen) > 34.0))
+        .filter(|entry| {
+            selected
+                .iter()
+                .all(|chosen| color_distance(entry, chosen) > 34.0)
+        })
         .max_by(|a, b| {
             score_target(a, target, max_population)
                 .unwrap_or(f64::MIN)

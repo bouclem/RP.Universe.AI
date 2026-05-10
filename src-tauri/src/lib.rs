@@ -31,6 +31,7 @@ mod pricing_cache;
 mod providers;
 pub mod storage_manager;
 pub mod sync;
+mod tls;
 mod tokens;
 mod transport;
 mod tts_manager;

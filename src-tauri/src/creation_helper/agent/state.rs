@@ -1,4 +1,3 @@
-
 use serde::Serialize;
 use serde_json::Value;
 
@@ -162,9 +161,8 @@ impl StepResult {
 pub fn build_draft_view(session: &CreationSession) -> DraftView {
     let kind = TargetKind::from_goal(&session.creation_goal);
     let mut rendered = render_draft(kind, &session.draft);
-    let images =
-        crate::creation_helper::service::get_all_uploaded_images_metadata(&session.id)
-            .unwrap_or_default();
+    let images = crate::creation_helper::service::get_all_uploaded_images_metadata(&session.id)
+        .unwrap_or_default();
     if !images.is_empty() {
         let active_avatar = session.draft.avatar_path.as_deref();
         rendered.push_str("  generated_images:\n");

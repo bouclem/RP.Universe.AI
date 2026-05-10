@@ -1,4 +1,3 @@
-
 use serde_json::{json, Value};
 use tauri::AppHandle;
 
@@ -56,7 +55,9 @@ pub fn load_context(app: &AppHandle) -> Result<LlmContext, String> {
         .unwrap_or("")
         .to_string();
 
-    let credentials = settings.get("providerCredentials").and_then(|v| v.as_array());
+    let credentials = settings
+        .get("providerCredentials")
+        .and_then(|v| v.as_array());
     let credential = credentials
         .and_then(|c| {
             c.iter().find(|cred| {
@@ -189,4 +190,3 @@ pub async fn call_text(
     .await;
     Ok(text)
 }
-

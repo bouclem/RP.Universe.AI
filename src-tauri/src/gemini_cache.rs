@@ -228,7 +228,8 @@ async fn create_gemini_cached_content(
     prefix_contents: &[Value],
     ttl: &str,
 ) -> Result<String, String> {
-    let client = transport::build_client(req.timeout_ms, false).map_err(|e| e.to_string())?;
+    let client = transport::build_client(app, req.timeout_ms, false, None, Some(&endpoint))
+        .map_err(|e| e.to_string())?;
     let mut builder = client.request(Method::POST, endpoint);
 
     if let Some(headers) = &req.headers {

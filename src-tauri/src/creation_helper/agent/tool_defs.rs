@@ -1,4 +1,3 @@
-
 use serde_json::{json, Value};
 
 use crate::chat_manager::prompting::prompt_engine;
@@ -304,7 +303,11 @@ fn args_summary(schema: &Value) -> String {
     let mut parts = Vec::new();
     for (k, v) in props {
         let ty = v.get("type").and_then(Value::as_str).unwrap_or("any");
-        let mark = if required.contains(k.as_str()) { "" } else { "?" };
+        let mark = if required.contains(k.as_str()) {
+            ""
+        } else {
+            "?"
+        };
         parts.push(format!("{}{}: {}", k, mark, ty));
     }
     parts.join(", ")

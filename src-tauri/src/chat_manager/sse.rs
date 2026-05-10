@@ -151,10 +151,7 @@ pub fn accumulate_tool_calls_from_sse(raw: &str, provider_id: &str) -> Vec<ToolC
                             entry.name = name;
                         }
                     }
-                    arg_buffers
-                        .entry(index)
-                        .or_default()
-                        .push_str(args_chunk);
+                    arg_buffers.entry(index).or_default().push_str(args_chunk);
                 }
             }
         }

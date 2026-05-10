@@ -7,6 +7,7 @@ import {
   type CustomColorPreset,
   type CustomColors,
   type PureModeLevel,
+  type TrustedCertificate,
 } from "./schemas";
 
 type Theme = AppState["theme"];
@@ -33,6 +34,9 @@ function cloneAppState(state?: AppState): AppState {
       settingsCardOpacity: preset.settingsCardOpacity,
     })),
     chatsViewMode: source.chatsViewMode ?? "hero",
+    trustedCertificates: (source.trustedCertificates ?? []).map((certificate) => ({
+      ...certificate,
+    })),
   };
 }
 
@@ -151,6 +155,17 @@ export async function setAnalyticsEnabled(enabled: boolean): Promise<void> {
 export async function setAutoDownloadCharacterCardAvatars(enabled: boolean): Promise<void> {
   await withAppState((state) => {
     state.autoDownloadCharacterCardAvatars = enabled;
+  });
+}
+
+export async function getTrustedCertificates(): Promise<TrustedCertificate[]> {
+  const state = await getAppState();
+  return [...(state.trustedCertificates ?? [])];
+}
+
+export async function setTrustedCertificates(certificates: TrustedCertificate[]): Promise<void> {
+  await withAppState((state) => {
+    state.trustedCertificates = certificates.map((certificate) => ({ ...certificate }));
   });
 }
 

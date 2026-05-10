@@ -1,4 +1,3 @@
-
 use quick_xml::escape::{resolve_xml_entity, unescape};
 use quick_xml::events::{BytesRef, BytesStart, Event};
 use quick_xml::Reader;
@@ -330,8 +329,7 @@ fn parse_xml(raw: &str) -> Result<ParsedFallback, String> {
                 let tag = String::from_utf8_lossy(event.name().as_ref()).into_owned();
                 if tag == "arg" {
                     if let Some(key) = arg_key.take() {
-                        current_args
-                            .insert(key, Value::String(arg_buf.trim().to_string()));
+                        current_args.insert(key, Value::String(arg_buf.trim().to_string()));
                         arg_buf.clear();
                     }
                 } else if tag == "call" {

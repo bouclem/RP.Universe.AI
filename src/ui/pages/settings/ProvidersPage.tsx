@@ -120,11 +120,13 @@ export function ProvidersPage() {
   const isCustomProvider =
     !!editorProvider &&
     (editorProvider.providerId === "custom" || editorProvider.providerId === "custom-anthropic");
+  const allowsTlsException = !!editorProvider && (isLocalProvider || isCustomProvider);
   const showBaseUrl =
     !!editorProvider && (isLocalProvider || isCustomProvider || isEngineProvider || isHostProvider);
   const customConfig = (editorProvider?.config ?? {}) as Record<string, any>;
   const customFetchModelsEnabled = customConfig.fetchModelsEnabled === true;
   const providerStreamingEnabled = customConfig.streamingEnabled !== false;
+  const providerAllowInvalidTls = customConfig.allowInvalidTls === true;
   const customAuthMode = (customConfig.authMode ?? "header") as
     | "bearer"
     | "header"
@@ -576,6 +578,30 @@ export function ProvidersPage() {
                             config: {
                               ...editorProvider.config,
                               streamingEnabled: next,
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+                {allowsTlsException && (
+                  <div className="rounded-lg border border-warning/20 bg-warning/5 px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-fg/80">Allow Invalid TLS</p>
+                        <p className="text-[11px] text-fg/45">
+                          Ignore certificate validation errors for this self-hosted endpoint
+                        </p>
+                      </div>
+                      <Switch
+                        id="providerAllowInvalidTls"
+                        checked={providerAllowInvalidTls}
+                        onChange={(next) =>
+                          updateEditorProvider({
+                            config: {
+                              ...editorProvider.config,
+                              allowInvalidTls: next,
                             },
                           })
                         }
