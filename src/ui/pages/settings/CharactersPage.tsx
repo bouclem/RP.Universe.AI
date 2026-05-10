@@ -93,8 +93,8 @@ export function CharactersPage() {
   };
 
   return (
-    <div className="flex h-full flex-col pb-16 text-fg/90">
-      <main className="flex-1 overflow-y-auto px-4 pt-4">
+    <div className="flex h-full flex-col text-fg/90">
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
         {loading ? (
           <CharacterSkeleton />
         ) : characters.length === 0 ? (

@@ -471,7 +471,7 @@ export function KokoroBlendEditorPage() {
       </div>
 
       {/* Sticky action bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-fg/10 bg-surface-el/85 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-fg/10 bg-surface-el/85 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] backdrop-blur lg:left-[var(--settings-sidebar-w,0px)]">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <p className="truncate text-[11px] text-fg/50">
             {voices.length === 0

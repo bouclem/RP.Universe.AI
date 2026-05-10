@@ -2243,8 +2243,8 @@ function cloneTemplateEntries(entries: SystemPromptEntry[]): SystemPromptEntry[]
 
 function LoadingSkeleton() {
   return (
-    <div className="flex h-full flex-col pb-16">
-      <main className="flex-1 overflow-y-auto px-4 pt-4">
+    <div className="flex h-full flex-col">
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
         <div className="mx-auto w-full max-w-5xl space-y-4">
           <div className="h-12 w-full animate-pulse rounded-xl bg-fg/10" />
           <div className="h-80 w-full animate-pulse rounded-xl bg-fg/10" />
@@ -3095,8 +3095,8 @@ export function EditPromptTemplate() {
   );
 
   return (
-    <div className="flex h-full flex-col pb-16">
-      <main className="flex-1 overflow-y-auto px-4 pt-4">
+    <div className="flex h-full flex-col">
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
         <div className="mx-auto w-full max-w-5xl">
           {/* Desktop: Two column layout */}
           <div className="flex flex-col lg:flex-row lg:gap-6">

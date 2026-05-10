@@ -162,8 +162,8 @@ export function AccessibilityPage() {
   }
 
   return (
-    <div className="flex h-full flex-col pb-16">
-      <section className="flex-1 overflow-y-auto px-3 pt-3 space-y-6">
+    <div className="flex h-full flex-col">
+      <section className="flex-1 overflow-y-auto px-3 pt-3 pb-6 space-y-6">
         <div>
           <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
             {t("accessibility.sectionTitles.language")}

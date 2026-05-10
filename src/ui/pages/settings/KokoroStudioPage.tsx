@@ -2412,7 +2412,7 @@ function MiniPlayer({
 }) {
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-fg/10 bg-surface-el/85 px-4 py-2 pb-[calc(env(safe-area-inset-bottom)+8px)] backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-fg/10 bg-surface-el/85 px-4 py-2 pb-[calc(env(safe-area-inset-bottom)+8px)] backdrop-blur lg:left-[var(--settings-sidebar-w,0px)]">
       <div className="mx-auto flex max-w-2xl items-center gap-3">
         <button
           onClick={onToggle}

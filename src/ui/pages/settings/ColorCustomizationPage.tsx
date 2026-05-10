@@ -1044,8 +1044,8 @@ export function ColorCustomizationPage() {
   if (isLoading) return null;
 
   return (
-    <div className="color-customization-editor-scope flex h-full flex-col pb-16">
-      <section className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 space-y-5">
+    <div className="color-customization-editor-scope flex h-full flex-col">
+      <section className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-6 space-y-5">
         <input
           ref={importInputRef}
           type="file"

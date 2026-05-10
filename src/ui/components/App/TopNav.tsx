@@ -20,7 +20,7 @@ import {
   Square,
   X,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 import { typography, interactive, cn } from "../../design-tokens";
@@ -597,8 +597,24 @@ export function TopNav({
     }
   };
 
+  const headerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const publish = () => {
+      document.documentElement.style.setProperty("--topnav-h", `${el.offsetHeight}px`);
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+    };
+  }, []);
+
   return (
     <header
+      ref={headerRef}
       className="fixed top-0 left-0 right-0 z-40 border-b border-fg/10 backdrop-blur-md bg-nav/80"
       style={{
         paddingTop: isDesktop ? "8px" : "calc(env(safe-area-inset-top) + 12px)",
@@ -625,27 +641,20 @@ export function TopNav({
               showBackButton ? "w-10" : "w-0",
             )}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {showBackButton && (
-                <motion.button
-                  key="back"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={handleBack}
-                  className={cn(
-                    "flex items-center px-[0.6em] py-[0.3em] justify-center rounded-full p-2",
-                    "text-fg/70 hover:text-fg hover:bg-fg/10",
-                    interactive.transition.fast,
-                    interactive.active.scale,
-                  )}
-                  aria-label={t("topNav.goBack")}
-                >
-                  <ArrowLeft size={20} strokeWidth={2.5} />
-                </motion.button>
-              )}
-            </AnimatePresence>
+            {showBackButton && (
+              <button
+                onClick={handleBack}
+                className={cn(
+                  "flex items-center px-[0.6em] py-[0.3em] justify-center rounded-full p-2",
+                  "text-fg/70 hover:text-fg hover:bg-fg/10",
+                  interactive.transition.fast,
+                  interactive.active.scale,
+                )}
+                aria-label={t("topNav.goBack")}
+              >
+                <ArrowLeft size={20} strokeWidth={2.5} />
+              </button>
+            )}
           </div>
 
           <motion.h1

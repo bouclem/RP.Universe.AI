@@ -478,8 +478,8 @@ export function AdvancedPage() {
   }
 
   return (
-    <div className="flex h-full flex-col pb-16">
-      <section className={cn("flex-1 overflow-y-auto px-3 pt-3", spacing.section)}>
+    <div className="flex h-full flex-col">
+      <section className={cn("flex-1 overflow-y-auto px-3 pt-3 pb-6", spacing.section)}>
         {/* AI Features Section */}
         <SettingsSection title={t("advanced.sectionTitles.aiFeatures")} icon={<Zap size={12} />}>
           <FeatureCard

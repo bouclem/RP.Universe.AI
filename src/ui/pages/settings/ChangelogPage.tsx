@@ -761,8 +761,8 @@ export function ChangelogPage() {
     };
 
     return (
-        <div className="flex h-full flex-col pb-16 text-fg/90">
-            <main className="flex-1 overflow-y-auto">
+        <div className="flex h-full flex-col text-fg/90">
+            <main className="flex-1 overflow-y-auto pb-6">
                 {/* Hero Header */}
                 <div className="relative px-4 pt-4 pb-6">
                     {/* Background gradient */}

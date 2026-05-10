@@ -61,8 +61,8 @@ export function BackupRestorePage() {
   };
 
   return (
-    <div className="flex h-full flex-col pb-16">
-      <section className="flex-1 overflow-y-auto px-3 pt-3 space-y-4">
+    <div className="flex h-full flex-col">
+      <section className="flex-1 overflow-y-auto px-3 pt-3 pb-6 space-y-4">
         {/* Success Message */}
         {state.exportSuccess && (
           <div className="flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/10 p-3">

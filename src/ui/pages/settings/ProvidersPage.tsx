@@ -1147,7 +1147,7 @@ export function ProvidersPage() {
 
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-30 border-t px-3 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3",
+          "fixed bottom-0 left-0 right-0 z-30 border-t px-3 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 lg:left-[var(--settings-sidebar-w,0px)]",
           colors.glass.strong,
         )}
       >

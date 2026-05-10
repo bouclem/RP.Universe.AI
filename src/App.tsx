@@ -13,6 +13,7 @@ import { Toaster } from "sonner";
 import { WelcomePage, OnboardingPage } from "./ui/pages/onboarding";
 import { WhereToFindPage } from "./ui/pages/onboarding/WhereToFind";
 import { SettingsPage } from "./ui/pages/settings/Settings";
+import { SettingsLayout } from "./ui/pages/settings/SettingsLayout";
 import { ProvidersPage } from "./ui/pages/settings/ProvidersPage";
 import { ModelsPage } from "./ui/pages/settings/ModelsPage";
 import { EditModelPage } from "./ui/pages/settings/EditModelPage";
@@ -777,6 +778,25 @@ function AppContent() {
     [location.pathname],
   );
 
+  // Track the last non-settings path so the desktop back button can
+  // exit settings instead of cycling between sidebar items in history.
+  const preSettingsPathRef = useRef<string>("/");
+  useEffect(() => {
+    if (!isSettingRoute) {
+      preSettingsPathRef.current = location.pathname + location.search;
+    }
+  }, [isSettingRoute, location.pathname, location.search]);
+
+  const [isLgViewport, setIsLgViewport] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia("(min-width: 1024px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => setIsLgViewport(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   const isLogsRoute = location.pathname === "/settings/logs";
 
   const isLorebookEditorRoute = useMemo(
@@ -928,7 +948,11 @@ function AppContent() {
     <div className="relative min-h-screen overflow-hidden">
       <div
         className={`relative z-10 mx-auto flex w-full ${
-          isChatDetailRoute ? "max-w-full h-screen" : "max-w-md lg:max-w-none min-h-screen"
+          isChatDetailRoute
+            ? "max-w-full h-screen"
+            : isSettingRoute
+              ? "max-w-md min-h-screen lg:max-w-none lg:h-screen lg:min-h-0"
+              : "max-w-md lg:max-w-none min-h-screen"
         } flex-col ${showBottomNav ? "pb-[calc(72px+env(safe-area-inset-bottom))]" : "pb-0"}`}
       >
         {!showTopNav && !isChatDetailRoute && !isSearchRoute && <WindowControls />}
@@ -938,7 +962,12 @@ function AppContent() {
             onBackOverride={
               isPersonaEditRoute
                 ? () => navigate(PERSONA_LIBRARY_ROUTE, { replace: true })
-                : undefined
+                : isSettingRoute && isLgViewport
+                  ? () => {
+                      const target = preSettingsPathRef.current || "/";
+                      navigate(target.startsWith("/settings") ? "/" : target);
+                    }
+                  : undefined
             }
             titleOverride={
               isAvatarLibraryPickerRoute
@@ -960,7 +989,7 @@ function AppContent() {
 
         <main
           ref={mainRef}
-          className={`flex-1 ${showTopNav ? "pt-[calc(72px+env(safe-area-inset-top))]" : ""} ${
+          className={`flex-1 ${showTopNav ? "pt-[var(--topnav-h,72px)]" : ""} ${
             isOnboardingRoute
               ? `overflow-y-auto ${isDesktop ? "" : "px-0 pt-5 pb-5"}`
               : isChatDetailRoute
@@ -979,7 +1008,9 @@ function AppContent() {
                           ? "overflow-hidden px-0 pt-0 pb-0"
                           : isDiscoveryRoute
                             ? "overflow-hidden px-0 pt-0 pb-0"
-                            : `overflow-y-auto px-4 pt-4 ${showBottomNav ? "pb-[calc(96px+env(safe-area-inset-bottom))]" : "pb-6"}`
+                            : isSettingRoute
+                              ? "overflow-y-auto px-4 pt-4 pb-6 lg:overflow-hidden lg:p-0 lg:mt-[var(--topnav-h,72px)]"
+                              : `overflow-y-auto px-4 pt-4 ${showBottomNav ? "pb-[calc(96px+env(safe-area-inset-bottom))]" : "pb-6"}`
           }`}
         >
           <div
@@ -1025,6 +1056,11 @@ function AppContent() {
                 path="/library/lorebooks/:lorebookId/preview"
                 element={<LorebookTriggerPreviewPage />}
               />
+              <Route
+                path="/library/lorebook/generate"
+                element={<LorebookGeneratorFlowPage />}
+              />
+              <Route element={<SettingsLayout />}>
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/providers" element={<ProvidersPage />} />
               <Route path="/settings/models" element={<ModelsPage />} />
@@ -1072,10 +1108,6 @@ function AppContent() {
                 element={<LorebookGeneratorPage />}
               />
               <Route
-                path="/library/lorebook/generate"
-                element={<LorebookGeneratorFlowPage />}
-              />
-              <Route
                 path="/settings/advanced/companion-soul-writer"
                 element={<CompanionSoulWriterPage />}
               />
@@ -1108,6 +1140,7 @@ function AppContent() {
                 path="/settings/engine/:credentialId/character/new"
                 element={<EngineCharacterCreate />}
               />
+              </Route>
               <Route path="/engine-chat/:credentialId/:slug" element={<EngineChatPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/chat/:characterId" element={<ChatLayout />}>

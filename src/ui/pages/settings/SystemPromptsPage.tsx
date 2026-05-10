@@ -968,8 +968,8 @@ export function SystemPromptsPage() {
   }, [templates, activeTag, search]);
 
   return (
-    <div className="flex h-full flex-col pb-16">
-      <main className="flex-1 overflow-y-auto px-4 pt-4">
+    <div className="flex h-full flex-col">
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
         <div className="mx-auto w-full max-w-5xl space-y-4">
           {/* Search and Filters */}
           <div className="flex flex-col gap-3">
