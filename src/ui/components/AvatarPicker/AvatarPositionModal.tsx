@@ -13,8 +13,11 @@ interface AvatarPositionModalProps {
   isOpen: boolean;
   onClose: () => void;
   imageSrc: string;
-  onConfirm: (roundImageData: string) => void;
+  onConfirm: (result: { baseImageData: string; roundImageData: string }) => void;
 }
+
+const GUIDE_CENTER = 50;
+const GUIDE_RADIUS = 49;
 
 export function AvatarPositionModal({
   isOpen,
@@ -281,18 +284,14 @@ export function AvatarPositionModal({
 
     const outputSize = 512;
     const exportScale = outputSize / size;
-    const canvas = document.createElement("canvas");
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const squareCanvas = document.createElement("canvas");
+    squareCanvas.width = outputSize;
+    squareCanvas.height = outputSize;
+    const squareCtx = squareCanvas.getContext("2d");
+    if (!squareCtx) return;
 
-    ctx.clearRect(0, 0, outputSize, outputSize);
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.setTransform(
+    squareCtx.clearRect(0, 0, outputSize, outputSize);
+    squareCtx.setTransform(
       scale * exportScale,
       0,
       0,
@@ -300,11 +299,25 @@ export function AvatarPositionModal({
       position.x * exportScale,
       position.y * exportScale,
     );
-    ctx.drawImage(imageRef.current, 0, 0);
-    ctx.restore();
+    squareCtx.drawImage(imageRef.current, 0, 0);
 
-    const roundImageData = canvas.toDataURL("image/png");
-    onConfirm(roundImageData);
+    const roundCanvas = document.createElement("canvas");
+    roundCanvas.width = outputSize;
+    roundCanvas.height = outputSize;
+    const roundCtx = roundCanvas.getContext("2d");
+    if (!roundCtx) return;
+
+    roundCtx.clearRect(0, 0, outputSize, outputSize);
+    roundCtx.save();
+    roundCtx.beginPath();
+    roundCtx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
+    roundCtx.clip();
+    roundCtx.drawImage(squareCanvas, 0, 0);
+    roundCtx.restore();
+
+    const baseImageData = squareCanvas.toDataURL("image/png");
+    const roundImageData = roundCanvas.toDataURL("image/png");
+    onConfirm({ baseImageData, roundImageData });
     onClose();
   }, [scale, position, onConfirm, onClose, imageSize]);
 
@@ -402,7 +415,7 @@ export function AvatarPositionModal({
                   className="absolute inset-0 z-10 pointer-events-none"
                   style={{
                     background:
-                      "radial-gradient(circle closest-side, transparent 90%, rgba(0, 0, 0, 0.7) 90%)",
+                      "radial-gradient(circle closest-side, transparent 98%, rgba(0, 0, 0, 0.7) 98%)",
                     WebkitBackdropFilter: "none",
                   }}
                 />
@@ -412,32 +425,37 @@ export function AvatarPositionModal({
                   <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                     {/* Circle border */}
                     <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
+                      cx={GUIDE_CENTER}
+                      cy={GUIDE_CENTER}
+                      r={GUIDE_RADIUS}
                       fill="none"
                       stroke="rgba(52, 211, 153, 0.6)"
                       strokeWidth="0.8"
                     />
                     {/* Rule of thirds grid inside circle */}
                     <line
-                      x1="50"
-                      y1="5"
-                      x2="50"
-                      y2="95"
+                      x1={GUIDE_CENTER}
+                      y1={GUIDE_CENTER - GUIDE_RADIUS}
+                      x2={GUIDE_CENTER}
+                      y2={GUIDE_CENTER + GUIDE_RADIUS}
                       stroke="rgba(255, 255, 255, 0.15)"
                       strokeWidth="0.3"
                     />
                     <line
-                      x1="5"
-                      y1="50"
-                      x2="95"
-                      y2="50"
+                      x1={GUIDE_CENTER - GUIDE_RADIUS}
+                      y1={GUIDE_CENTER}
+                      x2={GUIDE_CENTER + GUIDE_RADIUS}
+                      y2={GUIDE_CENTER}
                       stroke="rgba(255, 255, 255, 0.15)"
                       strokeWidth="0.3"
                     />
                     {/* Center point */}
-                    <circle cx="50" cy="50" r="1.5" fill="rgba(52, 211, 153, 0.5)" />
+                    <circle
+                      cx={GUIDE_CENTER}
+                      cy={GUIDE_CENTER}
+                      r="1.5"
+                      fill="rgba(52, 211, 153, 0.5)"
+                    />
                   </svg>
                 </div>
 

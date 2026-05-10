@@ -11,6 +11,7 @@ export type EntityType = "character" | "persona";
 
 export const AVATAR_BASE_FILENAME = "avatar_base.webp";
 export const AVATAR_ROUND_FILENAME = "avatar_round.webp";
+export const AVATAR_UPDATED_EVENT = "lettuce:avatar-updated";
 
 export interface GradientColor {
   r: number;
@@ -35,6 +36,19 @@ export interface AvatarGradient {
  */
 function getPrefixedEntityId(type: EntityType, id: string): string {
   return `${type}-${id}`;
+}
+
+function emitAvatarUpdated(type: EntityType, entityId: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(AVATAR_UPDATED_EVENT, {
+      detail: {
+        type,
+        entityId,
+        at: Date.now(),
+      },
+    }),
+  );
 }
 
 async function toDataUrlIfNeeded(imageData: string): Promise<string> {
@@ -98,6 +112,24 @@ export async function saveAvatar(
     clearEntityGradientCache(type, entityId);
     console.log("[saveAvatar] Cleared gradient cache for entity:", prefixedId);
 
+    try {
+      const regeneratedGradient = await generateGradientFromAvatar(
+        type,
+        entityId,
+        AVATAR_BASE_FILENAME,
+        true,
+      );
+      if (regeneratedGradient) {
+        const cacheKey = `${type}-${entityId}`;
+        gradientCache.set(cacheKey, regeneratedGradient);
+        console.log("[saveAvatar] Regenerated gradient and updated cache for entity:", prefixedId);
+      }
+    } catch (gradientError) {
+      console.error("[saveAvatar] Failed to regenerate gradient after avatar save:", gradientError);
+    }
+
+    emitAvatarUpdated(type, entityId);
+
     console.log("[saveAvatar] Successfully saved avatar:", result);
     return result;
   } catch (error) {
@@ -135,7 +167,9 @@ export async function loadAvatar(
     });
 
     console.log("[loadAvatar] Loaded avatar for entity:", prefixedId);
-    return convertFileSrc(filePath);
+    const assetUrl = convertFileSrc(filePath);
+    const versionedUrl = `${assetUrl}${assetUrl.includes("?") ? "&" : "?"}v=${Date.now()}`;
+    return versionedUrl;
   } catch (error) {
     console.error("[loadAvatar] Failed to load avatar:", error);
     return undefined;
@@ -292,7 +326,9 @@ export async function recalculateGradient(
   entityId: string,
 ): Promise<AvatarGradient | undefined> {
   clearEntityGradientCache(type, entityId);
-  return getCachedGradient(type, entityId, AVATAR_BASE_FILENAME, true);
+  const gradient = await getCachedGradient(type, entityId, AVATAR_BASE_FILENAME, true);
+  emitAvatarUpdated(type, entityId);
+  return gradient;
 }
 
 /**

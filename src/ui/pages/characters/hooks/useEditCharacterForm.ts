@@ -13,7 +13,7 @@ import type {
 } from "../../../../core/storage/schemas";
 import { processBackgroundImage } from "../../../../core/utils/image";
 import { convertToImageRef, deleteImageRef } from "../../../../core/storage/images";
-import { saveAvatar, loadAvatar } from "../../../../core/storage/avatars";
+import { saveAvatar, loadAvatar, recalculateGradient } from "../../../../core/storage/avatars";
 import { listPromptTemplates } from "../../../../core/prompts/service";
 import { invalidateAvatarCache } from "../../../hooks/useAvatar";
 import {
@@ -483,7 +483,9 @@ export function useEditCharacterForm(characterId: string | undefined) {
       // Save avatar using new centralized system if it's a new upload (data URL)
       let avatarFilename: string | undefined = undefined;
       if (state.avatarPath) {
-        if (state.avatarPath.startsWith("data:")) {
+        const hasNewAvatarData = state.avatarPath.startsWith("data:");
+        const hasNewRoundAvatarData = state.avatarRoundPath?.startsWith("data:") ?? false;
+        if (hasNewAvatarData || hasNewRoundAvatarData) {
           avatarFilename = await saveAvatar(
             "character",
             characterId,
@@ -494,6 +496,9 @@ export function useEditCharacterForm(characterId: string | undefined) {
             console.error("[EditCharacter] Failed to save avatar image");
           } else {
             invalidateAvatarCache("character", characterId);
+            if (!state.disableAvatarGradient) {
+              await recalculateGradient("character", characterId);
+            }
           }
         } else {
           avatarFilename =

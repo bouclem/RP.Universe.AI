@@ -889,6 +889,27 @@ pub struct GradientColor {
     pub b: u8,
     pub hex: String,
 }
+
+#[derive(Clone, Debug)]
+struct ClusterColor {
+    r: u8,
+    g: u8,
+    b: u8,
+    count: usize,
+}
+
+#[derive(Clone, Copy)]
+struct SwatchTarget {
+    min_saturation: f64,
+    target_saturation: f64,
+    max_saturation: f64,
+    min_luminance: f64,
+    target_luminance: f64,
+    max_luminance: f64,
+    saturation_weight: f64,
+    luminance_weight: f64,
+    population_weight: f64,
+}
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct AvatarGradient {
     pub colors: Vec<GradientColor>,
@@ -908,9 +929,12 @@ pub fn generate_avatar_gradient(
     let entity_id = validate_simple_id(&entity_id, "entity ID")?;
     let force = force.unwrap_or(false);
     let avatars_dir = storage_root(&app)?.join("avatars").join(entity_id);
+    let round_path = avatars_dir.join("avatar_round.webp");
     let base_path = avatars_dir.join("avatar_base.webp");
     let legacy_path = avatars_dir.join("avatar.webp");
-    let avatar_path = if base_path.exists() {
+    let avatar_path = if round_path.exists() {
+        round_path
+    } else if base_path.exists() {
         base_path
     } else {
         legacy_path
@@ -987,7 +1011,7 @@ pub fn generate_avatar_gradient(
     if samples.is_empty() {
         return Ok(create_default_gradient());
     }
-    let dominant_colors = find_dominant_colors(&samples, 3)?;
+    let dominant_colors = find_dominant_colors(&samples, 8)?;
     let avg_hue = calculate_average_hue(&dominant_colors);
     let gradient_colors = generate_gradient_colors(&dominant_colors, avg_hue)?;
     let gradient_css = create_css_gradient(&gradient_colors);
@@ -999,13 +1023,19 @@ pub fn generate_avatar_gradient(
         text_color,
         text_secondary,
     };
-    if let Ok(json) = serde_json::to_string_pretty(&gradient) {
-        let _ = fs::write(&gradient_cache_path, json);
-    }
+    let json = serde_json::to_string_pretty(&gradient).map_err(|e| {
+        crate::utils::err_msg(
+            module_path!(),
+            line!(),
+            format!("Failed to serialize gradient cache: {}", e),
+        )
+    })?;
+    fs::write(&gradient_cache_path, json)
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
     Ok(gradient)
 }
 
-fn find_dominant_colors(samples: &[(u8, u8, u8)], k: usize) -> Result<Vec<(u8, u8, u8)>, String> {
+fn find_dominant_colors(samples: &[(u8, u8, u8)], k: usize) -> Result<Vec<ClusterColor>, String> {
     if samples.is_empty() {
         return Err(crate::utils::err_msg(
             module_path!(),
@@ -1047,18 +1077,42 @@ fn find_dominant_colors(samples: &[(u8, u8, u8)], k: usize) -> Result<Vec<(u8, u
             }
         }
     }
-    Ok(centroids
+    let mut clusters: Vec<Vec<(f64, f64, f64)>> = vec![Vec::new(); k];
+    for &(r, g, b) in samples {
+        let mut best = 0usize;
+        let mut bestd = f64::MAX;
+        for (i, &(cr, cg, cb)) in centroids.iter().enumerate() {
+            let d = (r as f64 - cr).powi(2) + (g as f64 - cg).powi(2) + (b as f64 - cb).powi(2);
+            if d < bestd {
+                bestd = d;
+                best = i;
+            }
+        }
+        clusters[best].push((r as f64, g as f64, b as f64));
+    }
+
+    let mut result: Vec<ClusterColor> = centroids
         .into_iter()
-        .map(|(r, g, b)| (r.round() as u8, g.round() as u8, b.round() as u8))
-        .collect())
+        .enumerate()
+        .map(|(i, (r, g, b))| ClusterColor {
+            r: r.round() as u8,
+            g: g.round() as u8,
+            b: b.round() as u8,
+            count: clusters.get(i).map(|c| c.len()).unwrap_or(0),
+        })
+        .filter(|cluster| cluster.count > 0)
+        .collect();
+
+    result.sort_by(|a, b| b.count.cmp(&a.count));
+    Ok(result)
 }
 
-fn calculate_average_hue(colors: &[(u8, u8, u8)]) -> f64 {
+fn calculate_average_hue(colors: &[ClusterColor]) -> f64 {
     let mut sum_x = 0.0;
     let mut sum_y = 0.0;
-    for &(r, g, b) in colors {
-        let (h, s, v) = rgb_to_hsv(r, g, b);
-        let weight = s * v;
+    for color in colors {
+        let (h, s, v) = rgb_to_hsv(color.r, color.g, color.b);
+        let weight = s * v * color.count as f64;
         let angle = h.to_radians();
         sum_x += angle.cos() * weight;
         sum_y += angle.sin() * weight;
@@ -1164,18 +1218,171 @@ fn hsv_to_rgb(h: f64, s: f64, v: f64) -> (u8, u8, u8) {
 }
 
 fn generate_gradient_colors(
-    colors: &[(u8, u8, u8)],
+    colors: &[ClusterColor],
     _base_hue: f64,
 ) -> Result<Vec<GradientColor>, String> {
-    let mut gradient_colors = Vec::new();
-    for color in colors.iter() {
-        let (h, s, v) = rgb_to_hsv(color.0, color.1, color.2);
-        let boosted_s = (s * 1.2).min(0.85);
-        let (r, g, b) = hsv_to_rgb(h, boosted_s, v);
-        let hex = format!("#{:02x}{:02x}{:02x}", r, g, b);
-        gradient_colors.push(GradientColor { r, g, b, hex });
+    if colors.is_empty() {
+        return Ok(Vec::new());
     }
-    Ok(gradient_colors)
+
+    let total_population = colors.iter().map(|c| c.count).sum::<usize>().max(1);
+    let max_population = colors.iter().map(|c| c.count).max().unwrap_or(1);
+
+    let dark_muted_target = SwatchTarget {
+        min_saturation: 0.0,
+        target_saturation: 0.30,
+        max_saturation: 0.45,
+        min_luminance: 0.0,
+        target_luminance: 0.26,
+        max_luminance: 0.40,
+        saturation_weight: 0.24,
+        luminance_weight: 0.52,
+        population_weight: 0.24,
+    };
+    let muted_target = SwatchTarget {
+        min_saturation: 0.0,
+        target_saturation: 0.30,
+        max_saturation: 0.45,
+        min_luminance: 0.30,
+        target_luminance: 0.50,
+        max_luminance: 0.70,
+        saturation_weight: 0.30,
+        luminance_weight: 0.30,
+        population_weight: 0.40,
+    };
+    let dark_vibrant_target = SwatchTarget {
+        min_saturation: 0.35,
+        target_saturation: 0.80,
+        max_saturation: 1.0,
+        min_luminance: 0.0,
+        target_luminance: 0.26,
+        max_luminance: 0.45,
+        saturation_weight: 0.35,
+        luminance_weight: 0.35,
+        population_weight: 0.30,
+    };
+
+    let base = select_swatch_for_target(colors, dark_muted_target, max_population)
+        .or_else(|| select_swatch_for_target(colors, muted_target, max_population))
+        .or_else(|| select_swatch_for_target(colors, dark_vibrant_target, max_population))
+        .unwrap_or_else(|| colors[0].clone());
+
+    let companion = select_distinct_swatch_for_target(
+        colors,
+        &[base.clone()],
+        muted_target,
+        max_population,
+    )
+    .or_else(|| {
+        select_distinct_swatch_for_target(
+            colors,
+            &[base.clone()],
+            dark_muted_target,
+            max_population,
+        )
+    });
+
+    let accent = select_distinct_swatch_for_target(
+        colors,
+        &companion
+            .as_ref()
+            .map(|c| vec![base.clone(), c.clone()])
+            .unwrap_or_else(|| vec![base.clone()]),
+        dark_vibrant_target,
+        max_population,
+    );
+
+    let mut selected: Vec<ClusterColor> = vec![base];
+    if let Some(color) = companion {
+        selected.push(color);
+    }
+    if let Some(color) = accent {
+        selected.push(color);
+    }
+
+    if selected.len() == 1 && colors.len() > 1 {
+        selected.push(colors[1].clone());
+    }
+
+    let _ = total_population;
+
+    Ok(selected
+        .into_iter()
+        .map(|color| GradientColor {
+            r: color.r,
+            g: color.g,
+            b: color.b,
+            hex: format!("#{:02x}{:02x}{:02x}", color.r, color.g, color.b),
+        })
+        .collect())
+}
+
+fn perceived_luminance(r: u8, g: u8, b: u8) -> f64 {
+    (0.299 * r as f64 + 0.587 * g as f64 + 0.114 * b as f64) / 255.0
+}
+
+fn color_distance(a: &ClusterColor, b: &ClusterColor) -> f64 {
+    let dr = a.r as f64 - b.r as f64;
+    let dg = a.g as f64 - b.g as f64;
+    let db = a.b as f64 - b.b as f64;
+    (dr * dr + dg * dg + db * db).sqrt()
+}
+
+fn score_target(color: &ClusterColor, target: SwatchTarget, max_population: usize) -> Option<f64> {
+    let (_, saturation, _) = rgb_to_hsv(color.r, color.g, color.b);
+    let luminance = perceived_luminance(color.r, color.g, color.b);
+
+    if saturation < target.min_saturation
+        || saturation > target.max_saturation
+        || luminance < target.min_luminance
+        || luminance > target.max_luminance
+    {
+        return None;
+    }
+
+    let saturation_score = 1.0 - (saturation - target.target_saturation).abs();
+    let luminance_score = 1.0 - (luminance - target.target_luminance).abs();
+    let population_score = color.count as f64 / max_population.max(1) as f64;
+
+    Some(
+        saturation_score * target.saturation_weight
+            + luminance_score * target.luminance_weight
+            + population_score * target.population_weight,
+    )
+}
+
+fn select_swatch_for_target(
+    colors: &[ClusterColor],
+    target: SwatchTarget,
+    max_population: usize,
+) -> Option<ClusterColor> {
+    colors
+        .iter()
+        .max_by(|a, b| {
+            score_target(a, target, max_population)
+                .unwrap_or(f64::MIN)
+                .partial_cmp(&score_target(b, target, max_population).unwrap_or(f64::MIN))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .and_then(|entry| score_target(entry, target, max_population).map(|_| entry.clone()))
+}
+
+fn select_distinct_swatch_for_target(
+    colors: &[ClusterColor],
+    selected: &[ClusterColor],
+    target: SwatchTarget,
+    max_population: usize,
+) -> Option<ClusterColor> {
+    colors
+        .iter()
+        .filter(|entry| selected.iter().all(|chosen| color_distance(entry, chosen) > 34.0))
+        .max_by(|a, b| {
+            score_target(a, target, max_population)
+                .unwrap_or(f64::MIN)
+                .partial_cmp(&score_target(b, target, max_population).unwrap_or(f64::MIN))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .and_then(|entry| score_target(entry, target, max_population).map(|_| entry.clone()))
 }
 
 fn create_css_gradient(colors: &[GradientColor]) -> String {

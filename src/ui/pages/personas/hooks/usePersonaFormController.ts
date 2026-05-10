@@ -2,7 +2,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getPersona, savePersona } from "../../../../core/storage/repo";
-import { loadAvatar, saveAvatar } from "../../../../core/storage/avatars";
+import { loadAvatar, saveAvatar, recalculateGradient } from "../../../../core/storage/avatars";
 import { convertToImageRef, deleteImageRef } from "../../../../core/storage/images";
 import { invalidateAvatarCache } from "../../../hooks/useAvatar";
 import { useI18n } from "../../../../core/i18n/context";
@@ -236,12 +236,15 @@ export function usePersonaFormController(personaId: string | undefined) {
       // Save avatar if provided
       let avatarFilename: string | undefined = undefined;
       if (avatarPath) {
-        if (avatarPath.startsWith("data:")) {
+        const hasNewAvatarData = avatarPath.startsWith("data:");
+        const hasNewRoundAvatarData = avatarRoundPath?.startsWith("data:") ?? false;
+        if (hasNewAvatarData || hasNewRoundAvatarData) {
           avatarFilename = await saveAvatar("persona", personaId, avatarPath, avatarRoundPath);
           if (!avatarFilename) {
             console.error("[EditPersona] Failed to save avatar image");
           } else {
             invalidateAvatarCache("persona", personaId);
+            await recalculateGradient("persona", personaId);
           }
         } else {
           avatarFilename =

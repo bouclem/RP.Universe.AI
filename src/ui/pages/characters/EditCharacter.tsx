@@ -77,6 +77,12 @@ const wordCount = (text: string) => {
   return trimmed.split(/\s+/).length;
 };
 
+const summarizeAvatarValue = (value?: string | null) => {
+  if (!value) return "(empty)";
+  if (value.startsWith("data:")) return `data-url(${value.slice(0, 24)}..., len=${value.length})`;
+  return value.length > 96 ? `${value.slice(0, 96)}...` : value;
+};
+
 type EditCharacterTab = "character" | "soul" | "settings";
 
 const buildOpeningContext = (
@@ -216,7 +222,7 @@ export function EditCharacterPage() {
     (template) =>
       template.promptType === "companionChat" && template.id !== APP_COMPANION_TEMPLATE_ID,
   );
-  const { colors: autoGradientColors } = useAvatarGradient(
+  const { colors: autoGradientColors, refreshGradient } = useAvatarGradient(
     "character",
     characterId ?? "",
     avatarPath ?? undefined,
@@ -238,6 +244,7 @@ export function EditCharacterPage() {
     setRecalculatingGradient(true);
     try {
       await recalculateGradient("character", characterId);
+      await refreshGradient(true);
       toast.success("Gradient recalculated", "Avatar colors were regenerated.");
     } catch (error) {
       console.error("Failed to recalculate avatar gradient:", error);
@@ -245,7 +252,14 @@ export function EditCharacterPage() {
     } finally {
       setRecalculatingGradient(false);
     }
-  }, [avatarPath, characterId, recalculatingGradient]);
+  }, [avatarPath, characterId, recalculatingGradient, refreshGradient]);
+
+  React.useEffect(() => {
+    console.log("[EditCharacter] avatar state", {
+      avatarPath: summarizeAvatarValue(avatarPath),
+      avatarRoundPath: summarizeAvatarValue(avatarRoundPath),
+    });
+  }, [avatarPath, avatarRoundPath]);
   const tabItems = React.useMemo(
     () =>
       [
@@ -1002,15 +1016,23 @@ export function EditCharacterPage() {
                     <div className="relative">
                       <AvatarPicker
                         currentAvatarPath={avatarPath}
-                        onAvatarChange={(path) => setFields({ avatarPath: path })}
+                        onAvatarChange={(path) => {
+                          console.log("[EditCharacter] onAvatarChange", {
+                            path: summarizeAvatarValue(path),
+                          });
+                          setFields({ avatarPath: path });
+                        }}
                         promptSubjectName={name}
                         promptSubjectDescription={definition}
                         avatarCrop={avatarCrop}
                         onAvatarCropChange={(crop) => setFields({ avatarCrop: crop })}
                         avatarRoundPath={avatarRoundPath}
-                        onAvatarRoundChange={(roundPath) =>
-                          setFields({ avatarRoundPath: roundPath })
-                        }
+                        onAvatarRoundChange={(roundPath) => {
+                          console.log("[EditCharacter] onAvatarRoundChange", {
+                            roundPath: summarizeAvatarValue(roundPath),
+                          });
+                          setFields({ avatarRoundPath: roundPath });
+                        }}
                         placeholder={avatarInitial}
                       />
 

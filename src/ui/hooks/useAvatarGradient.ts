@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { getCachedGradient, type AvatarGradient, type EntityType } from "../../core/storage/avatars";
 
 /**
@@ -102,36 +102,37 @@ export function useAvatarGradient(
         };
     }, [hasCustomColors, customColors?.colors, customColors?.textColor, customColors?.textSecondary]);
 
-    useEffect(() => {
-        // If using custom colors, no need to fetch gradient
+    const refreshGradient = useCallback(async (force = false) => {
         if (hasCustomColors) {
             setGradient(null);
-            return;
+            return null;
         }
 
         if (!entityId || !avatarPath || disabled) {
             setGradient(null);
-            return;
+            return null;
         }
 
-        const generateGradient = async () => {
-            setIsLoading(true);
-            setError(null);
+        setIsLoading(true);
+        setError(null);
 
-            try {
-                const gradientData = await getCachedGradient(type, entityId, avatarPath);
-                setGradient(gradientData || null);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : "Failed to generate gradient";
-                setError(errorMessage);
-                setGradient(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        try {
+            const gradientData = await getCachedGradient(type, entityId, avatarPath, force);
+            setGradient(gradientData || null);
+            return gradientData || null;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Failed to generate gradient";
+            setError(errorMessage);
+            setGradient(null);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [avatarPath, disabled, entityId, hasCustomColors, type]);
 
-        generateGradient();
-    }, [type, entityId, avatarPath, disabled, hasCustomColors]);
+    useEffect(() => {
+        refreshGradient().catch(() => undefined);
+    }, [refreshGradient]);
 
     // Calculate average brightness from gradient colors
     const calculateAverageBrightness = (): number => {
@@ -172,6 +173,7 @@ export function useAvatarGradient(
             textSecondary: customGradient.textSecondary,
             averageBrightness: 0.5,
             isCustom: true,
+            refreshGradient,
         };
     }
 
@@ -187,6 +189,7 @@ export function useAvatarGradient(
         textSecondary: gradient?.text_secondary || "rgba(255, 255, 255, 0.7)",
         averageBrightness,
         isCustom: false,
+        refreshGradient,
     };
 }
 

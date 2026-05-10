@@ -7,7 +7,7 @@ import {
   setCharacterLorebooks,
 } from "../../../../core/storage";
 import { uuidv4 } from "../../../../core/storage/repo";
-import { saveAvatar } from "../../../../core/storage/avatars";
+import { saveAvatar, recalculateGradient } from "../../../../core/storage/avatars";
 import { convertToImageRef, convertToImageUrl } from "../../../../core/storage/images";
 import type {
   AvatarCrop,
@@ -944,6 +944,9 @@ export function useCharacterForm(draftCharacter?: any) {
         } else {
           console.log("[CreateCharacter] Avatar saved as:", avatarFilename);
           invalidateAvatarCache("character", characterId);
+          if (!state.disableAvatarGradient) {
+            await recalculateGradient("character", characterId);
+          }
         }
       }
 

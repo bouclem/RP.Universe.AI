@@ -5,6 +5,7 @@ import { cn, radius, interactive } from "../../design-tokens";
 import { resolveAvatarGenerationOptions } from "../../../core/image-generation";
 import { convertFilePathToDataUrl } from "../../../core/storage/images";
 import { readSettings, SETTINGS_UPDATED_EVENT } from "../../../core/storage/repo";
+import { isRenderableImageUrl } from "../../../core/utils/image";
 import type { AvatarCrop } from "../../../core/storage/schemas";
 import { AvatarImage } from "../AvatarImage";
 
@@ -57,12 +58,20 @@ export function AvatarPicker({
   const [showGenerationSheet, setShowGenerationSheet] = useState(false);
   const [showPositionModal, setShowPositionModal] = useState(false);
   const [pendingImageSrc, setPendingImageSrc] = useState<string | null>(null);
+  const [localAvatarPreviewPath, setLocalAvatarPreviewPath] = useState<string | null>(null);
+  const [localAvatarRoundPreviewPath, setLocalAvatarRoundPreviewPath] = useState<string | null>(null);
   const [hasImageGenModels, setHasImageGenModels] = useState(false);
   const [generationMode, setGenerationMode] = useState<"create" | "edit-current">("create");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const hadExternalAvatarRef = useRef(false);
   const returnPath = `${location.pathname}${location.search}`;
+  const summarizeSrc = useCallback((value?: string | null) => {
+    if (!value) return "(empty)";
+    if (value.startsWith("data:")) return `data-url(${value.slice(0, 24)}..., len=${value.length})`;
+    return value.length > 96 ? `${value.slice(0, 96)}...` : value;
+  }, []);
 
   useEffect(() => {
     const loadAvailability = async () => {
@@ -80,6 +89,27 @@ export function AvatarPicker({
     return () => window.removeEventListener(SETTINGS_UPDATED_EVENT, loadAvailability);
   }, []);
 
+  useEffect(() => {
+    if (currentAvatarPath) {
+      setLocalAvatarPreviewPath(currentAvatarPath);
+    }
+    if (avatarRoundPath) {
+      setLocalAvatarRoundPreviewPath(avatarRoundPath);
+    }
+
+    const hasExternalAvatar = !!(currentAvatarPath || avatarRoundPath);
+    if (!hasExternalAvatar && hadExternalAvatarRef.current) {
+      setLocalAvatarPreviewPath(null);
+      setLocalAvatarRoundPreviewPath(null);
+    }
+    hadExternalAvatarRef.current = hasExternalAvatar;
+    console.log("[AvatarPicker] external sync", {
+      currentAvatarPath: summarizeSrc(currentAvatarPath),
+      avatarRoundPath: summarizeSrc(avatarRoundPath),
+      hasExternalAvatar,
+    });
+  }, [avatarRoundPath, currentAvatarPath]);
+
   const sizeClasses = {
     sm: "h-20 w-20",
     md: "h-28 w-28",
@@ -95,6 +125,7 @@ export function AvatarPicker({
   }, []);
 
   const handleChooseFromLibrary = useCallback(() => {
+    console.log("[AvatarPicker] choose from library", { returnPath });
     onBeforeChooseFromLibrary?.();
     navigate("/library/images/pick", {
       state: {
@@ -106,10 +137,16 @@ export function AvatarPicker({
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    console.log("[AvatarPicker] file selected", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    });
 
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
+      console.log("[AvatarPicker] file read complete", { dataUrl: summarizeSrc(dataUrl) });
       setPendingImageSrc(dataUrl);
       setShowPositionModal(true);
     };
@@ -119,20 +156,57 @@ export function AvatarPicker({
   }, []);
 
   const handleGeneratedImage = useCallback((imageDataUrl: string) => {
+    console.log("[AvatarPicker] generated image received", {
+      imageDataUrl: summarizeSrc(imageDataUrl),
+    });
     setPendingImageSrc(imageDataUrl);
     setShowPositionModal(true);
-  }, []);
+  }, [summarizeSrc]);
 
   const handleEditCurrent = useCallback(() => {
     if (!currentAvatarPath) return;
     setShowEditCurrentMenu(true);
   }, [currentAvatarPath]);
 
+  const normalizeModalImageSrc = useCallback(async (src: string): Promise<string> => {
+    if (!src) {
+      return src;
+    }
+
+    if (!isRenderableImageUrl(src) || src.startsWith("data:")) {
+      return src;
+    }
+
+    const response = await fetch(src);
+    if (!response.ok) {
+      throw new Error(`Failed to load avatar asset (${response.status})`);
+    }
+
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to convert avatar asset to data URL"));
+      reader.readAsDataURL(blob);
+    });
+  }, []);
+
   const handleRepositionCurrent = useCallback(() => {
     if (!currentAvatarPath) return;
-    setPendingImageSrc(currentAvatarPath);
-    setShowPositionModal(true);
-  }, [currentAvatarPath]);
+    void (async () => {
+      try {
+        const normalizedSrc = await normalizeModalImageSrc(currentAvatarPath);
+        console.log("[AvatarPicker] reposition current normalized", {
+          currentAvatarPath: summarizeSrc(currentAvatarPath),
+          normalizedSrc: summarizeSrc(normalizedSrc),
+        });
+        setPendingImageSrc(normalizedSrc);
+        setShowPositionModal(true);
+      } catch (error) {
+        console.error("[AvatarPicker] failed to normalize current avatar for reposition", error);
+      }
+    })();
+  }, [currentAvatarPath, normalizeModalImageSrc, summarizeSrc]);
 
   const handleEditCurrentWithAI = useCallback(() => {
     if (!currentAvatarPath) return;
@@ -141,15 +215,26 @@ export function AvatarPicker({
   }, [currentAvatarPath]);
 
   const handlePositionConfirm = useCallback(
-    (roundImageData: string) => {
-      if (pendingImageSrc) {
-        onAvatarChange(pendingImageSrc);
-      }
+    ({
+      baseImageData,
+      roundImageData,
+    }: {
+      baseImageData: string;
+      roundImageData: string;
+    }) => {
+      console.log("[AvatarPicker] position confirm", {
+        pendingImageSrc: summarizeSrc(pendingImageSrc),
+        baseImageData: summarizeSrc(baseImageData),
+        roundImageData: summarizeSrc(roundImageData),
+      });
+      setLocalAvatarPreviewPath(baseImageData);
+      onAvatarChange(baseImageData);
+      setLocalAvatarRoundPreviewPath(roundImageData);
       onAvatarRoundChange?.(roundImageData);
       onAvatarCropChange?.(null);
       setPendingImageSrc(null);
     },
-    [onAvatarChange, onAvatarRoundChange, onAvatarCropChange, pendingImageSrc],
+    [onAvatarChange, onAvatarRoundChange, onAvatarCropChange, pendingImageSrc, summarizeSrc],
   );
 
   const handlePositionModalClose = useCallback(() => {
@@ -163,8 +248,6 @@ export function AvatarPicker({
     if (!rawSelection) {
       return;
     }
-
-    sessionStorage.removeItem(storageKey);
 
     let parsed: AvatarLibrarySelectionPayload | null = null;
     try {
@@ -182,8 +265,17 @@ export function AvatarPicker({
     void (async () => {
       const dataUrl = await convertFilePathToDataUrl(parsed.filePath);
       if (!dataUrl || cancelled) {
+        console.log("[AvatarPicker] library selection conversion failed or cancelled", {
+          filePath: parsed.filePath,
+          cancelled,
+        });
         return;
       }
+      sessionStorage.removeItem(storageKey);
+      console.log("[AvatarPicker] library selection converted", {
+        filePath: parsed.filePath,
+        dataUrl: summarizeSrc(dataUrl),
+      });
       setPendingImageSrc(dataUrl);
       setShowPositionModal(true);
     })();
@@ -191,7 +283,37 @@ export function AvatarPicker({
     return () => {
       cancelled = true;
     };
-  }, [returnPath]);
+  }, [returnPath, summarizeSrc]);
+
+  const displayAvatarSrc =
+    localAvatarRoundPreviewPath ||
+    avatarRoundPath ||
+    localAvatarPreviewPath ||
+    currentAvatarPath;
+  const hasDisplayAvatar = !!displayAvatarSrc;
+
+  useEffect(() => {
+    console.log("[AvatarPicker] render sources", {
+      displayAvatarSrc: summarizeSrc(displayAvatarSrc),
+      localAvatarPreviewPath: summarizeSrc(localAvatarPreviewPath),
+      localAvatarRoundPreviewPath: summarizeSrc(localAvatarRoundPreviewPath),
+      currentAvatarPath: summarizeSrc(currentAvatarPath),
+      avatarRoundPath: summarizeSrc(avatarRoundPath),
+      hasDisplayAvatar,
+      pendingImageSrc: summarizeSrc(pendingImageSrc),
+      showPositionModal,
+    });
+  }, [
+    avatarRoundPath,
+    currentAvatarPath,
+    displayAvatarSrc,
+    hasDisplayAvatar,
+    localAvatarPreviewPath,
+    localAvatarRoundPreviewPath,
+    pendingImageSrc,
+    showPositionModal,
+    summarizeSrc,
+  ]);
 
   return (
     <div className="relative inline-block">
@@ -202,16 +324,16 @@ export function AvatarPicker({
           sizeClasses[size],
           radius.full,
           "bg-[#111113]",
-          currentAvatarPath
+          hasDisplayAvatar
             ? "border-[3px] border-white/10"
             : "border-2 border-dashed border-white/15",
         )}
       >
         {avatarPreview ? (
           avatarPreview
-        ) : avatarRoundPath || currentAvatarPath ? (
+        ) : hasDisplayAvatar ? (
           <AvatarImage
-            src={avatarRoundPath || currentAvatarPath}
+            src={displayAvatarSrc}
             alt="Avatar"
             crop={avatarCrop}
             applyCrop
@@ -265,7 +387,7 @@ export function AvatarPicker({
         onChooseImage={handleChooseImage}
         onEditCurrent={handleEditCurrent}
         hasImageGenerationModels={hasImageGenModels}
-        hasCurrentAvatar={!!currentAvatarPath}
+        hasCurrentAvatar={hasDisplayAvatar}
       />
 
       <AvatarCurrentEditMenu

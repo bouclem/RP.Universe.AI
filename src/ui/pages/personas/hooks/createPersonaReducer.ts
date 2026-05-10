@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { savePersona, uuidv4 } from "../../../../core/storage/repo";
-import { saveAvatar } from "../../../../core/storage/avatars";
+import { saveAvatar, recalculateGradient } from "../../../../core/storage/avatars";
 import { convertToImageRef } from "../../../../core/storage/images";
 import { invalidateAvatarCache } from "../../../hooks/useAvatar";
 import { importPersona, readFileAsText } from "../../../../core/storage/personaTransfer";
@@ -245,6 +245,7 @@ export function useCreatePersonaController() {
           console.error("[CreatePersona] Failed to save avatar image");
         } else {
           invalidateAvatarCache("persona", personaId);
+          await recalculateGradient("persona", personaId);
         }
       }
 
