@@ -331,11 +331,28 @@ jobs:
           cd src-tauri/target/release/bundle
           zip -r ../../../../dist-artifacts/linux-cpu.zip .
 
-      - name: Upload Linux CPU zip to GitHub Release
+      - name: Package Linux CPU release tarball
+        run: |
+          bash scripts/package-linux-release-tarball.sh \
+            src-tauri/target/release/bundle \
+            cpu \
+            dist-artifacts/lettuceai-linux-x86_64-cpu.tar.gz
+
+      - name: Copy Linux CPU deb with stable name
+        run: |
+          mkdir -p dist-artifacts
+          DEB_PATH="$(find src-tauri/target/release/bundle/deb -maxdepth 1 -type f -name '*.deb' | sort | head -n 1)"
+          test -n "${DEB_PATH}"
+          cp "${DEB_PATH}" dist-artifacts/lettuceai-linux-x86_64-cpu.deb
+
+      - name: Upload Linux CPU artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
-          files: dist-artifacts/linux-cpu.zip
+          files: |
+            dist-artifacts/linux-cpu.zip
+            dist-artifacts/lettuceai-linux-x86_64-cpu.deb
+            dist-artifacts/lettuceai-linux-x86_64-cpu.tar.gz
           fail_on_unmatched_files: true
 
   linux_cuda:
@@ -463,11 +480,28 @@ jobs:
           cd src-tauri/target-cuda/release/bundle
           zip -r ../../../../dist-artifacts/linux-cuda.zip .
 
-      - name: Upload Linux CUDA zip to GitHub Release
+      - name: Package Linux CUDA release tarball
+        run: |
+          bash scripts/package-linux-release-tarball.sh \
+            src-tauri/target-cuda/release/bundle \
+            cuda \
+            dist-artifacts/lettuceai-linux-x86_64-cuda.tar.gz
+
+      - name: Copy Linux CUDA deb with stable name
+        run: |
+          mkdir -p dist-artifacts
+          DEB_PATH="$(find src-tauri/target-cuda/release/bundle/deb -maxdepth 1 -type f -name '*.deb' | sort | head -n 1)"
+          test -n "${DEB_PATH}"
+          cp "${DEB_PATH}" dist-artifacts/lettuceai-linux-x86_64-cuda.deb
+
+      - name: Upload Linux CUDA artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
-          files: dist-artifacts/linux-cuda.zip
+          files: |
+            dist-artifacts/linux-cuda.zip
+            dist-artifacts/lettuceai-linux-x86_64-cuda.deb
+            dist-artifacts/lettuceai-linux-x86_64-cuda.tar.gz
           fail_on_unmatched_files: true
 
   linux_vulkan:
@@ -593,11 +627,28 @@ jobs:
           cd src-tauri/target-vulkan/release/bundle
           zip -r ../../../../dist-artifacts/linux-vulkan.zip .
 
-      - name: Upload Linux Vulkan zip to GitHub Release
+      - name: Package Linux Vulkan release tarball
+        run: |
+          bash scripts/package-linux-release-tarball.sh \
+            src-tauri/target-vulkan/release/bundle \
+            vulkan \
+            dist-artifacts/lettuceai-linux-x86_64-vulkan.tar.gz
+
+      - name: Copy Linux Vulkan deb with stable name
+        run: |
+          mkdir -p dist-artifacts
+          DEB_PATH="$(find src-tauri/target-vulkan/release/bundle/deb -maxdepth 1 -type f -name '*.deb' | sort | head -n 1)"
+          test -n "${DEB_PATH}"
+          cp "${DEB_PATH}" dist-artifacts/lettuceai-linux-x86_64-vulkan.deb
+
+      - name: Upload Linux Vulkan artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
-          files: dist-artifacts/linux-vulkan.zip
+          files: |
+            dist-artifacts/linux-vulkan.zip
+            dist-artifacts/lettuceai-linux-x86_64-vulkan.deb
+            dist-artifacts/lettuceai-linux-x86_64-vulkan.tar.gz
           fail_on_unmatched_files: true
 
   windows_cpu:
@@ -706,11 +757,29 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist-artifacts | Out-Null
           Compress-Archive -Path C:\t\release\bundle\* -DestinationPath dist-artifacts/windows-cpu.zip -Force
 
-      - name: Upload Windows CPU zip to GitHub Release
+      - name: Copy Windows CPU installers with stable names
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-artifacts | Out-Null
+
+          $msi = Get-ChildItem -Path 'C:\t\release\bundle\msi' -Filter '*.msi' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $msi) {
+            Copy-Item $msi.FullName 'dist-artifacts/lettuceai-windows-x64-cpu.msi'
+          }
+
+          $nsis = Get-ChildItem -Path 'C:\t\release\bundle\nsis' -Filter '*.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $nsis) {
+            Copy-Item $nsis.FullName 'dist-artifacts/lettuceai-windows-x64-cpu-setup.exe'
+          }
+
+      - name: Upload Windows CPU artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
-          files: dist-artifacts/windows-cpu.zip
+          files: |
+            dist-artifacts/windows-cpu.zip
+            dist-artifacts/lettuceai-windows-x64-cpu.msi
+            dist-artifacts/lettuceai-windows-x64-cpu-setup.exe
           fail_on_unmatched_files: true
 
   windows_cuda:
@@ -836,11 +905,29 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist-artifacts | Out-Null
           Compress-Archive -Path C:\t\release\bundle\* -DestinationPath dist-artifacts/windows-cuda.zip -Force
 
-      - name: Upload Windows CUDA zip to GitHub Release
+      - name: Copy Windows CUDA installers with stable names
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-artifacts | Out-Null
+
+          $msi = Get-ChildItem -Path 'C:\t\release\bundle\msi' -Filter '*.msi' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $msi) {
+            Copy-Item $msi.FullName 'dist-artifacts/lettuceai-windows-x64-cuda.msi'
+          }
+
+          $nsis = Get-ChildItem -Path 'C:\t\release\bundle\nsis' -Filter '*.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $nsis) {
+            Copy-Item $nsis.FullName 'dist-artifacts/lettuceai-windows-x64-cuda-setup.exe'
+          }
+
+      - name: Upload Windows CUDA artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
-          files: dist-artifacts/windows-cuda.zip
+          files: |
+            dist-artifacts/windows-cuda.zip
+            dist-artifacts/lettuceai-windows-x64-cuda.msi
+            dist-artifacts/lettuceai-windows-x64-cuda-setup.exe
           fail_on_unmatched_files: true
 
   windows_vulkan:
@@ -1065,11 +1152,29 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist-artifacts | Out-Null
           Compress-Archive -Path C:\t\release\bundle\* -DestinationPath dist-artifacts/windows-vulkan.zip -Force
 
-      - name: Upload Windows Vulkan zip to GitHub Release
+      - name: Copy Windows Vulkan installers with stable names
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-artifacts | Out-Null
+
+          $msi = Get-ChildItem -Path 'C:\t\release\bundle\msi' -Filter '*.msi' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $msi) {
+            Copy-Item $msi.FullName 'dist-artifacts/lettuceai-windows-x64-vulkan.msi'
+          }
+
+          $nsis = Get-ChildItem -Path 'C:\t\release\bundle\nsis' -Filter '*.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $nsis) {
+            Copy-Item $nsis.FullName 'dist-artifacts/lettuceai-windows-x64-vulkan-setup.exe'
+          }
+
+      - name: Upload Windows Vulkan artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
-          files: dist-artifacts/windows-vulkan.zip
+          files: |
+            dist-artifacts/windows-vulkan.zip
+            dist-artifacts/lettuceai-windows-x64-vulkan.msi
+            dist-artifacts/lettuceai-windows-x64-vulkan-setup.exe
           fail_on_unmatched_files: true
 
   macos_cpu:
