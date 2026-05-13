@@ -5514,6 +5514,7 @@ fn build_group_system_prompt(
         has_key_memories: !key_memories_text.trim().is_empty(),
         has_lorebook_content: !lorebook_text.trim().is_empty(),
         does_author_note_exists: false,
+        has_active_scheduled_note: false,
         has_subject_description: false,
         has_current_description: false,
         has_character_reference_images: false,

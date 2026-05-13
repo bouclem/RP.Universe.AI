@@ -116,6 +116,11 @@ fn direct_chat_variables() -> Vec<PromptVariableDefinition> {
             "Rendered emotional and relationship state for companion chats.",
         ),
         variable(
+            "{{scheduled_notes}}",
+            "Scheduled Notes",
+            "Active companion-only scheduled background notes.",
+        ),
+        variable(
             "{{key_memories}}",
             "Key Memories",
             "Relevant long-term memory facts.",

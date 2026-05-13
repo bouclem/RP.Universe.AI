@@ -986,8 +986,15 @@ pub fn render_prompt_preview(
     let effective_persona_id = resolve_persona_id(&session, persona_id.as_deref());
     let persona = context.choose_persona(effective_persona_id);
 
-    let rendered =
-        prompt_engine::render_with_context(&app, &content, &character, persona, &session, settings);
+    let rendered = prompt_engine::render_with_context(
+        &app,
+        &content,
+        &character,
+        persona,
+        &session,
+        settings,
+        None,
+    );
     Ok(rendered)
 }
 

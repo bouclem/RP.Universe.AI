@@ -20,6 +20,7 @@ pub(crate) struct PromptEntryConditionContext<'a> {
     pub(crate) has_key_memories: bool,
     pub(crate) has_lorebook_content: bool,
     pub(crate) does_author_note_exists: bool,
+    pub(crate) has_active_scheduled_note: bool,
     pub(crate) has_subject_description: bool,
     pub(crate) has_current_description: bool,
     pub(crate) has_character_reference_images: bool,
@@ -92,6 +93,9 @@ pub(crate) fn matches_condition(
         }
         PromptEntryCondition::DoesAuthorNoteExists { value } => {
             context.does_author_note_exists == *value
+        }
+        PromptEntryCondition::HasActiveScheduledNote { value } => {
+            context.companion_mode_enabled && context.has_active_scheduled_note == *value
         }
         PromptEntryCondition::HasSubjectDescription { value } => {
             context.has_subject_description == *value
@@ -199,6 +203,7 @@ mod tests {
             has_key_memories: false,
             has_lorebook_content: true,
             does_author_note_exists: true,
+            has_active_scheduled_note: false,
             has_subject_description: false,
             has_current_description: false,
             has_character_reference_images: false,
@@ -268,6 +273,18 @@ mod tests {
 
         let condition = PromptEntryCondition::IsCompanionMode { value: true };
 
+        assert!(matches_condition(&condition, &context));
+    }
+
+    #[test]
+    fn active_scheduled_note_condition_only_matches_in_companion_mode() {
+        let mut context = sample_context();
+        context.has_active_scheduled_note = true;
+
+        let condition = PromptEntryCondition::HasActiveScheduledNote { value: true };
+        assert!(!matches_condition(&condition, &context));
+
+        context.companion_mode_enabled = true;
         assert!(matches_condition(&condition, &context));
     }
 }

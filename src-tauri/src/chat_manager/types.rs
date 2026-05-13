@@ -135,6 +135,9 @@ pub enum PromptEntryCondition {
     DoesAuthorNoteExists {
         value: bool,
     },
+    HasActiveScheduledNote {
+        value: bool,
+    },
     HasSubjectDescription {
         value: bool,
     },

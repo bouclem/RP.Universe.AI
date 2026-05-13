@@ -159,6 +159,7 @@ fn dynamic_memory_prompt_condition_context<'a>(
             .as_deref()
             .map(|value| !value.trim().is_empty())
             .unwrap_or(false),
+        has_active_scheduled_note: false,
         has_subject_description: false,
         has_current_description: false,
         has_character_reference_images: false,
@@ -205,6 +206,7 @@ fn render_active_prompt_entries(
                 persona,
                 session,
                 settings,
+                None,
             );
             let trimmed = rendered.trim();
             if trimmed.is_empty() {
@@ -3075,6 +3077,7 @@ async fn run_memory_tool_update(
                     None,
                     session,
                     settings,
+                    None,
                 )
             } else {
                 render_active_prompt_entries(
@@ -4320,6 +4323,7 @@ async fn summarize_messages(
                     persona,
                     session,
                     settings,
+                    None,
                 )
             } else {
                 render_active_prompt_entries(

@@ -209,6 +209,7 @@ fn render_entries(
         has_key_memories: false,
         has_lorebook_content: false,
         does_author_note_exists: false,
+        has_active_scheduled_note: false,
         has_subject_description: false,
         has_current_description: false,
         has_character_reference_images: false,

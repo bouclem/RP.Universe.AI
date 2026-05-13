@@ -2588,7 +2588,7 @@ pub fn default_companion_entries() -> Vec<SystemPromptEntry> {
             id: "companion_memory".to_string(),
             name: "Continuity".to_string(),
             role: PromptEntryRole::System,
-            content: "# Relationship Continuity\nUse this as continuity and emotional grounding, not as a rigid script.\n\nAll live relationship and emotional state below belongs to the relationship between {{char.name}} and {{persona.name}}.\nDo not project these states onto third-party people mentioned in bios, lore, or memories unless a memory explicitly describes that third-party relationship.\n\n## Conversation Summary\n{{context_summary}}\n\n## Live Companion State\n{{companion_state}}\n\n## Key Memories\nUnless a memory explicitly describes a third-party relationship, interpret relationship, boundary, preference, profile, routine, plan, and milestone memories as continuity between {{char.name}} and {{persona.name}}.\n{{key_memories}}\n\n## Relevant Lore\n{{lorebook}}".to_string(),
+            content: "# Relationship Continuity\nUse this as continuity and emotional grounding, not as a rigid script.\n\nAll live relationship and emotional state below belongs to the relationship between {{char.name}} and {{persona.name}}.\nDo not project these states onto third-party people mentioned in bios, lore, or memories unless a memory explicitly describes that third-party relationship.\n\n## Conversation Summary\n{{context_summary}}\n\n## Live Companion State\n{{companion_state}}\n\n## Scheduled Background Context\n{{scheduled_notes}}\n\n## Key Memories\nUnless a memory explicitly describes a third-party relationship, interpret relationship, boundary, preference, profile, routine, plan, and milestone memories as continuity between {{char.name}} and {{persona.name}}.\n{{key_memories}}\n\n## Relevant Lore\n{{lorebook}}".to_string(),
             enabled: true,
             injection_position: PromptEntryPosition::Relative,
             injection_depth: 0,
@@ -3093,6 +3093,20 @@ pub fn build_system_prompt_entries(
         .as_ref()
         .map(|value| !value.trim().is_empty())
         .unwrap_or(false);
+    let scheduled_notes_text = if companion_mode {
+        crate::storage_manager::companion_scheduled_notes::render_scheduled_notes_block(
+            app,
+            &character.id,
+            crate::utils::now_millis().unwrap_or_default(),
+        )
+        .unwrap_or(None)
+    } else {
+        None
+    };
+    let has_scheduled_notes = scheduled_notes_text
+        .as_ref()
+        .map(|value| !value.trim().is_empty())
+        .unwrap_or(false);
     let time_awareness_enabled = companion_mode && companion_time_awareness_enabled(session);
     let has_author_note = author_note_text.is_some();
     let has_key_memories = if dynamic_memory_active {
@@ -3129,6 +3143,7 @@ pub fn build_system_prompt_entries(
         has_key_memories,
         has_lorebook_content,
         does_author_note_exists: has_author_note,
+        has_active_scheduled_note: has_scheduled_notes,
         has_subject_description: false,
         has_current_description: false,
         has_character_reference_images: false,
@@ -3159,7 +3174,15 @@ pub fn build_system_prompt_entries(
             continue;
         }
         let rendered =
-            render_with_context(app, &entry.content, character, persona, session, settings);
+            render_with_context(
+                app,
+                &entry.content,
+                character,
+                persona,
+                session,
+                settings,
+                scheduled_notes_text.as_deref(),
+            );
         if rendered.trim().is_empty() {
             continue;
         }
@@ -3291,6 +3314,28 @@ pub fn build_system_prompt_entries(
         }
     }
 
+    if companion_mode
+        && has_scheduled_notes
+        && !has_placeholder(&base_entries, "{{scheduled_notes}}")
+    {
+        if let Some(scheduled_notes) = scheduled_notes_text.as_deref() {
+            rendered_entries.push(SystemPromptEntry {
+                id: "entry_scheduled_notes".to_string(),
+                name: "Scheduled Notes".to_string(),
+                role: PromptEntryRole::System,
+                content: scheduled_notes.to_string(),
+                enabled: true,
+                injection_position: PromptEntryPosition::Relative,
+                injection_depth: 0,
+                conditional_min_messages: None,
+                interval_turns: None,
+                system_prompt: true,
+                conditions: None,
+                prompt_entry_payload: None,
+            });
+        }
+    }
+
     if condense_prompt_entries {
         rendered_entries = condense_entries_into_single_system_message(rendered_entries);
     }
@@ -3300,6 +3345,7 @@ pub fn build_system_prompt_entries(
         "memories_count": session.memories.len(),
         "author_note_chars": author_note_text.as_ref().map(|value| value.len()).unwrap_or(0),
         "companion_state_chars": companion_state_text.as_ref().map(|value| value.len()).unwrap_or(0),
+        "scheduled_notes_chars": scheduled_notes_text.as_ref().map(|value| value.len()).unwrap_or(0),
     }));
 
     let mut total_chars: usize = 0;
@@ -3524,6 +3570,7 @@ pub fn render_with_context(
     persona: Option<&Persona>,
     session: &Session,
     settings: &Settings,
+    scheduled_notes_text_override: Option<&str>,
 ) -> String {
     render_with_context_internal(
         Some(app),
@@ -3532,6 +3579,7 @@ pub fn render_with_context(
         persona,
         session,
         settings,
+        scheduled_notes_text_override,
     )
 }
 
@@ -3551,6 +3599,7 @@ fn render_with_context_internal(
     persona: Option<&Persona>,
     session: &Session,
     settings: &Settings,
+    scheduled_notes_text_override: Option<&str>,
 ) -> String {
     let char_name = &character.name;
     let raw_char_desc = character
@@ -3744,6 +3793,24 @@ fn render_with_context_internal(
     let author_note_text = render_author_note_text(character, persona, session).unwrap_or_default();
     let companion_state_text =
         companion::render_prompt_state(session, character, persona).unwrap_or_default();
+    let scheduled_notes_text = scheduled_notes_text_override
+        .map(str::to_string)
+        .or_else(|| {
+            app.and_then(|handle| {
+                if companion::is_companion_mode(session, character) {
+                    crate::storage_manager::companion_scheduled_notes::render_scheduled_notes_block(
+                        handle,
+                        &character.id,
+                        reference_ms,
+                    )
+                    .ok()
+                    .flatten()
+                } else {
+                    None
+                }
+            })
+        })
+        .unwrap_or_default();
     if author_note_text.is_empty() {
         result = result.replace("# Author Note\n    {{author_note}}", "");
         result = result.replace("# Author Note\n{{author_note}}", "");
@@ -3754,6 +3821,11 @@ fn render_with_context_internal(
         result = result.replace("Current companion state:\n{{companion_state}}", "");
     }
     result = result.replace("{{companion_state}}", &companion_state_text);
+    if scheduled_notes_text.is_empty() {
+        result = result.replace("# Scheduled Background Context\n{{scheduled_notes}}", "");
+        result = result.replace("## Scheduled Background Context\n{{scheduled_notes}}", "");
+    }
+    result = result.replace("{{scheduled_notes}}", &scheduled_notes_text);
     // Legacy support for {{rules}} placeholder
     result = result.replace("{{rules}}", "");
 
@@ -3992,6 +4064,7 @@ mod tests {
             persona.as_ref(),
             &session,
             &settings,
+            None,
         );
         assert!(rendered.contains("Hello Alice and Bob."));
         assert!(rendered.contains("I am Alice. Partner: Bob."));
@@ -4023,6 +4096,7 @@ mod tests {
             persona.as_ref(),
             &session2,
             &settings,
+            None,
         );
         assert!(rendered2.contains("Var Alice"));
         assert!(!rendered2.contains("Starting Scene")); // No hardcoded formatting
@@ -4053,6 +4127,7 @@ mod tests {
             persona.as_ref(),
             &session2_edited,
             &settings,
+            None,
         );
         assert_eq!(rendered2_edited, "Edited scene with Alice and Bob");
 
@@ -4065,6 +4140,7 @@ mod tests {
             persona.as_ref(),
             &session3,
             &settings,
+            None,
         );
         assert_eq!(rendered3, "Keep Alice focused on Bob.");
 
@@ -4075,6 +4151,7 @@ mod tests {
             persona.as_ref(),
             &session,
             &settings,
+            None,
         );
         assert!(!rendered4.contains("{{date}}"));
         assert!(!rendered4.contains("{{time_hour}}"));

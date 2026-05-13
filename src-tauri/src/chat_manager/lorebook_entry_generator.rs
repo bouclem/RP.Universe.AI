@@ -289,7 +289,7 @@ fn render_lorebook_entry_prompt_content(
     selected_memories: &str,
 ) -> String {
     let rendered = crate::chat_manager::prompt_engine::render_with_context(
-        app, content, character, persona, session, settings,
+        app, content, character, persona, session, settings, None,
     );
     let rendered = replace_custom_placeholder(&rendered, "{{lorebook_name}}", lorebook_name);
     let rendered = replace_custom_placeholder(&rendered, "{{character_name}}", &character.name);
@@ -347,6 +347,7 @@ fn render_lorebook_entry_prompt_entries(
             .as_deref()
             .map(|value| !value.trim().is_empty())
             .unwrap_or(false),
+        has_active_scheduled_note: false,
         has_subject_description: false,
         has_current_description: false,
         has_character_reference_images: false,
@@ -436,6 +437,7 @@ fn render_lorebook_keyword_prompt_entries(
         has_key_memories: false,
         has_lorebook_content: !entry_content.trim().is_empty(),
         does_author_note_exists: false,
+        has_active_scheduled_note: false,
         has_subject_description: false,
         has_current_description: false,
         has_character_reference_images: false,
