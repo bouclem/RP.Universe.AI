@@ -228,28 +228,65 @@ export function CompanionSoulEditor({
     spec: SliderSpec<K>,
     sliderValue: number,
     onSliderChange: (next: number) => void,
-  ) => (
-    <div key={spec.key} className={spacing.tight}>
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-fg/80">{spec.label}</span>
-        <span className="text-[11px] text-fg/50">{pct(sliderValue)}</span>
+  ) => {
+    const intValue = Math.round(sliderValue * 100);
+    return (
+      <div key={spec.key} className={spacing.tight}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm text-fg/80">{spec.label}</span>
+          <span className="inline-flex items-center gap-0.5 text-[11px] text-fg/50">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              disabled={disabled}
+              value={intValue}
+              onChange={(event) => {
+                const raw = event.target.value;
+                if (raw === "") {
+                  onSliderChange(0);
+                  return;
+                }
+                const parsed = Number(raw);
+                if (!Number.isFinite(parsed)) return;
+                const clamped = Math.min(100, Math.max(0, Math.round(parsed)));
+                onSliderChange(clamped / 100);
+              }}
+              onBlur={(event) => {
+                // Restore canonical value if user cleared the field
+                if (event.target.value === "") {
+                  onSliderChange(0);
+                }
+              }}
+              className={cn(
+                "w-9 border-b border-transparent bg-transparent text-right text-fg/70 tabular-nums outline-none",
+                "hover:border-fg/15 focus:border-fg/30 focus:text-fg",
+                "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+              aria-label={`${spec.label} percent`}
+            />
+            <span aria-hidden="true">%</span>
+          </span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          disabled={disabled}
+          value={intValue}
+          onChange={(event) => onSliderChange(Number(event.target.value) / 100)}
+          className="w-full accent-accent disabled:opacity-50"
+        />
+        <div className="flex justify-between text-[10px] text-fg/40">
+          <span>{spec.low}</span>
+          <span>{spec.high}</span>
+        </div>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        step={1}
-        disabled={disabled}
-        value={Math.round(sliderValue * 100)}
-        onChange={(event) => onSliderChange(Number(event.target.value) / 100)}
-        className="w-full accent-accent disabled:opacity-50"
-      />
-      <div className="flex justify-between text-[10px] text-fg/40">
-        <span>{spec.low}</span>
-        <span>{spec.high}</span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderCollapsible = (
     id: "affect" | "regulation" | "relationship",
@@ -313,84 +350,30 @@ export function CompanionSoulEditor({
   return (
     <div className={spacing.section}>
       {onGenerate && (
-        <div
-          className={cn(
-            "overflow-hidden border border-accent/20 bg-accent/5",
-            radius.lg,
-          )}
-        >
-          <div className="flex items-start gap-3 px-4 py-3.5">
-            <div className={cn("border border-accent/30 bg-accent/10 p-1.5", radius.md)}>
-              <Sparkles className="h-4 w-4 text-accent" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className={cn(typography.h3.size, typography.h3.weight, "text-fg")}>
-                Generate from character
-              </h3>
-              <p className={cn(typography.bodySmall.size, "mt-1 text-fg/55")}>
-                {generateBlocked
-                  ? generationDisabledReason
-                  : modelLabel
-                    ? <>Uses <span className="text-fg/80">{modelLabel}</span>. You'll review and edit before applying.</>
-                    : "Drafts a soul from the character's name, definition, and scenes."}
-              </p>
-            </div>
-          </div>
-
-          <AnimatePresence>
-            {directionOpen && onDirectionChange && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                className="overflow-hidden border-t border-accent/15 bg-surface-el/30"
-              >
-                <div className="px-4 py-2.5">
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg/55">
-                      Direction
-                    </label>
-                    <span className="text-[10px] text-fg/40">Optional steering for the LLM</span>
-                  </div>
-                  <textarea
-                    value={direction}
-                    onChange={(e) => onDirectionChange(e.target.value)}
-                    rows={3}
-                    autoFocus
-                    placeholder='e.g. "Lean tsundere — guarded outside, soft once trusted. Less anxious, more pride."'
-                    className={cn(
-                      "w-full resize-none border border-fg/10 bg-surface-el/40 px-3 py-2 text-[12.5px] leading-relaxed text-fg outline-none placeholder:text-fg/35",
-                      radius.md,
-                      interactive.transition.default,
-                      "focus:border-fg/25",
-                    )}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="flex items-center gap-2 border-t border-accent/15 bg-fg/[0.02] px-3 py-2.5">
+        <div className={spacing.tight}>
+          <div className="flex flex-wrap items-center gap-2">
             {onDirectionChange && (
               <button
                 type="button"
                 onClick={() => setDirectionOpen((v) => !v)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 border px-2.5 py-2 text-[12px] font-medium",
+                  "inline-flex items-center gap-1.5 border px-2.5 py-2 font-medium",
+                  typography.bodySmall.size,
                   radius.md,
                   interactive.transition.fast,
                   direction.trim()
-                    ? "border-info/30 bg-info/10 text-info"
+                    ? "border-info/30 bg-info/10 text-info hover:bg-info/15"
                     : directionOpen
                       ? "border-fg/20 bg-fg/10 text-fg"
-                      : "border-fg/10 bg-fg/5 text-fg/65 hover:bg-fg/10",
+                      : "border-fg/10 bg-fg/5 text-fg/65 hover:border-fg/20 hover:text-fg",
                 )}
-                title="Optional direction for generation"
+                title="Optional direction for the LLM"
               >
                 <Compass className="h-3.5 w-3.5" />
                 <span>Direction</span>
-                {direction.trim() && <span className="h-1.5 w-1.5 rounded-full bg-info" />}
+                {direction.trim() && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-info" />
+                )}
               </button>
             )}
             <div className="flex-1" />
@@ -400,7 +383,8 @@ export function CompanionSoulEditor({
               disabled={disabled || generating || generateBlocked}
               title={generationDisabledReason ?? undefined}
               className={cn(
-                "inline-flex items-center gap-1.5 border border-accent/30 bg-accent/15 px-3.5 py-2 text-[12px] font-semibold text-accent",
+                "inline-flex items-center gap-1.5 border border-accent/30 bg-accent/15 px-3 py-2 font-semibold text-accent",
+                typography.bodySmall.size,
                 radius.md,
                 interactive.transition.fast,
                 interactive.active.scale,
@@ -412,9 +396,45 @@ export function CompanionSoulEditor({
               ) : (
                 <Sparkles className="h-3.5 w-3.5" />
               )}
-              {generating ? "Generating" : "Generate"}
+              {generating ? "Generating..." : "Generate soul"}
             </button>
           </div>
+
+          <p className={cn(typography.caption.size, "text-fg/45")}>
+            {generateBlocked
+              ? generationDisabledReason
+              : modelLabel
+                ? <>Drafts from the character's definition using <span className="text-fg/70">{modelLabel}</span>. You'll review before applying.</>
+                : "Drafts from the character's name, definition, and scenes. You'll review before applying."}
+          </p>
+
+          <AnimatePresence>
+            {directionOpen && onDirectionChange && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <textarea
+                  value={direction}
+                  onChange={(e) => onDirectionChange(e.target.value)}
+                  rows={3}
+                  autoFocus
+                  placeholder='e.g. "Lean tsundere, guarded outside, soft once trusted. Less anxious, more pride."'
+                  className={cn(
+                    "mt-1 w-full resize-none border border-fg/10 bg-surface-el/40 px-3 py-2 text-fg outline-none placeholder:text-fg/35",
+                    typography.bodySmall.size,
+                    "leading-relaxed",
+                    radius.md,
+                    interactive.transition.fast,
+                    "focus:border-fg/25 focus:bg-surface-el/60",
+                  )}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
