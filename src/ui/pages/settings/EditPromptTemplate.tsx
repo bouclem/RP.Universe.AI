@@ -878,12 +878,23 @@ function getEntryActivationSummary(entry: SystemPromptEntry) {
   return conditionCount === 1 ? describeConditionTree(entry.conditions) : `${conditionCount} rules`;
 }
 
-function SummaryField({ label, value }: { label: string; value: string }) {
+function MetaPill({
+  label,
+  value,
+  title,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+}) {
   return (
-    <div className="min-w-30">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-fg/35">{label}</p>
-      <p className="mt-1 text-sm leading-snug text-fg/78">{value}</p>
-    </div>
+    <span
+      title={title}
+      className="inline-flex items-center gap-1.5 rounded-full border border-fg/10 bg-surface-el/30 px-2.5 py-1 text-[11px]"
+    >
+      <span className="text-fg/40">{label}</span>
+      <span className="font-medium text-fg/80">{value}</span>
+    </span>
   );
 }
 
@@ -1912,30 +1923,25 @@ function PromptEntryCard({
             className="overflow-hidden"
           >
             <div className="space-y-3 pt-0.5">
-              <div className="rounded-lg border border-fg/10 bg-surface-el/16 px-3.5 py-3">
-                <div className="flex flex-wrap gap-x-6 gap-y-3">
-                  <SummaryField
-                    label="Role"
-                    value={
-                      getEntryKindSummary(entry) === "Text" ? getEntryRoleLabel(entry.role) : "User"
-                    }
-                  />
-                  <SummaryField label="Kind" value={getEntryKindSummary(entry)} />
-                  <SummaryField
-                    label="Placement"
-                    value={getEntryPositionLabel(entry.injectionPosition)}
-                  />
-                  <SummaryField label="Behavior" value={getEntryBehaviorSummary(entry)} />
-                  <SummaryField label="Activation" value={conditionSummary} />
-                  {entry.injectionDepth > 0 ? (
-                    <SummaryField label="Depth" value={String(entry.injectionDepth)} />
-                  ) : null}
-                </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <MetaPill
+                  label="Role"
+                  value={
+                    getEntryKindSummary(entry) === "Text" ? getEntryRoleLabel(entry.role) : "User"
+                  }
+                />
+                <MetaPill label="Kind" value={getEntryKindSummary(entry)} />
+                <MetaPill
+                  label="Placement"
+                  value={getEntryPositionLabel(entry.injectionPosition)}
+                  title={getInjectionModeHint(entry.injectionPosition)}
+                />
+                <MetaPill label="Behavior" value={getEntryBehaviorSummary(entry)} />
+                <MetaPill label="Activation" value={conditionSummary} />
+                {entry.injectionDepth > 0 ? (
+                  <MetaPill label="Depth" value={String(entry.injectionDepth)} />
+                ) : null}
               </div>
-
-              <p className="text-[11px] text-fg/50">
-                {getInjectionModeHint(entry.injectionPosition)}
-              </p>
 
               {isImageEntry ? (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-fg/10 bg-surface-el/20 px-3.5 py-3">
@@ -1963,7 +1969,7 @@ function PromptEntryCard({
                   type="button"
                   onClick={onOpenEditor}
                   className={cn(
-                    "block w-full rounded-xl border border-fg/10 bg-surface-el/20 p-3 text-left transition-colors",
+                    "group block w-full rounded-xl border border-fg/10 bg-surface-el/20 px-4 py-3 text-left transition-colors",
                     "hover:border-fg/20 hover:bg-surface-el/30",
                   )}
                 >
@@ -1971,11 +1977,14 @@ function PromptEntryCard({
                     <span className="text-[11px] font-medium uppercase tracking-wide text-fg/40">
                       Prompt Content
                     </span>
-                    <span className="text-[11px] text-fg/45">Open editor</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] text-fg/40 transition-colors group-hover:text-fg/70">
+                      Open editor
+                      <ChevronRight className="h-3 w-3" />
+                    </span>
                   </div>
-                  <div className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg border border-fg/10 bg-black/10 px-3.5 py-3 font-mono text-sm leading-relaxed text-fg/82">
+                  <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed text-fg/80">
                     {contentPreview}
-                  </div>
+                  </p>
                 </button>
               )}
             </div>
