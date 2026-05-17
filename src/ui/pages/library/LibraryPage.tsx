@@ -124,11 +124,11 @@ export function LibraryPage() {
         listPersonas(),
         listLorebooks(),
       ]);
-      libraryPageCache = {
+      setLibraryPageCache({
         characters: chars,
         personas: pers,
         lorebooks: lbs,
-      };
+      });
       setCharacters(chars);
       setPersonas(pers);
       setLorebooks(lbs);
@@ -696,7 +696,28 @@ type LibraryPageCache = {
   lorebooks: Lorebook[];
 };
 
-let libraryPageCache: LibraryPageCache | null = null;
+const LIBRARY_PAGE_CACHE_STORAGE_KEY = "library.page.cache.v1";
+
+let libraryPageCache: LibraryPageCache | null = (() => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LIBRARY_PAGE_CACHE_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LibraryPageCache;
+  } catch {
+    return null;
+  }
+})();
+
+function setLibraryPageCache(next: LibraryPageCache) {
+  libraryPageCache = next;
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LIBRARY_PAGE_CACHE_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // localStorage may be full or disabled; in-memory cache still applies.
+  }
+}
 
 function isImageLike(s?: string) {
   return isRenderableImageUrl(s);
@@ -765,12 +786,30 @@ const LibraryCard = memo(
     const descriptionPreview = getItemDescription(item, t);
     const avatarPath = getItemAvatarPath(item);
 
+    // Defer gradient computation until after first paint so the card mounts fast.
+    const [gradientReady, setGradientReady] = useState(false);
+    useEffect(() => {
+      const idle =
+        (window as unknown as { requestIdleCallback?: (cb: () => void) => number })
+          .requestIdleCallback;
+      const handle = idle
+        ? idle(() => setGradientReady(true))
+        : window.setTimeout(() => setGradientReady(true), 0);
+      return () => {
+        const cancelIdle = (
+          window as unknown as { cancelIdleCallback?: (handle: number) => void }
+        ).cancelIdleCallback;
+        if (cancelIdle && idle) cancelIdle(handle as number);
+        else window.clearTimeout(handle as number);
+      };
+    }, []);
+
     // Only use gradient for non-lorebook items
     const { gradientCss, hasGradient } = useAvatarGradient(
       item.itemType === "lorebook" ? "character" : (item.itemType as "character" | "persona"),
       item.id,
       avatarPath,
-      getItemDisableGradient(item),
+      !gradientReady || getItemDisableGradient(item),
       undefined,
       item.itemType === "character" ? ((item as Character).avatarGradientSource ?? "base") : "round",
     );
