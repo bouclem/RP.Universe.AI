@@ -7,7 +7,7 @@ use crate::storage_manager::settings::{read_settings_typed, write_settings_typed
 use crate::utils::log_info;
 
 /// Current migration version
-pub const CURRENT_MIGRATION_VERSION: u32 = 66;
+pub const CURRENT_MIGRATION_VERSION: u32 = 67;
 
 pub fn run_migrations(app: &AppHandle) -> Result<(), String> {
     log_info(app, "migrations", "Starting migration check");
@@ -697,6 +697,16 @@ pub fn run_migrations(app: &AppHandle) -> Result<(), String> {
         );
         migrate_v65_to_v66(app)?;
         version = 66;
+    }
+
+    if version < 67 {
+        log_info(
+            app,
+            "migrations",
+            "Running migration v66 -> v67: Repair missing character banner crop columns",
+        );
+        migrate_v66_to_v67(app)?;
+        version = 67;
     }
 
     // Update the stored version
@@ -3772,6 +3782,49 @@ fn migrate_v65_to_v66(app: &AppHandle) -> Result<(), String> {
         "#,
     )
     .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+
+    Ok(())
+}
+
+fn migrate_v66_to_v67(app: &AppHandle) -> Result<(), String> {
+    let conn = crate::storage_manager::db::open_db(app)?;
+
+    let mut has_banner_crop_x = false;
+    let mut has_banner_crop_y = false;
+    let mut has_banner_crop_scale = false;
+
+    let mut stmt = conn
+        .prepare("PRAGMA table_info(characters)")
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    let rows = stmt
+        .query_map([], |row| row.get::<_, String>(1))
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+
+    for col in rows {
+        let name = col.map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+        match name.as_str() {
+            "banner_crop_x" => has_banner_crop_x = true,
+            "banner_crop_y" => has_banner_crop_y = true,
+            "banner_crop_scale" => has_banner_crop_scale = true,
+            _ => {}
+        }
+    }
+
+    if !has_banner_crop_x {
+        conn.execute("ALTER TABLE characters ADD COLUMN banner_crop_x REAL", [])
+            .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    }
+    if !has_banner_crop_y {
+        conn.execute("ALTER TABLE characters ADD COLUMN banner_crop_y REAL", [])
+            .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    }
+    if !has_banner_crop_scale {
+        conn.execute(
+            "ALTER TABLE characters ADD COLUMN banner_crop_scale REAL",
+            [],
+        )
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    }
 
     Ok(())
 }
