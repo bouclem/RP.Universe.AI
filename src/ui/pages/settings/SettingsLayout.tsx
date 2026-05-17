@@ -343,6 +343,13 @@ export function SettingsLayout() {
         onSelect: () => navigate("/settings/about"),
       },
       {
+        key: "whatsNew",
+        icon: <Sparkles />,
+        label: "What's New",
+        matchPath: "__never__",
+        onSelect: () => window.dispatchEvent(new Event("whatsnew:open")),
+      },
+      {
         key: "changelog",
         icon: <ScrollText />,
         label: t("settings.items.changelog.title"),

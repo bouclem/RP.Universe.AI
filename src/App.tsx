@@ -115,7 +115,14 @@ import { V1UpgradeToast } from "./ui/components/V1UpgradeToast";
 import { V2UpgradeToast } from "./ui/components/V2UpgradeToast";
 import { V3UpgradeToast } from "./ui/components/V3UpgradeToast";
 import { ConfirmBottomMenuHost } from "./ui/components/ConfirmBottomMenu";
-import { isOnboardingCompleted } from "./core/storage/appState";
+import {
+  getLastSeenAppVersion,
+  isOnboardingCompleted,
+} from "./core/storage/appState";
+import {
+  WhatsNewDrawer,
+  WHATS_NEW_OPEN_EVENT,
+} from "./ui/pages/whats-new/WhatsNewPage";
 import { TopNav, BottomNav, WindowControls } from "./ui/components/App";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen, UnlistenFn } from "@tauri-apps/api/event";
@@ -334,6 +341,13 @@ function LegacyPersonaEditRedirect() {
 
 function App() {
   const platform = useMemo(() => getPlatform(), []);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+
+  useEffect(() => {
+    const onOpen = () => setWhatsNewOpen(true);
+    window.addEventListener(WHATS_NEW_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(WHATS_NEW_OPEN_EVENT, onOpen);
+  }, []);
 
   useEffect(() => {
     if (typeof document === "undefined" || platform.os !== "linux") return;
@@ -588,6 +602,10 @@ function App() {
               }}
             />
             <ConfirmBottomMenuHost />
+            <WhatsNewDrawer
+              isOpen={whatsNewOpen}
+              onClose={() => setWhatsNewOpen(false)}
+            />
             <DownloadQueueProvider>
               <AppUpdateNotifier />
               <AppContent />
@@ -1250,16 +1268,28 @@ function OnboardingCheck() {
   useEffect(() => {
     let cancelled = false;
 
-    const checkOnboarding = async () => {
+    const check = async () => {
       const onboardingCompleted = await isOnboardingCompleted();
       if (cancelled) return;
       if (!onboardingCompleted) {
         setShouldShowOnboarding(true);
+        setIsChecking(false);
+        return;
       }
-      setIsChecking(false);
+
+      try {
+        const currentVersion = await invoke<string>("get_app_version");
+        const lastSeen = await getLastSeenAppVersion();
+        if (cancelled) return;
+        if (lastSeen !== currentVersion) {
+          window.dispatchEvent(new Event(WHATS_NEW_OPEN_EVENT));
+        }
+      } catch { }
+
+      if (!cancelled) setIsChecking(false);
     };
 
-    checkOnboarding();
+    void check();
 
     return () => {
       cancelled = true;

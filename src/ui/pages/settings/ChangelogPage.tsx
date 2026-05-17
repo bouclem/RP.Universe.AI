@@ -4,9 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import { BottomMenu } from "../../components";
 import { Sparkles, Zap, Bug, AlertTriangle, ChevronRight, Calendar, Hash, ArrowRight } from "lucide-react";
 
-interface ChangelogEntry {
+export interface ChangelogEntry {
     version: string;
     date: string;
+    title?: string;
+    description?: string;
     changes: {
         type: 'feature' | 'improvement' | 'bugfix' | 'breaking';
         description: string;
@@ -14,7 +16,48 @@ interface ChangelogEntry {
 }
 
 
-const changelog: ChangelogEntry[] = [
+export const changelog: ChangelogEntry[] = [
+    {
+        version: "1.7.2 / 1.4.1",
+        date: "2026-05-11",
+        title: "Provider Leak Fixes, Groq Compatibility & Linux Packaging",
+        description:
+            "A hotfix release that plugs internal request metadata from leaking to providers, fixes Groq's model listing and ships its logo, restores Android TLS by reverting to bundled rustls roots, re-enables text tool-call parsing on mobile, and lights up Linux distribution via Flatpak, AUR, and Debian repo publishing workflows.",
+        changes: [
+            {
+                type: "bugfix",
+                description: "Stopped internal request metadata from leaking into provider payloads.",
+            },
+            {
+                type: "bugfix",
+                description: "Stripped visible chat metadata from outbound provider messages.",
+            },
+            {
+                type: "bugfix",
+                description: "Fixed Groq's model listing to use the OpenAI-compatible endpoint.",
+            },
+            {
+                type: "feature",
+                description: "Added the Groq provider logo.",
+            },
+            {
+                type: "bugfix",
+                description: "Restored Android networking by reverting reqwest to bundled rustls-tls roots.",
+            },
+            {
+                type: "bugfix",
+                description: "Re-enabled text-based tool-call parsing on mobile builds.",
+            },
+            {
+                type: "feature",
+                description: "Added Linux package publishing workflows for Flatpak, AUR, and Debian repository.",
+            },
+            {
+                type: "improvement",
+                description: "Provider message construction is now centralized for metadata-scrubbing consistency.",
+            },
+        ],
+    },
     {
         version: "1.0-beta.6.1",
         date: "2025-12-23",

@@ -2664,6 +2664,7 @@ export const AppStateSchema = z.object({
   customColorPresets: z.array(CustomColorPresetSchema).default([]),
   chatsViewMode: ChatsViewModeSchema.default("hero"),
   trustedCertificates: z.array(TrustedCertificateSchema).default([]),
+  lastSeenAppVersion: z.string().optional(),
 });
 export type AppState = z.infer<typeof AppStateSchema>;
 

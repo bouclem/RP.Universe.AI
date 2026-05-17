@@ -37,6 +37,7 @@ function cloneAppState(state?: AppState): AppState {
     trustedCertificates: (source.trustedCertificates ?? []).map((certificate) => ({
       ...certificate,
     })),
+    lastSeenAppVersion: source.lastSeenAppVersion,
   };
 }
 
@@ -69,10 +70,21 @@ export async function isOnboardingCompleted(): Promise<boolean> {
 }
 
 export async function setOnboardingCompleted(completed: boolean = true): Promise<void> {
+  let stampVersion: string | undefined;
+  if (completed) {
+    try {
+      stampVersion = await invoke<string>("get_app_version");
+    } catch {
+      // ignore; the what's-new splash will record the version on next launch
+    }
+  }
   await withAppState((state) => {
     state.onboarding.completed = completed;
     if (completed) {
       state.onboarding.skipped = false;
+      if (stampVersion) {
+        state.lastSeenAppVersion = stampVersion;
+      }
     }
   });
 }
@@ -254,5 +266,16 @@ export function getChatsViewModeCached(): ChatsViewMode | null {
 export async function setChatsViewMode(mode: ChatsViewMode): Promise<void> {
   await withAppState((state) => {
     state.chatsViewMode = mode;
+  });
+}
+
+export async function getLastSeenAppVersion(): Promise<string | undefined> {
+  const state = await getAppState();
+  return state.lastSeenAppVersion;
+}
+
+export async function setLastSeenAppVersion(version: string): Promise<void> {
+  await withAppState((state) => {
+    state.lastSeenAppVersion = version;
   });
 }
