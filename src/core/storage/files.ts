@@ -259,6 +259,11 @@ export const storageBridge = {
     invoke<string>("character_upsert", { characterJson: JSON.stringify(character) }).then((s) =>
       JSON.parse(s),
     ),
+  characterUpdateChatAppearance: (id: string, chatAppearanceJson: string | null) =>
+    invoke<string>("character_update_chat_appearance", {
+      id,
+      chatAppearanceJson,
+    }).then((s) => JSON.parse(s)),
   characterDelete: (id: string) => invoke("character_delete", { id }) as Promise<void>,
   companionScheduledNotesList: (characterId: string) =>
     invoke<string>("companion_scheduled_notes_list", { characterId }).then((s) => JSON.parse(s)),

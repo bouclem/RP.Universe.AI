@@ -48,7 +48,7 @@ export function ChatFooter({
   onSendSystemMessage,
   onAbort,
   hasBackgroundImage,
-  footerOverlayClassName: _footerOverlayClassName,
+  footerOverlayClassName,
   pendingAttachments = [],
   onAddAttachment,
   onRemoveAttachment,
@@ -305,7 +305,10 @@ export function ChatFooter({
           className={cn(
             "relative",
             "rounded-4xl",
-            "border border-fg/15 bg-surface-el/65 backdrop-blur-md",
+            "border border-fg/15 backdrop-blur-md",
+            hasBackgroundImage
+              ? footerOverlayClassName || "bg-surface-el/65"
+              : "bg-surface-el/65",
             shadows.md,
           )}
         >

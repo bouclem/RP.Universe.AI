@@ -561,6 +561,26 @@ pub fn character_upsert(app: tauri::AppHandle, character_json: String) -> Result
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))
 }
 
+#[tauri::command]
+pub fn character_update_chat_appearance(
+    app: tauri::AppHandle,
+    id: String,
+    chat_appearance_json: Option<String>,
+) -> Result<String, String> {
+    let conn = open_db(&app)?;
+    let now = now_ms() as i64;
+
+    conn.execute(
+        "UPDATE characters SET chat_appearance = ?, updated_at = ? WHERE id = ?",
+        params![chat_appearance_json, now, id],
+    )
+    .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+
+    let refreshed = read_character(&conn, &id)?;
+    serde_json::to_string(&refreshed)
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))
+}
+
 fn upsert_character_value(app: &tauri::AppHandle, c: &JsonValue) -> Result<JsonValue, String> {
     let mut conn = open_db(app)?;
     let id = c

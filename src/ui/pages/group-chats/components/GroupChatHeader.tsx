@@ -19,6 +19,7 @@ export function GroupChatHeader({
   onLorebooks,
   hasBackgroundImage,
   headerOverlayClassName,
+  transparentHeader = false,
 }: {
   session: GroupSession;
   characters: Character[];
@@ -28,6 +29,7 @@ export function GroupChatHeader({
   onLorebooks: () => void;
   hasBackgroundImage?: boolean;
   headerOverlayClassName?: string;
+  transparentHeader?: boolean;
 }) {
   const { t } = useI18n();
   const dragRegionProps = useDragRegionProps();
@@ -104,7 +106,11 @@ export function GroupChatHeader({
     <header
       className={cn(
         "z-20 shrink-0 border-b border-fg/10 px-3 lg:px-8",
-        hasBackgroundImage ? headerOverlayClassName || "bg-surface/40" : "bg-surface",
+        hasBackgroundImage
+          ? transparentHeader
+            ? "bg-transparent"
+            : headerOverlayClassName || "bg-surface/40"
+          : "bg-surface",
       )}
       style={{
         paddingTop: "calc(env(safe-area-inset-top) + 12px)",

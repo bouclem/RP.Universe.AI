@@ -2740,6 +2740,7 @@ export const ChatAppearanceSettingsSchema = z.object({
   inlineCodeTextColorHex: z.string().optional(),
 
   // Background handling (only active when character has a background image)
+  transparentHeader: z.boolean().default(false),
   backgroundDim: z.number().min(0).max(80).default(0),
   backgroundBlur: z.number().min(0).max(20).default(0),
   bubbleBlur: z.enum(["none", "light", "medium", "heavy"]).default("none"),
@@ -2771,6 +2772,7 @@ export function createDefaultChatAppearanceSettings(): ChatAppearanceSettings {
     italicTextColorHex: undefined,
     quotedTextColorHex: undefined,
     inlineCodeTextColorHex: undefined,
+    transparentHeader: false,
     backgroundDim: 0,
     backgroundBlur: 0,
     bubbleBlur: "none",

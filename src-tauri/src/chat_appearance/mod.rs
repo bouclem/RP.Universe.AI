@@ -234,11 +234,8 @@ pub fn compute_chat_theme(
                 } else {
                     "bg-[#050505]/45 backdrop-blur-md".into()
                 },
-                content_overlay: if is_light {
-                    "rgba(255, 255, 255, 0.20)".into()
-                } else {
-                    "rgba(5, 5, 5, 0.15)".into()
-                },
+                // Keep the content area transparent by default; explicit dim settings handle darkening.
+                content_overlay: String::new(),
             }
         }
     };

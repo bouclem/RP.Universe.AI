@@ -2135,6 +2135,7 @@ export function ChatConversationPage() {
           session={sessionForHeader}
           hasBackgroundImage={!!backgroundImageData}
           headerOverlayClassName={theme.headerOverlay}
+          transparentHeader={chatAppearance.transparentHeader}
           onSessionUpdate={handleSessionUpdate}
           onBeforeSettingsOpen={!isMobile ? captureFooterFocusForDrawer : undefined}
           onSettingsOpen={!isMobile ? () => setSettingsDrawerOpen(true) : undefined}

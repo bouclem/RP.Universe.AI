@@ -261,8 +261,8 @@ export async function computeChatTheme(
     assistantBorderColor,
     headerOverlay: bgBrightness === null ? "" : isLightBg ? "bg-white/45" : "bg-[#050505]/40",
     footerOverlay: bgBrightness === null ? "" : isLightBg ? "bg-white/50" : "bg-[#050505]/45",
-    contentOverlay:
-      bgBrightness === null ? "" : isLightBg ? "rgba(255, 255, 255, 0.20)" : "rgba(5, 5, 5, 0.15)",
+    // Leave the chat background fully visible unless the user explicitly enables dimming.
+    contentOverlay: "",
   };
 }
 

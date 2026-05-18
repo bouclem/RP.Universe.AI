@@ -1609,6 +1609,7 @@ export function GroupChatPage() {
             onLorebooks={() => navigate(Routes.groupChatLorebook(session.id))}
             hasBackgroundImage={!!backgroundImageData}
             headerOverlayClassName={theme.headerOverlay}
+            transparentHeader={chatAppearance.transparentHeader}
           />
         </div>
 

@@ -921,6 +921,8 @@ export async function listReferencedBackgroundImagePaths(): Promise<string[]> {
 
 export async function saveCharacter(c: Partial<Character>): Promise<Character> {
   const settings = await readSettings();
+  const shouldClearChatAppearance =
+    Object.prototype.hasOwnProperty.call(c, "chatAppearance") && c.chatAppearance === undefined;
   const pureModeLevel =
     settings.appState.pureModeLevel ?? (settings.appState.pureModeEnabled ? "standard" : "off");
   const defaultRules =
@@ -982,7 +984,7 @@ export async function saveCharacter(c: Partial<Character>): Promise<Character> {
     customTextSecondary: c.customTextSecondary,
     voiceConfig: c.voiceConfig,
     voiceAutoplay: c.voiceAutoplay ?? false,
-    chatAppearance: c.chatAppearance,
+    chatAppearance: shouldClearChatAppearance ? (null as any) : c.chatAppearance,
     chatTemplates: c.chatTemplates ?? [],
     defaultChatTemplateId: c.defaultChatTemplateId ?? null,
     createdAt: c.createdAt ?? timestamp,
@@ -990,6 +992,17 @@ export async function saveCharacter(c: Partial<Character>): Promise<Character> {
   } as Character;
 
   const stored = await storageBridge.characterUpsert(entity);
+  return CharacterSchema.parse(stored);
+}
+
+export async function updateCharacterChatAppearance(
+  id: string,
+  chatAppearance: Record<string, unknown> | null,
+): Promise<Character> {
+  const stored = await storageBridge.characterUpdateChatAppearance(
+    id,
+    chatAppearance ? JSON.stringify(chatAppearance) : null,
+  );
   return CharacterSchema.parse(stored);
 }
 

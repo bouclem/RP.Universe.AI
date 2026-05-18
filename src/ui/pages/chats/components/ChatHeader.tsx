@@ -23,6 +23,7 @@ interface ChatHeaderProps {
   session?: Session | null;
   hasBackgroundImage?: boolean;
   headerOverlayClassName?: string;
+  transparentHeader?: boolean;
   onSessionUpdate?: () => void;
   onBeforeSettingsOpen?: () => void;
   onSettingsOpen?: () => void;
@@ -40,6 +41,7 @@ export function ChatHeader({
   session,
   hasBackgroundImage,
   headerOverlayClassName,
+  transparentHeader = false,
   onSessionUpdate,
   onBeforeSettingsOpen,
   onSettingsOpen,
@@ -165,7 +167,11 @@ export function ChatHeader({
         className={cn(
           "z-20 shrink-0 border-b border-fg/10 pl-3 lg:pl-8",
           hasCustomWindowControls ? "pr-0" : "pr-3 lg:pr-8",
-          hasBackgroundImage ? headerOverlayClassName || "bg-surface/40" : "bg-surface",
+          hasBackgroundImage
+            ? transparentHeader
+              ? "bg-transparent"
+              : headerOverlayClassName || "bg-surface/40"
+            : "bg-surface",
         )}
         style={{
           paddingTop: "calc(env(safe-area-inset-top) + 12px)",

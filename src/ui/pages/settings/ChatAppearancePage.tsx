@@ -4,9 +4,9 @@ import { RotateCcw, Bot, User, RefreshCw, Eye } from "lucide-react";
 import {
   readSettings,
   saveAdvancedSettings,
-  saveCharacter,
   listCharacters,
   getDefaultPersona,
+  updateCharacterChatAppearance,
 } from "../../../core/storage/repo";
 import {
   createDefaultChatAppearanceSettings,
@@ -21,6 +21,7 @@ import { useI18n } from "../../../core/i18n/context";
 import { useAvatar } from "../../hooks/useAvatar";
 import { useImageData } from "../../hooks/useImageData";
 import { AvatarImage } from "../../components/AvatarImage";
+import { Switch } from "../../components/Switch";
 import { toast } from "../../components/toast";
 import { MarkdownRenderer } from "../chats/components/MarkdownRenderer";
 import {
@@ -73,6 +74,20 @@ function normalizeOverride(override: ChatAppearanceOverride): ChatAppearanceOver
       .filter(([_, value]) => value !== undefined)
       .sort(([a], [b]) => a.localeCompare(b)),
   ) as ChatAppearanceOverride;
+}
+
+function deriveOverrideFromSettings(
+  global: ChatAppearanceSettings,
+  effective: ChatAppearanceSettings,
+): ChatAppearanceOverride {
+  const next: Record<string, unknown> = {};
+
+  for (const key of Object.keys(effective) as AppearanceKey[]) {
+    if (JSON.stringify(effective[key]) === JSON.stringify(global[key])) continue;
+    next[key] = effective[key];
+  }
+
+  return normalizeOverride(next as ChatAppearanceOverride);
 }
 
 function areSettingsEqual(a: ChatAppearanceSettings, b: ChatAppearanceSettings): boolean {
@@ -285,6 +300,46 @@ function HexColorControl({
   );
 }
 
+function ToggleControl({
+  label,
+  description,
+  checked,
+  onChange,
+  overridden,
+  onReset,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  overridden?: boolean;
+  onReset?: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-medium text-fg/60">{label}</div>
+          {description ? <div className="mt-0.5 text-[11px] text-fg/45">{description}</div> : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {overridden && onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              className="flex items-center gap-1 text-[10px] text-accent/70 hover:text-accent"
+            >
+              <RotateCcw size={10} />
+              Reset
+            </button>
+          )}
+          <Switch checked={checked} onChange={onChange} aria-label={label} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CharacterAvatar({ character, size }: { character: Character; size: string }) {
   const avatarUrl = useAvatar("character", character.id, character.avatarPath, "round");
   if (avatarUrl) {
@@ -393,6 +448,8 @@ function LivePreview({
   };
   const userColor = userHex ?? resolveTokenColor(settings.userBubbleColor);
   const assistantColor = assistantHex ?? resolveTokenColor(settings.assistantBubbleColor);
+  const useLive = liveMode && character;
+  const hasBg = useLive && backgroundUrl;
   const userBubbleStyle = isMinimal
     ? undefined
     : {
@@ -402,10 +459,15 @@ function LivePreview({
   const assistantBubbleStyle = isMinimal
     ? undefined
     : settings.assistantBubbleColor === "neutral" && !assistantHex
-      ? {
-          backgroundColor: "color-mix(in oklab, var(--color-fg) 5%, transparent)",
-          borderColor: "color-mix(in oklab, var(--color-fg) 10%, transparent)",
-        }
+      ? hasBg
+        ? {
+            backgroundColor: `rgba(0, 0, 0, ${opacity / 100})`,
+            borderColor: "rgba(0, 0, 0, 0.4)",
+          }
+        : {
+            backgroundColor: "color-mix(in oklab, var(--color-fg) 5%, transparent)",
+            borderColor: "color-mix(in oklab, var(--color-fg) 10%, transparent)",
+          }
       : {
           backgroundColor: `color-mix(in oklab, ${assistantColor} ${opacity}%, transparent)`,
           borderColor: `color-mix(in oklab, ${assistantColor} 50%, transparent)`,
@@ -419,11 +481,15 @@ function LivePreview({
   );
   const assistantTextClass =
     settings.assistantBubbleColor === "neutral" && !assistantHex && settings.textMode === "auto"
-      ? "text-fg"
+      ? hasBg
+        ? "text-white/95"
+        : "text-fg"
       : computeBubbleTextClass(
           null,
           settings.assistantBubbleColor === "neutral" && !assistantHex
-            ? colorToLuminance("color-mix(in oklab, var(--color-fg) 5%, transparent)")
+            ? hasBg
+              ? 0
+              : colorToLuminance("color-mix(in oklab, var(--color-fg) 5%, transparent)")
             : colorToLuminance(assistantColor),
           opacity01,
           settings.textMode,
@@ -435,9 +501,6 @@ function LivePreview({
     quoted: settings.quotedTextColorHex ?? "currentColor",
     code: settings.inlineCodeTextColorHex ?? "currentColor",
   };
-
-  const useLive = liveMode && character;
-  const hasBg = useLive && backgroundUrl;
 
   return (
     <div
@@ -453,15 +516,8 @@ function LivePreview({
             backgroundImage: `url(${backgroundUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-          }}
-        />
-      )}
-      {hasBg && settings.backgroundBlur > 0 && (
-        <div
-          className="absolute inset-0 transform-gpu backdrop-blur-md will-change-opacity"
-          style={{
-            opacity: Math.min(1, settings.backgroundBlur / 20),
-            backgroundColor: "rgba(0, 0, 0, 0.01)",
+            filter: settings.backgroundBlur > 0 ? `blur(${settings.backgroundBlur}px)` : undefined,
+            transform: settings.backgroundBlur > 0 ? "scale(1.06)" : undefined,
           }}
         />
       )}
@@ -633,15 +689,15 @@ export function ChatAppearancePage() {
   }, []);
 
   const persistCharacter = useCallback(
-    async (next: ChatAppearanceOverride) => {
+    async (next: ChatAppearanceSettings) => {
       if (!character) throw new Error("Character not loaded");
-      const normalized = normalizeOverride(next);
-      return saveCharacter({
-        ...character,
-        chatAppearance: Object.keys(normalized).length > 0 ? normalized : undefined,
-      });
+      const normalized = deriveOverrideFromSettings(globalSettings, next);
+      return updateCharacterChatAppearance(
+        character.id,
+        Object.keys(normalized).length > 0 ? normalized : null,
+      );
     },
-    [character],
+    [character, globalSettings],
   );
 
   const updateField = useCallback(
@@ -696,11 +752,11 @@ export function ChatAppearancePage() {
     setIsSaving(true);
     try {
       if (mode === "character") {
-        const saved = await persistCharacter(characterOverride);
-        const nextOverride = normalizeOverride(saved.chatAppearance ?? characterOverride);
-        setCharacter({ ...saved, chatAppearance: nextOverride });
-        setCharacterOverride(nextOverride);
-        setInitialCharacterOverride(nextOverride);
+        const derivedOverride = deriveOverrideFromSettings(globalSettings, effectiveSettings);
+        const saved = await persistCharacter(effectiveSettings);
+        setCharacter({ ...saved, chatAppearance: derivedOverride });
+        setCharacterOverride(derivedOverride);
+        setInitialCharacterOverride(derivedOverride);
         toast.success("Saved", "Character chat appearance updated.");
       } else {
         const normalizedGlobal = normalizeSettings(globalSettings);
@@ -715,7 +771,15 @@ export function ChatAppearancePage() {
     } finally {
       setIsSaving(false);
     }
-  }, [isDirty, isSaving, mode, characterOverride, globalSettings, persistCharacter, persistGlobal]);
+  }, [
+    isDirty,
+    isSaving,
+    mode,
+    effectiveSettings,
+    globalSettings,
+    persistCharacter,
+    persistGlobal,
+  ]);
 
   const handleDiscard = useCallback(() => {
     if (!isDirty) return;
@@ -1116,6 +1180,14 @@ export function ChatAppearancePage() {
           {t("chatAppearance.backgroundTransparency.label")}
         </h2>
         <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
+          <ToggleControl
+            label="Transparent Header"
+            description="When a chat background image is active, remove the header scrim and let the image show through."
+            checked={effectiveSettings.transparentHeader}
+            onChange={(v) => updateField("transparentHeader", v)}
+            overridden={isOverridden("transparentHeader")}
+            onReset={mode === "character" ? () => resetField("transparentHeader") : undefined}
+          />
           <SliderControl
             label={t("chatAppearance.backgroundTransparency.backgroundDim")}
             value={effectiveSettings.backgroundDim}
