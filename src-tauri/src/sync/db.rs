@@ -2713,12 +2713,6 @@ fn apply_groups_snapshot(conn: &mut DbConnection, payload: &[u8]) -> Result<(), 
     Ok(())
 }
 
-fn apply_sessions_snapshot(conn: &mut DbConnection, payload: &[u8]) -> Result<(), String> {
-    let snapshot: SessionsSnapshot = bincode::deserialize(payload)
-        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
-    apply_sessions_snapshot_struct(conn, snapshot)
-}
-
 fn apply_sessions_snapshot_struct(
     conn: &mut DbConnection,
     snapshot: SessionsSnapshot,

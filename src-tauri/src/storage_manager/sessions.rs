@@ -24,17 +24,6 @@ const ALLOWED_MEMORY_CATEGORIES: &[&str] = &[
     "other",
 ];
 
-const COMPANION_MEMORY_CATEGORIES: &[&str] = &[
-    "relationship",
-    "milestone",
-    "boundary",
-    "preference",
-    "profile",
-    "routine",
-    "episodic",
-    "emotional_snapshot",
-];
-
 struct LoadedMemoryFields {
     memories_json: String,
     memory_embeddings: Vec<MemoryEmbedding>,
