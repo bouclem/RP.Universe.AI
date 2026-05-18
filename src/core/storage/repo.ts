@@ -1658,7 +1658,9 @@ export async function toggleMessagePin(
   sessionId: string,
   messageId: string,
 ): Promise<boolean | null> {
-  return storageBridge.messageTogglePin(sessionId, messageId);
+  const nextPinned = await storageBridge.messageTogglePin(sessionId, messageId);
+  broadcastSessionUpdated();
+  return nextPinned;
 }
 
 export async function setMemoryColdState(
