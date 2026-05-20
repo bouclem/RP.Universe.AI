@@ -971,8 +971,31 @@ export const storageBridge = {
       });
 
       if (!selected || typeof selected !== "string") return null;
+
+      console.log("[jsonlPickFile] Selected file:", selected);
+
+      const isContentUri = selected.startsWith("content://");
+
+      let filename: string;
       const parts = selected.split("/");
-      const filename = parts[parts.length - 1] || "chat.jsonl";
+      filename = parts[parts.length - 1] || "chat.jsonl";
+      if (filename.startsWith("content:") || filename.includes("%")) {
+        filename = "chat.jsonl";
+      }
+
+      if (!filename.endsWith(".jsonl") && !filename.endsWith(".json")) {
+        filename = filename + ".jsonl";
+      }
+
+      if (isContentUri) {
+        console.log(
+          "[jsonlPickFile] Android content URI detected, passing URI to backend:",
+          selected,
+        );
+      } else {
+        console.log("[jsonlPickFile] Desktop path, using directly:", selected);
+      }
+
       return { path: selected, filename };
     } catch (error) {
       console.error("[jsonlPickFile] Error:", error);

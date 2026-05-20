@@ -9,6 +9,14 @@ use tauri::State;
 use uuid::Uuid;
 
 use super::db::{now_ms, open_db, SwappablePool};
+#[cfg(target_os = "android")]
+use std::io::Read;
+#[cfg(target_os = "android")]
+use tauri_plugin_android_fs::{AndroidFs, AndroidFsExt};
+#[cfg(target_os = "android")]
+use tauri_plugin_fs::FilePath;
+#[cfg(target_os = "android")]
+use url::Url;
 
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -363,9 +371,38 @@ struct ParsedJsonl {
     messages: Vec<JsonValue>,
 }
 
-fn read_jsonl(path: &str) -> Result<ParsedJsonl, String> {
-    let raw = fs::read_to_string(path)
-        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+fn read_jsonl_file(_app: &tauri::AppHandle, path: &str) -> Result<String, String> {
+    #[cfg(target_os = "android")]
+    {
+        if path.starts_with("content://") {
+            let api = _app.android_fs();
+            let url = Url::parse(path).map_err(|e| {
+                crate::utils::err_msg(
+                    module_path!(),
+                    line!(),
+                    format!("Invalid URI '{}': {}", path, e),
+                )
+            })?;
+            let file_path = FilePath::Url(url);
+            let mut file = api.open_file(&file_path).map_err(|e| {
+                crate::utils::err_msg(
+                    module_path!(),
+                    line!(),
+                    format!("Failed to open Android file: {}", e),
+                )
+            })?;
+            let mut raw = String::new();
+            file.read_to_string(&mut raw)
+                .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+            return Ok(raw);
+        }
+    }
+
+    fs::read_to_string(path).map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))
+}
+
+fn read_jsonl(app: &tauri::AppHandle, path: &str) -> Result<ParsedJsonl, String> {
+    let raw = read_jsonl_file(app, path)?;
     let mut entries: Vec<JsonValue> = Vec::new();
     for line in raw.lines() {
         let trimmed = line.trim();
@@ -445,8 +482,8 @@ fn message_created_at(entry: &JsonValue) -> i64 {
 // ------------------- Inspect -------------------
 
 #[tauri::command]
-pub fn jsonl_inspect(path: String) -> Result<String, String> {
-    let parsed = read_jsonl(&path)?;
+pub fn jsonl_inspect(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    let parsed = read_jsonl(&app, &path)?;
 
     let title = parsed
         .metadata
@@ -512,7 +549,7 @@ pub fn jsonl_import(
         None => JsonlImportOptions::default(),
     };
 
-    let parsed = read_jsonl(&path)?;
+    let parsed = read_jsonl(&app, &path)?;
 
     // Determine single vs group from distinct assistant speakers.
     let mut speakers: HashSet<String> = HashSet::new();
