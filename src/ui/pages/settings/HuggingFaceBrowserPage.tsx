@@ -3040,6 +3040,8 @@ export function HuggingFaceBrowserPage() {
                                         const modelMax = recData.modelMaxContext;
                                         const showGpuGuidance =
                                           gpuOptionsEnabled && recModelOffload !== "cpu";
+                                        const warnOnGpuCtxOverflow =
+                                          showGpuGuidance && recKvPlacement !== "ram";
                                         // Max context for 100% GPU offload (model+KV+compute all in VRAM)
                                         const fullGpuCtx = computeGpuOptimalContext(
                                           selFile.size,
@@ -3156,7 +3158,7 @@ export function HuggingFaceBrowserPage() {
                                               </div>
                                             )}
                                             {/* Warning: exceeding GPU-optimal context */}
-                                            {showGpuGuidance &&
+                                            {warnOnGpuCtxOverflow &&
                                               fullGpuCtx > 0 &&
                                               fullGpuCtx < maxCtx &&
                                               clampedCtx > fullGpuCtx && (
