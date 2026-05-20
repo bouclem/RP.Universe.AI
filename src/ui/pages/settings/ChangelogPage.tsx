@@ -18,6 +18,39 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "1.8.1 / 1.5.1",
+        date: "2026-05-20",
+        title: "Startup, Import & Settings Stability",
+        description:
+            "A focused stability release that tightens local model startup behavior, repairs Android chat imports, prevents memory migration from hanging behind permanent progress UI, improves download progress visibility, and refreshes chat settings from the latest saved character state.",
+        changes: [
+            {
+                type: "bugfix",
+                description: "Stopped GPU-optimal context warnings from appearing in Model Browser when KV cache is explicitly set to RAM.",
+            },
+            {
+                type: "bugfix",
+                description: "Fixed Android JSONL chat imports by supporting document-picker content URIs instead of assuming filesystem paths.",
+            },
+            {
+                type: "bugfix",
+                description: "Fixed stalled dynamic memory vector migrations by timing out stuck embedding work and dismissing the migration toast cleanly on failure.",
+            },
+            {
+                type: "improvement",
+                description: "Added estimated time remaining to active download queue cards and repaired missing locale-backed queue labels.",
+            },
+            {
+                type: "bugfix",
+                description: "Stopped local model startup toasts from reappearing when llama.cpp reuses an already loaded model.",
+            },
+            {
+                type: "bugfix",
+                description: "Fixed chat settings drawers reopening with stale persona and model quick-setting values by reloading the latest saved character by ID.",
+            },
+        ],
+    },
+    {
         version: "1.8.0 / 1.5.0",
         date: "2026-05-18",
         title: "Sync Onboarding, Banner Cards & Shared Memory",
