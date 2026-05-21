@@ -57,7 +57,11 @@ type SyncStatus =
   | { status: "SyncCompleted" }
   | { status: "Error"; details: { message: string } };
 
-const COMPLETION_DESTINATION = "/chat?firstTime=true";
+const COMPLETION_DESTINATION = "/";
+
+function requiresEmbeddingModel(advanced: Awaited<ReturnType<typeof readAdvancedSettings>>): boolean {
+  return advanced.dynamicMemory?.enabled === true || advanced.groupDynamicMemory?.enabled === true;
+}
 
 function formatBytes(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "0 B";
@@ -147,12 +151,13 @@ export function OnboardingSyncStep() {
         await setOnboardingCompleted(true);
 
         const advanced = await readAdvancedSettings();
-        const dynamicEnabled = advanced.dynamicMemory?.enabled === true;
-
-        if (dynamicEnabled) {
+        if (requiresEmbeddingModel(advanced)) {
           const hasModel = await storageBridge.checkEmbeddingModel();
           if (!hasModel) {
-            if (!cancelled) setShowEmbeddingPrompt(true);
+            if (!cancelled) {
+              setCompleting(false);
+              setShowEmbeddingPrompt(true);
+            }
             return;
           }
         }

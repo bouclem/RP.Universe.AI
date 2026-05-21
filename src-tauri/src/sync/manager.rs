@@ -19,6 +19,7 @@ use crate::utils::{log_error, log_info, log_warn};
 
 const PROTOCOL_VERSION: u32 = 11;
 const MANIFEST_MIN_PROTOCOL: u32 = 10;
+const READY_MIN_PROTOCOL: u32 = 11;
 const ASSET_CHUNK_PROTOCOL: u32 = 11;
 const ASSET_CHUNK_SIZE: usize = 256 * 1024;
 
@@ -568,17 +569,9 @@ async fn handle_driver_connection(
         )
         .await;
 
-    let approval_result = tokio::select! {
-        decision = rx => decision.map_err(|_| "Connection approval was cancelled".to_string()),
-        msg = framed.next() => {
-            Err(match msg {
-                Some(Ok(P2PMessage::Disconnect)) => "Passenger disconnected before approval".to_string(),
-                Some(Ok(other)) => format!("Passenger sent unexpected message before approval: {:?}", other),
-                Some(Err(e)) => format!("Connection dropped before approval: {}", e),
-                None => "Passenger disconnected before approval".to_string(),
-            })
-        }
-    };
+    let approval_result = rx
+        .await
+        .map_err(|_| "Connection approval was cancelled".to_string());
     state.pending_approvals.write().await.remove(&remote_ip);
 
     match approval_result {
@@ -621,22 +614,21 @@ async fn handle_driver_connection(
         )
         .await;
 
-    let start_result = tokio::select! {
-        result = start_rx => result.map_err(|_| "Sync start was cancelled".to_string()),
-        msg = framed.next() => {
-            Err(match msg {
-                Some(Ok(P2PMessage::Disconnect)) => "Passenger disconnected before sync start".to_string(),
-                Some(Ok(other)) => format!("Passenger sent unexpected message before sync start: {:?}", other),
-                Some(Err(e)) => format!("Connection dropped before sync start: {}", e),
-                None => "Passenger disconnected before sync start".to_string(),
-            })
-        }
-    };
+    let start_result = start_rx
+        .await
+        .map_err(|_| "Sync start was cancelled".to_string());
     state.pending_starts.write().await.remove(&remote_ip);
 
     if let Err(reason) = start_result {
         set_driver_running_status(&app, state.inner(), port).await;
         return Err(crate::utils::err_msg(module_path!(), line!(), reason));
+    }
+
+    if peer_protocol_version >= READY_MIN_PROTOCOL {
+        framed
+            .send(P2PMessage::Ready)
+            .await
+            .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
     }
 
     // Main Loop
@@ -1059,12 +1051,6 @@ async fn run_passenger_session(
         .await;
 
     sync_db::rebuild_change_log(&app, &mut conn)?;
-    let cursors = sync_db::load_peer_cursors(&conn, &driver_device_id)?;
-    framed
-        .send(P2PMessage::AdvertiseCursors { cursors })
-        .await
-        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
-
     if driver_protocol_version < PROTOCOL_VERSION {
         let warning = format!(
             "Warning: driver is outdated (v{}). Please update ASAP.",
@@ -1073,6 +1059,40 @@ async fn run_passenger_session(
         log_warn(&app, "sync_passenger", warning.clone());
         state.set_status(&app, syncing(warning)).await;
     }
+
+    if driver_protocol_version >= READY_MIN_PROTOCOL {
+        match framed.next().await {
+            Some(Ok(P2PMessage::Ready)) => {}
+            Some(Ok(P2PMessage::Disconnect)) => {
+                return Err(crate::utils::err_msg(
+                    module_path!(),
+                    line!(),
+                    "Driver disconnected before sending Ready",
+                ))
+            }
+            Some(Ok(other)) => {
+                return Err(crate::utils::err_msg(
+                    module_path!(),
+                    line!(),
+                    format!("Expected Ready, got {:?}", other),
+                ))
+            }
+            Some(Err(e)) => return Err(e.to_string()),
+            None => {
+                return Err(crate::utils::err_msg(
+                    module_path!(),
+                    line!(),
+                    "Connection closed before Ready",
+                ))
+            }
+        }
+    }
+
+    let cursors = sync_db::load_peer_cursors(&conn, &driver_device_id)?;
+    framed
+        .send(P2PMessage::AdvertiseCursors { cursors })
+        .await
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut pending_asset_batch: Option<PendingAssetBatch> = None;
     let mut pending_asset: Option<PendingIncomingAsset> = None;
