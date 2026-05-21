@@ -31,8 +31,12 @@ import { cn, typography, spacing, interactive, radius } from "../../design-token
 import { BottomMenu, MenuButton } from "../../components/BottomMenu";
 import { useI18n } from "../../../core/i18n/context";
 import { storageBridge } from "../../../core/storage/files";
-import { readAdvancedSettings, type AdvancedSettings } from "../../../core/storage/advanced";
-import { DynamicMemoryEmbeddingPrompt } from "../onboarding/components/DynamicMemoryEmbeddingPrompt";
+import { MissingModelRequirementsSheet } from "../../components/MissingModelRequirementsSheet";
+import {
+  buildModelRequirementsQueuePath,
+  getPostSyncMissingModelRequirementsSettled,
+  type ModelRequirement,
+} from "../../modelRequirements";
 
 type QRCodeComponentProps = SVGProps<SVGSVGElement> & {
   value: string;
@@ -125,10 +129,6 @@ function formatProgressPercent(ratio: number | null): string | null {
   const normalized = Math.min(1, Math.max(0, ratio)) * 100;
   if (normalized > 0 && normalized < 10) return normalized.toFixed(1);
   return Math.round(normalized).toString();
-}
-
-function requiresEmbeddingModel(advanced: AdvancedSettings): boolean {
-  return advanced.dynamicMemory?.enabled === true || advanced.groupDynamicMemory?.enabled === true;
 }
 
 function SectionHeader({ title, icon, right }: { title: string; icon?: ReactNode; right?: ReactNode }) {
@@ -406,7 +406,7 @@ export function SyncPage() {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isStartingSyncSession, setIsStartingSyncSession] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [showEmbeddingPrompt, setShowEmbeddingPrompt] = useState(false);
+  const [missingRequirements, setMissingRequirements] = useState<ModelRequirement[]>([]);
   const handledCompletionRef = useRef(false);
 
   useEffect(() => {
@@ -461,21 +461,18 @@ export function SyncPage() {
 
     let cancelled = false;
 
-    const checkEmbeddingRequirements = async () => {
+    const checkRequirements = async () => {
       try {
-        const advanced = await readAdvancedSettings();
-        if (!requiresEmbeddingModel(advanced)) return;
-
-        const hasModel = await storageBridge.checkEmbeddingModel();
-        if (!hasModel && !cancelled) {
-          setShowEmbeddingPrompt(true);
+        const missing = await getPostSyncMissingModelRequirementsSettled();
+        if (missing.length > 0 && !cancelled) {
+          setMissingRequirements(missing);
         }
       } catch (e) {
-        console.error("Failed to check embedding model after sync", e);
+        console.error("Failed to check local model requirements after sync", e);
       }
     };
 
-    void checkEmbeddingRequirements();
+    void checkRequirements();
     return () => {
       cancelled = true;
     };
@@ -534,23 +531,27 @@ export function SyncPage() {
     try {
       await invoke("stop_sync");
       setStatus({ status: "Idle" });
-      setShowEmbeddingPrompt(false);
+      setMissingRequirements([]);
     } catch (e) {
       console.error("Failed to stop sync", e);
     }
   };
 
-  const handleDownloadEmbedding = () => {
-    setShowEmbeddingPrompt(false);
-    navigate("/settings/embedding-download?returnTo=%2Fsync");
+  const handleDownloadRequirements = () => {
+    const queued = [...missingRequirements];
+    setMissingRequirements([]);
+    navigate(buildModelRequirementsQueuePath(queued, "/sync"));
   };
 
-  const handleContinueWithoutEmbedding = async () => {
-    setShowEmbeddingPrompt(false);
-    try {
-      await storageBridge.backupDisableDynamicMemory();
-    } catch (e) {
-      console.error("Failed to disable dynamic memory", e);
+  const handleContinueWithoutRequirements = async () => {
+    const needsEmbedding = missingRequirements.some((requirement) => requirement.kind === "embedding");
+    setMissingRequirements([]);
+    if (needsEmbedding) {
+      try {
+        await storageBridge.backupDisableDynamicMemory();
+      } catch (e) {
+        console.error("Failed to disable dynamic memory", e);
+      }
     }
   };
 
@@ -1204,10 +1205,16 @@ export function SyncPage() {
         </div>
       )}
 
-      {showEmbeddingPrompt && (
-        <DynamicMemoryEmbeddingPrompt
-          onDownload={handleDownloadEmbedding}
-          onContinueWithout={() => void handleContinueWithoutEmbedding()}
+      {missingRequirements.length > 0 && (
+        <MissingModelRequirementsSheet
+          isOpen
+          title="More setup needed"
+          description="This synced data uses local features that need on-device models before they can fully run. You can download everything in one queue now or continue and install them later."
+          missing={missingRequirements}
+          onClose={() => void handleContinueWithoutRequirements()}
+          onDownload={handleDownloadRequirements}
+          closeLabel="Continue for now"
+          downloadLabel="Download required models"
         />
       )}
     </div>

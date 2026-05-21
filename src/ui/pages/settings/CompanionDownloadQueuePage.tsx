@@ -11,19 +11,19 @@ import {
 import { useModelDownload } from "./hooks/useModelDownload";
 import {
   describeRequirement,
-  type CompanionRequirement,
-  type CompanionRequirementKind,
-} from "../characters/hooks/useCompanionRequirements";
+  type ModelRequirement,
+  type ModelRequirementKind,
+} from "../../modelRequirements";
 import { cn, interactive, radius, spacing, typography } from "../../design-tokens";
 
-const VALID_KINDS: CompanionRequirementKind[] = ["embedding", "emotion", "ner", "router"];
+const VALID_KINDS: ModelRequirementKind[] = ["embedding", "emotion", "ner", "router"];
 
-function parseQueue(raw: string | null): CompanionRequirementKind[] {
+function parseQueue(raw: string | null): ModelRequirementKind[] {
   if (!raw) return [];
-  const seen = new Set<CompanionRequirementKind>();
-  const result: CompanionRequirementKind[] = [];
+  const seen = new Set<ModelRequirementKind>();
+  const result: ModelRequirementKind[] = [];
   for (const piece of raw.split(",")) {
-    const trimmed = piece.trim() as CompanionRequirementKind;
+    const trimmed = piece.trim() as ModelRequirementKind;
     if (VALID_KINDS.includes(trimmed) && !seen.has(trimmed)) {
       seen.add(trimmed);
       result.push(trimmed);
@@ -32,7 +32,7 @@ function parseQueue(raw: string | null): CompanionRequirementKind[] {
   return result;
 }
 
-function bridgeFor(kind: CompanionRequirementKind): () => Promise<void> {
+function bridgeFor(kind: ModelRequirementKind): () => Promise<void> {
   if (kind === "embedding") return () => storageBridge.startEmbeddingDownload();
   return () => storageBridge.startCompanionDownload(kind);
 }
@@ -45,13 +45,13 @@ export function CompanionDownloadQueuePage() {
   const queue = useMemo(() => parseQueue(searchParams.get("queue")), [searchParams]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [completed, setCompleted] = useState<CompanionRequirementKind[]>([]);
+  const [completed, setCompleted] = useState<ModelRequirementKind[]>([]);
   const [allDone, setAllDone] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [autoStarted, setAutoStarted] = useState(false);
 
-  const currentKindRef = useRef<CompanionRequirementKind | null>(null);
-  const currentRequirement: CompanionRequirement | null =
+  const currentKindRef = useRef<ModelRequirementKind | null>(null);
+  const currentRequirement: ModelRequirement | null =
     currentIndex < queue.length ? describeRequirement(queue[currentIndex]) : null;
   currentKindRef.current = currentRequirement?.kind ?? null;
 

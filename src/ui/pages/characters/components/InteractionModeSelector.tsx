@@ -5,6 +5,7 @@ import type { CharacterMode } from "../../../../core/storage/schemas";
 import { cn, interactive, radius, typography } from "../../../design-tokens";
 import { MissingCompanionModelsSheet } from "../../../components/MissingCompanionModelsSheet";
 import { useCompanionRequirements } from "../hooks/useCompanionRequirements";
+import { buildModelRequirementsQueuePath } from "../../../modelRequirements";
 
 interface InteractionModeSelectorProps {
   mode: CharacterMode;
@@ -54,11 +55,8 @@ export function InteractionModeSelector({
 
   const handleDownload = () => {
     setSheetOpen(false);
-    const queue = missing.map((m) => m.kind).join(",");
     const returnTo = `${location.pathname}${location.search}`;
-    navigate(
-      `/settings/companion-download-queue?queue=${queue}&returnTo=${encodeURIComponent(returnTo)}`,
-    );
+    navigate(buildModelRequirementsQueuePath(missing, returnTo));
   };
 
   return (

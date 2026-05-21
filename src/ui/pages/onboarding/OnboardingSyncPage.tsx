@@ -25,8 +25,12 @@ import { cn, interactive, radius, shadows, typography } from "../../design-token
 import { useI18n } from "../../../core/i18n/context";
 import { setOnboardingCompleted } from "../../../core/storage/appState";
 import { storageBridge } from "../../../core/storage/files";
-import { readAdvancedSettings } from "../../../core/storage/advanced";
-import { DynamicMemoryEmbeddingPrompt } from "./components/DynamicMemoryEmbeddingPrompt";
+import { MissingModelRequirementsSheet } from "../../components/MissingModelRequirementsSheet";
+import {
+  buildModelRequirementsQueuePath,
+  getPostSyncMissingModelRequirementsSettled,
+  type ModelRequirement,
+} from "../../modelRequirements";
 
 type DomainProgress = {
   domain: string;
@@ -58,10 +62,6 @@ type SyncStatus =
   | { status: "Error"; details: { message: string } };
 
 const COMPLETION_DESTINATION = "/chat";
-
-function requiresEmbeddingModel(advanced: Awaited<ReturnType<typeof readAdvancedSettings>>): boolean {
-  return advanced.dynamicMemory?.enabled === true || advanced.groupDynamicMemory?.enabled === true;
-}
 
 function formatBytes(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "0 B";
@@ -100,7 +100,7 @@ export function OnboardingSyncStep() {
   const [isMobile, setIsMobile] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [completing, setCompleting] = useState(false);
-  const [showEmbeddingPrompt, setShowEmbeddingPrompt] = useState(false);
+  const [missingRequirements, setMissingRequirements] = useState<ModelRequirement[]>([]);
   const [sawSyncing, setSawSyncing] = useState(false);
   const [rejected, setRejected] = useState(false);
   const handledCompletionRef = useRef(false);
@@ -155,16 +155,13 @@ export function OnboardingSyncStep() {
     const finish = async () => {
       setCompleting(true);
       try {
-        const advanced = await readAdvancedSettings();
-        if (requiresEmbeddingModel(advanced)) {
-          const hasModel = await storageBridge.checkEmbeddingModel();
-          if (!hasModel) {
-            if (!cancelled) {
-              setCompleting(false);
-              setShowEmbeddingPrompt(true);
-            }
-            return;
+        const missing = await getPostSyncMissingModelRequirementsSettled();
+        if (missing.length > 0) {
+          if (!cancelled) {
+            setCompleting(false);
+            setMissingRequirements(missing);
           }
+          return;
         }
 
         void setOnboardingCompleted(true).catch((e) => {
@@ -255,22 +252,26 @@ export function OnboardingSyncStep() {
   };
 
   const handleDownloadEmbedding = () => {
-    setShowEmbeddingPrompt(false);
+    const queued = [...missingRequirements];
+    setMissingRequirements([]);
     void setOnboardingCompleted(true).catch((e) => {
-      console.error("Failed to persist onboarding completion before embedding download", e);
+      console.error("Failed to persist onboarding completion before model download", e);
     });
-    navigate(`/settings/embedding-download?returnTo=${encodeURIComponent(COMPLETION_DESTINATION)}`);
+    navigate(buildModelRequirementsQueuePath(queued, COMPLETION_DESTINATION));
   };
 
   const handleContinueWithoutEmbedding = async () => {
-    setShowEmbeddingPrompt(false);
-    try {
-      await storageBridge.backupDisableDynamicMemory();
-    } catch (e) {
-      console.error("Failed to disable dynamic memory", e);
+    const needsEmbedding = missingRequirements.some((requirement) => requirement.kind === "embedding");
+    setMissingRequirements([]);
+    if (needsEmbedding) {
+      try {
+        await storageBridge.backupDisableDynamicMemory();
+      } catch (e) {
+        console.error("Failed to disable dynamic memory", e);
+      }
     }
     void setOnboardingCompleted(true).catch((e) => {
-      console.error("Failed to persist onboarding completion after skipping embedding download", e);
+      console.error("Failed to persist onboarding completion after skipping model download", e);
     });
     navigate(COMPLETION_DESTINATION);
   };
@@ -540,10 +541,16 @@ export function OnboardingSyncStep() {
         </div>
       </main>
 
-      {showEmbeddingPrompt && (
-        <DynamicMemoryEmbeddingPrompt
+      {missingRequirements.length > 0 && (
+        <MissingModelRequirementsSheet
+          isOpen
+          title="One more setup step"
+          description="Your synced setup includes local features that need on-device models before they can fully run. Download them now in one queue, or continue and install them later."
+          missing={missingRequirements}
+          onClose={() => void handleContinueWithoutEmbedding()}
           onDownload={handleDownloadEmbedding}
-          onContinueWithout={() => void handleContinueWithoutEmbedding()}
+          closeLabel="Continue for now"
+          downloadLabel="Download required models"
         />
       )}
 
