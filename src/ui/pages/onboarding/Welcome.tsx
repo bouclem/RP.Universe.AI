@@ -13,6 +13,7 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
+  HelpCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -205,6 +206,16 @@ export function WelcomePage({ onContinue, onGoToSync }: WelcomePageProps = {}) {
               <span className="lai-link-text">
                 {t("onboarding.welcome.skipForNow")}
               </span>
+            </button>
+
+            <span className="lai-link-sep" />
+
+            <button
+              onClick={() => navigate("/settings/help", { state: { fromWelcome: true } })}
+              className="lai-link group inline-flex items-center gap-1.5 py-1"
+            >
+              <HelpCircle size={13} strokeWidth={2} />
+              <span className="lai-link-text">New here? Read the FAQ</span>
             </button>
           </motion.div>
 

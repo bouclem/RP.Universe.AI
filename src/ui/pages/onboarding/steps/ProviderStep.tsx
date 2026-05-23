@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Cpu, Download, FolderOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Cpu, Download, FolderOpen, HelpCircle } from "lucide-react";
 import type { ProviderCapabilitiesCamel } from "../../../../core/providers/capabilities";
 import type { TestResult } from "../hooks/onboardingReducer";
 import { ProviderCard } from "../components/ProviderCard";
@@ -54,8 +55,10 @@ export function ProviderStep({
   onUseOwnGguf,
 }: ProviderStepProps) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const platform = getPlatform();
   const isDesktop = platform.type === "desktop";
+  const openHelp = () => navigate("/settings/help", { state: { fromWelcome: true } });
   const [showLocalLLMMenu, setShowLocalLLMMenu] = useState(false);
   const visibleCapabilities = (isDesktop
     ? capabilities
@@ -209,13 +212,21 @@ export function ProviderStep({
   return (
     <div className="flex flex-col items-center pb-8">
       {/* Title */}
-      <div className="text-center space-y-2 mb-8">
+      <div className="text-center space-y-2 mb-6">
         <h1 className="text-[25px] font-bold text-white">Choose your AI provider</h1>
         <p className="text-[15px] text-white/70 max-w-sm leading-relaxed">
           Select an AI provider to get started. Your API keys are securely encrypted on your device.
           No account signup needed.
         </p>
       </div>
+      <button
+        type="button"
+        onClick={openHelp}
+        className="mb-8 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[12px] font-medium text-white/75 transition hover:bg-white/[0.08] hover:text-white"
+      >
+        <HelpCircle size={13} strokeWidth={2} />
+        New to this? Read the FAQ
+      </button>
 
       {/* Provider Selection */}
       <div className="w-full max-w-2xl mb-8">

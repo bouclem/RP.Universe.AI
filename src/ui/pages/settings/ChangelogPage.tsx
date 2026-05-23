@@ -18,6 +18,71 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "1.8.2 / 1.5.2",
+        date: "2026-05-23",
+        title: "Character Creation, Navigation & Sync Polish",
+        description:
+            "A polish release that brings design references into the character creation flow, fixes navigation loops in chat templates, smooths sync onboarding around embedding prompts and local model requirements, and resolves a handful of UI and platform-specific bugs across the avatar picker, image generator, and what's-new drawer.",
+        changes: [
+            {
+                type: "feature",
+                description: "Added an in-app Help & FAQ page covering BYOK, API keys, free vs paid providers, tokens, privacy, and common setup questions, with a shortcut from onboarding for new users.",
+            },
+            {
+                type: "feature",
+                description: "Added design references (visual description and reference images) to the character create flow so scene generation can stay on-model from the start.",
+            },
+            {
+                type: "improvement",
+                description: "Unified the local model requirements prompt across sync onboarding so the embedding check is presented consistently.",
+            },
+            {
+                type: "improvement",
+                description: "Aligned the reasoning header and toggle styling for a more consistent message presentation.",
+            },
+            {
+                type: "improvement",
+                description: "Redirected the Settings \"Convert Files\" entry to lettuceai.app/convert.",
+            },
+            {
+                type: "bugfix",
+                description: "Fixed the chat templates back arrow looping between Templates and Settings; the editor now returns to the template list and the list returns to character edit.",
+            },
+            {
+                type: "bugfix",
+                description: "Stopped the banner avatar picker from overflowing narrow containers by making the small/medium sizes fluid.",
+            },
+            {
+                type: "bugfix",
+                description: "Restored the missing chat template options on mobile.",
+            },
+            {
+                type: "bugfix",
+                description: "Corrected the misleading \"Continue to Starting Scenes\" button label shown while already on the Starting Scenes step.",
+            },
+            {
+                type: "bugfix",
+                description: "Defaulted the summarisation model correctly during onboarding and runtime so dynamic memory works out of the box.",
+            },
+            {
+                type: "bugfix",
+                description: "Applied the user's custom TLS trust store to image-generation requests so self-signed endpoints work like the rest of the app.",
+            },
+            {
+                type: "bugfix",
+                description: "Surfaced the embedding-model prompt after a sync completes when the local model requirement isn't met yet.",
+            },
+            {
+                type: "bugfix",
+                description: "Reapplied the sync Ready handshake and post-sync completion fixes that were lost in a previous merge.",
+            },
+            {
+                type: "bugfix",
+                description: "Respected the device safe area inside the what's-new drawer so content no longer sits under the notch or home indicator.",
+            },
+        ],
+    },
+    {
         version: "1.8.1 / 1.5.1",
         date: "2026-05-20",
         title: "Startup, Import & Settings Stability",

@@ -241,6 +241,7 @@ export const BACK_MAPPINGS: BackMapping[] = [
   { match: (p) => p.startsWith("/settings/usage/activity"), target: Routes.settingsUsage },
   { match: (p) => p.startsWith("/settings/usage"), target: Routes.settings },
   { match: (p) => p.startsWith("/settings/changelog"), target: Routes.settings },
+  { match: (p) => p.startsWith("/settings/help"), target: Routes.settings },
   { match: (p) => p.startsWith("/settings/developer"), target: Routes.settings },
   { match: (p) => p.startsWith("/settings/reset"), target: Routes.settings },
   { match: (p) => /^\/personas\/[^/]+\/edit$/.test(p), target: Routes.libraryPersonas },

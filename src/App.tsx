@@ -36,6 +36,7 @@ import { AboutPage } from "./ui/pages/settings/AboutPage";
 import { CharactersPage } from "./ui/pages/settings/CharactersPage";
 import { DeveloperPage } from "./ui/pages/settings/DeveloperPage";
 import { ChangelogPage } from "./ui/pages/settings/ChangelogPage";
+import { HelpPage } from "./ui/pages/settings/HelpPage";
 import { AdvancedPage } from "./ui/pages/settings/AdvancedPage";
 import { CreationHelperPage as AICreationHelperPage } from "./ui/pages/settings/CreationHelperPage";
 import { HelpMeReplyPage } from "./ui/pages/settings/HelpMeReplyPage";
@@ -1148,6 +1149,7 @@ function AppContent() {
               <Route path="/settings/embedding-test" element={<EmbeddingTestPage />} />
               <Route path="/settings/developer/kokoro-test" element={<KokoroTestPage />} />
               <Route path="/settings/changelog" element={<ChangelogPage />} />
+              <Route path="/settings/help" element={<HelpPage />} />
               <Route path="/settings/developer" element={<DeveloperPage />} />
               <Route path="/settings/reset" element={<ResetPage />} />
               <Route path="/settings/backup" element={<BackupRestorePage />} />

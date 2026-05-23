@@ -343,6 +343,13 @@ export function SettingsLayout() {
 
     const support: NavItem[] = [
       {
+        key: "help",
+        icon: <HelpCircle />,
+        label: "Help & FAQ",
+        matchPath: "/settings/help",
+        onSelect: () => navigate("/settings/help"),
+      },
+      {
         key: "about",
         icon: <Info />,
         label: t("settings.items.about.title"),
