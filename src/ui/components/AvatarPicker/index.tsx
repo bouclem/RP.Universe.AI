@@ -123,8 +123,8 @@ export function AvatarPicker({
   const sizeClasses =
     shape === "banner"
       ? {
-          sm: "h-24 w-60",
-          md: "h-32 w-80",
+          sm: "h-24 w-full max-w-[240px]",
+          md: "h-32 w-full max-w-[320px]",
           lg: "h-48 w-full max-w-[480px]",
         }
       : {
