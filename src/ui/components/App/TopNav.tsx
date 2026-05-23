@@ -559,11 +559,18 @@ export function TopNav({
         navigate("/");
         return;
       }
-      const templateMatch = basePath.match(
-        /^\/settings\/characters\/([^/]+)\/templates(?:\/.+)?$/,
+      const templateEditorMatch = basePath.match(
+        /^\/settings\/characters\/([^/]+)\/templates\/.+$/,
       );
-      if (templateMatch) {
-        navigate(`/settings/characters/${templateMatch[1]}/edit`);
+      if (templateEditorMatch) {
+        navigate(`/settings/characters/${templateEditorMatch[1]}/templates`);
+        return;
+      }
+      const templateListMatch = basePath.match(
+        /^\/settings\/characters\/([^/]+)\/templates$/,
+      );
+      if (templateListMatch) {
+        navigate(`/settings/characters/${templateListMatch[1]}/edit`);
         return;
       }
       const mapped = resolveBackTarget(currentPath);
