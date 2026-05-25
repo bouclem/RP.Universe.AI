@@ -134,7 +134,11 @@ import { hasSeenTooltip, setTooltipSeen } from "./core/storage/appState";
 import { checkForAppUpdate } from "./core/app-updates/checkForAppUpdate";
 import { detectUpdateChannel } from "./core/app-updates/checkForAppUpdate";
 import { presentAppUpdateToast } from "./core/app-updates/presentAppUpdateToast";
-import { readSettings, SETTINGS_UPDATED_EVENT } from "./core/storage/repo";
+import {
+  readSettings,
+  refreshSettingsFromStorage,
+  SETTINGS_UPDATED_EVENT,
+} from "./core/storage/repo";
 import { recordChatDebugEvent } from "./core/debug/chatDebugStore";
 
 const chatLog = logManager({ component: "Chat" });
@@ -681,6 +685,39 @@ function AppUpdateNotifier() {
     return () => {
       cancelled = true;
       window.removeEventListener(SETTINGS_UPDATED_EVENT, handleSettingsUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: UnlistenFn | null = null;
+
+    const reloadSettings = async () => {
+      try {
+        await refreshSettingsFromStorage();
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to refresh settings after database reload:", error);
+        }
+      }
+    };
+
+    void listen("database-reloaded", () => {
+      if (cancelled) return;
+      void reloadSettings();
+    })
+      .then((fn) => {
+        unlisten = fn;
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("Failed to attach database reload listener:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (unlisten) unlisten();
     };
   }, []);
 

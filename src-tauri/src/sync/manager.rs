@@ -1425,6 +1425,7 @@ async fn run_passenger_session(
                             ));
                         }
                         log_info(&app, "sync_passenger", "Received SyncComplete");
+                        let _ = app.emit("database-reloaded", ());
                         framed
                             .send(P2PMessage::SyncApplied)
                             .await

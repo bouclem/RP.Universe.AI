@@ -730,6 +730,12 @@ export async function readSettings(): Promise<Settings> {
   return fallback;
 }
 
+export async function refreshSettingsFromStorage(): Promise<Settings> {
+  const settings = await readSettings();
+  broadcastSettingsUpdated();
+  return settings;
+}
+
 export async function writeSettings(s: Settings, suppressBroadcast = false): Promise<void> {
   SettingsSchema.parse(s);
   await storageBridge.writeSettings(s);
