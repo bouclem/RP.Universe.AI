@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { RotateCcw, Bot, User, RefreshCw, Eye } from "lucide-react";
+import { Bot, User, RefreshCw, Eye } from "lucide-react";
+import {
+  AppearanceTabBar,
+  ChatAppearanceForm,
+  type AppearanceKey,
+  type AppearanceTab,
+} from "../chats/components/appearance/ChatAppearanceForm";
 import {
   readSettings,
   saveAdvancedSettings,
@@ -21,7 +27,6 @@ import { useI18n } from "../../../core/i18n/context";
 import { useAvatar } from "../../hooks/useAvatar";
 import { useImageData } from "../../hooks/useImageData";
 import { AvatarImage } from "../../components/AvatarImage";
-import { Switch } from "../../components/Switch";
 import { toast } from "../../components/toast";
 import { MarkdownRenderer } from "../chats/components/MarkdownRenderer";
 import {
@@ -30,8 +35,6 @@ import {
   normalizeHexColor,
 } from "../../../core/utils/imageAnalysis";
 import { AnimatePresence, motion } from "framer-motion";
-
-type AppearanceKey = keyof ChatAppearanceSettings;
 
 const SAMPLE_MESSAGES: { role: "assistant" | "user"; text: string }[] = [
   {
@@ -109,235 +112,6 @@ function normalizeSettings(settings: ChatAppearanceSettings): ChatAppearanceSett
     quotedTextColorHex: normalizeHexColor(settings.quotedTextColorHex),
     inlineCodeTextColorHex: normalizeHexColor(settings.inlineCodeTextColorHex),
   };
-}
-
-// Option grid component for enum-based settings
-function OptionGrid<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-  overridden,
-  onReset,
-}: {
-  label: string;
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (v: T) => void;
-  overridden?: boolean;
-  onReset?: () => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-fg/60">{label}</span>
-        {overridden && onReset && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="flex items-center gap-1 text-[10px] text-accent/70 hover:text-accent"
-          >
-            <RotateCcw size={10} />
-            Reset
-          </button>
-        )}
-      </div>
-      <div className={`grid gap-1.5 ${options.length <= 3 ? "grid-cols-3" : "grid-cols-4"}`}>
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              "rounded-lg border py-2 text-[11px] font-medium transition-all",
-              value === opt.value
-                ? "border-accent/50 bg-accent/10 text-accent"
-                : "border-fg/5 bg-fg/5 text-fg/40 hover:bg-fg/10",
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Slider component for numeric settings
-function SliderControl({
-  label,
-  value,
-  min,
-  max,
-  step = 1,
-  unit = "",
-  onChange,
-  overridden,
-  onReset,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  unit?: string;
-  onChange: (v: number) => void;
-  overridden?: boolean;
-  onReset?: () => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-fg/60">{label}</span>
-        <div className="flex items-center gap-2">
-          {overridden && onReset && (
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex items-center gap-1 text-[10px] text-accent/70 hover:text-accent"
-            >
-              <RotateCcw size={10} />
-              Reset
-            </button>
-          )}
-          <span className="text-[11px] text-fg/50">
-            {value}
-            {unit}
-          </span>
-        </div>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-accent"
-      />
-    </div>
-  );
-}
-
-function HexColorControl({
-  label,
-  value,
-  onChange,
-  overridden,
-  onReset,
-}: {
-  label: string;
-  value?: string;
-  onChange: (v: string | undefined) => void;
-  overridden?: boolean;
-  onReset?: () => void;
-}) {
-  const [draft, setDraft] = useState(value ?? "");
-  useEffect(() => {
-    setDraft(value ?? "");
-  }, [value]);
-
-  const applyDraft = useCallback(() => {
-    onChange(normalizeHexColor(draft));
-  }, [draft, onChange]);
-
-  const swatch = normalizeHexColor(draft) ?? "#000000";
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-fg/60">{label}</span>
-        <div className="flex items-center gap-2">
-          {overridden && onReset && (
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex items-center gap-1 text-[10px] text-accent/70 hover:text-accent"
-            >
-              <RotateCcw size={10} />
-              Reset
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onChange(undefined)}
-            className="text-[10px] text-fg/45 transition hover:text-fg/70"
-          >
-            Use token
-          </button>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={applyDraft}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              applyDraft();
-              (e.currentTarget as HTMLInputElement).blur();
-            }
-          }}
-          placeholder="#00FFAA"
-          className="h-9 flex-1 rounded-lg border border-fg/10 bg-fg/5 px-3 text-xs text-fg outline-none transition focus:border-accent/40"
-        />
-        <input
-          type="color"
-          value={swatch}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            onChange(normalizeHexColor(e.target.value));
-          }}
-          className="h-9 w-12 cursor-pointer rounded-md border border-fg/15 bg-fg/5 p-1"
-          aria-label={`${label} picker`}
-        />
-      </div>
-      {draft.trim().length > 0 && !normalizeHexColor(draft) && (
-        <p className="text-[10px] text-warning">Use 3, 4, 6, or 8-digit hex. Example: #22CCAA</p>
-      )}
-    </div>
-  );
-}
-
-function ToggleControl({
-  label,
-  description,
-  checked,
-  onChange,
-  overridden,
-  onReset,
-}: {
-  label: string;
-  description?: string;
-  checked: boolean;
-  onChange: (next: boolean) => void;
-  overridden?: boolean;
-  onReset?: () => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs font-medium text-fg/60">{label}</div>
-          {description ? <div className="mt-0.5 text-[11px] text-fg/45">{description}</div> : null}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {overridden && onReset && (
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex items-center gap-1 text-[10px] text-accent/70 hover:text-accent"
-            >
-              <RotateCcw size={10} />
-              Reset
-            </button>
-          )}
-          <Switch checked={checked} onChange={onChange} aria-label={label} />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function CharacterAvatar({ character, size }: { character: Character; size: string }) {
@@ -630,6 +404,7 @@ export function ChatAppearancePage() {
   const [persona, setPersona] = useState<Persona | null>(null);
   const [livePreview, setLivePreview] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<AppearanceTab>("typography");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
@@ -930,328 +705,6 @@ export function ChatAppearancePage() {
     </div>
   );
 
-  const settingsContent = (
-    <>
-      {/* Reset button */}
-      <button
-        type="button"
-        onClick={resetAll}
-        className={cn(
-          "flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-medium transition-all",
-          "border-fg/10 bg-fg/5 text-fg/50 hover:border-fg/20 hover:bg-fg/10 hover:text-fg/70",
-        )}
-      >
-        <RefreshCw size={13} />
-        {mode === "character" ? "Clear all overrides" : "Reset all to defaults"}
-      </button>
-
-      {/* Typography */}
-      <div>
-        <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-          {t("chatAppearance.typography")}
-        </h2>
-        <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
-          <OptionGrid
-            label={t("chatAppearance.fontSize.label")}
-            value={effectiveSettings.fontSize}
-            options={[
-              { value: "small", label: t("chatAppearance.fontSize.small") },
-              { value: "medium", label: t("chatAppearance.fontSize.medium") },
-              { value: "large", label: t("chatAppearance.fontSize.large") },
-              { value: "xlarge", label: t("chatAppearance.fontSize.xLarge") },
-            ]}
-            onChange={(v) => updateField("fontSize", v)}
-            overridden={isOverridden("fontSize")}
-            onReset={mode === "character" ? () => resetField("fontSize") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.lineSpacing.label")}
-            value={effectiveSettings.lineSpacing}
-            options={[
-              { value: "tight", label: t("chatAppearance.lineSpacing.tight") },
-              { value: "normal", label: t("chatAppearance.lineSpacing.normal") },
-              { value: "relaxed", label: t("chatAppearance.lineSpacing.relaxed") },
-            ]}
-            onChange={(v) => updateField("lineSpacing", v)}
-            overridden={isOverridden("lineSpacing")}
-            onReset={mode === "character" ? () => resetField("lineSpacing") : undefined}
-          />
-        </div>
-      </div>
-
-      {/* Message Bubbles */}
-      <div>
-        <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-          {t("chatAppearance.messageBubbles.label")}
-        </h2>
-        <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
-          <OptionGrid
-            label={t("chatAppearance.messageBubbles.style.label")}
-            value={effectiveSettings.bubbleStyle}
-            options={[
-              { value: "bordered", label: t("chatAppearance.messageBubbles.style.bordered") },
-              { value: "filled", label: t("chatAppearance.messageBubbles.style.filled") },
-              { value: "minimal", label: t("chatAppearance.messageBubbles.style.minimal") },
-            ]}
-            onChange={(v) => updateField("bubbleStyle", v)}
-            overridden={isOverridden("bubbleStyle")}
-            onReset={mode === "character" ? () => resetField("bubbleStyle") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.messageBubbles.cornerRadius.label")}
-            value={effectiveSettings.bubbleRadius}
-            options={[
-              { value: "sharp", label: t("chatAppearance.messageBubbles.cornerRadius.sharp") },
-              { value: "rounded", label: t("chatAppearance.messageBubbles.cornerRadius.rounded") },
-              { value: "pill", label: t("chatAppearance.messageBubbles.cornerRadius.pill") },
-            ]}
-            onChange={(v) => updateField("bubbleRadius", v)}
-            overridden={isOverridden("bubbleRadius")}
-            onReset={mode === "character" ? () => resetField("bubbleRadius") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.messageBubbles.maxWidth.label")}
-            value={effectiveSettings.bubbleMaxWidth}
-            options={[
-              { value: "compact", label: t("chatAppearance.messageBubbles.maxWidth.compact") },
-              { value: "normal", label: t("chatAppearance.messageBubbles.maxWidth.normal") },
-              { value: "wide", label: t("chatAppearance.messageBubbles.maxWidth.wide") },
-            ]}
-            onChange={(v) => updateField("bubbleMaxWidth", v)}
-            overridden={isOverridden("bubbleMaxWidth")}
-            onReset={mode === "character" ? () => resetField("bubbleMaxWidth") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.messageBubbles.padding.label")}
-            value={effectiveSettings.bubblePadding}
-            options={[
-              { value: "compact", label: t("chatAppearance.messageBubbles.padding.compact") },
-              { value: "normal", label: t("chatAppearance.messageBubbles.padding.normal") },
-              { value: "spacious", label: t("chatAppearance.messageBubbles.padding.spacious") },
-            ]}
-            onChange={(v) => updateField("bubblePadding", v)}
-            overridden={isOverridden("bubblePadding")}
-            onReset={mode === "character" ? () => resetField("bubblePadding") : undefined}
-          />
-        </div>
-      </div>
-
-      {/* Layout */}
-      <div>
-        <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-          {t("chatAppearance.layout.label")}
-        </h2>
-        <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
-          <OptionGrid
-            label={t("chatAppearance.layout.messageSpacing")}
-            value={effectiveSettings.messageGap}
-            options={[
-              { value: "tight", label: t("chatAppearance.layout.tight") },
-              { value: "normal", label: t("chatAppearance.layout.normal") },
-              { value: "relaxed", label: t("chatAppearance.layout.relaxed") },
-            ]}
-            onChange={(v) => updateField("messageGap", v)}
-            overridden={isOverridden("messageGap")}
-            onReset={mode === "character" ? () => resetField("messageGap") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.avatar.shape.label")}
-            value={effectiveSettings.avatarShape}
-            options={[
-              { value: "circle", label: t("chatAppearance.avatar.shape.circle") },
-              { value: "rounded", label: t("chatAppearance.avatar.shape.rounded") },
-              { value: "hidden", label: t("chatAppearance.avatar.shape.hidden") },
-            ]}
-            onChange={(v) => updateField("avatarShape", v)}
-            overridden={isOverridden("avatarShape")}
-            onReset={mode === "character" ? () => resetField("avatarShape") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.avatar.size.label")}
-            value={effectiveSettings.avatarSize}
-            options={[
-              { value: "small", label: t("chatAppearance.avatar.size.small") },
-              { value: "medium", label: t("chatAppearance.avatar.size.medium") },
-              { value: "large", label: t("chatAppearance.avatar.size.large") },
-            ]}
-            onChange={(v) => updateField("avatarSize", v)}
-            overridden={isOverridden("avatarSize")}
-            onReset={mode === "character" ? () => resetField("avatarSize") : undefined}
-          />
-        </div>
-      </div>
-
-      {/* Colors */}
-      <div>
-        <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-          {t("chatAppearance.colors.label")}
-        </h2>
-        <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
-          <OptionGrid
-            label={t("chatAppearance.colors.userBubble")}
-            value={effectiveSettings.userBubbleColor}
-            options={[
-              { value: "accent", label: t("chatAppearance.colors.accent") },
-              { value: "info", label: t("chatAppearance.colors.info") },
-              { value: "secondary", label: t("chatAppearance.colors.secondary") },
-              { value: "warning", label: t("chatAppearance.colors.warning") },
-            ]}
-            onChange={(v) => updateField("userBubbleColor", v)}
-            overridden={isOverridden("userBubbleColor")}
-            onReset={mode === "character" ? () => resetField("userBubbleColor") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.colors.assistantBubble")}
-            value={effectiveSettings.assistantBubbleColor}
-            options={[
-              { value: "neutral", label: t("chatAppearance.colors.neutral") },
-              { value: "accent", label: t("chatAppearance.colors.accent") },
-              { value: "info", label: t("chatAppearance.colors.info") },
-              { value: "secondary", label: t("chatAppearance.colors.secondary") },
-            ]}
-            onChange={(v) => updateField("assistantBubbleColor", v)}
-            overridden={isOverridden("assistantBubbleColor")}
-            onReset={mode === "character" ? () => resetField("assistantBubbleColor") : undefined}
-          />
-          <HexColorControl
-            label={t("chatAppearance.colors.userBubbleHex")}
-            value={effectiveSettings.userBubbleColorHex}
-            onChange={(v) => updateField("userBubbleColorHex", v)}
-            overridden={isOverridden("userBubbleColorHex")}
-            onReset={mode === "character" ? () => resetField("userBubbleColorHex") : undefined}
-          />
-          <HexColorControl
-            label={t("chatAppearance.colors.assistantBubbleHex")}
-            value={effectiveSettings.assistantBubbleColorHex}
-            onChange={(v) => updateField("assistantBubbleColorHex", v)}
-            overridden={isOverridden("assistantBubbleColorHex")}
-            onReset={mode === "character" ? () => resetField("assistantBubbleColorHex") : undefined}
-          />
-        </div>
-      </div>
-
-      {/* Text Colors */}
-      <div>
-        <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-          {t("chatAppearance.colors.textColors")}
-        </h2>
-        <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
-          <HexColorControl
-            label={t("chatAppearance.colors.messageTextHex")}
-            value={effectiveSettings.messageTextColorHex}
-            onChange={(v) => updateField("messageTextColorHex", v)}
-            overridden={isOverridden("messageTextColorHex")}
-            onReset={mode === "character" ? () => resetField("messageTextColorHex") : undefined}
-          />
-          <HexColorControl
-            label={t("chatAppearance.colors.plainTextHex")}
-            value={effectiveSettings.plainTextColorHex}
-            onChange={(v) => updateField("plainTextColorHex", v)}
-            overridden={isOverridden("plainTextColorHex")}
-            onReset={mode === "character" ? () => resetField("plainTextColorHex") : undefined}
-          />
-          <HexColorControl
-            label={t("chatAppearance.colors.italicTextHex")}
-            value={effectiveSettings.italicTextColorHex}
-            onChange={(v) => updateField("italicTextColorHex", v)}
-            overridden={isOverridden("italicTextColorHex")}
-            onReset={mode === "character" ? () => resetField("italicTextColorHex") : undefined}
-          />
-          <HexColorControl
-            label={t("chatAppearance.colors.quotedTextHex")}
-            value={effectiveSettings.quotedTextColorHex}
-            onChange={(v) => updateField("quotedTextColorHex", v)}
-            overridden={isOverridden("quotedTextColorHex")}
-            onReset={mode === "character" ? () => resetField("quotedTextColorHex") : undefined}
-          />
-          <HexColorControl
-            label={t("chatAppearance.colors.inlineCodeTextHex")}
-            value={effectiveSettings.inlineCodeTextColorHex}
-            onChange={(v) => updateField("inlineCodeTextColorHex", v)}
-            overridden={isOverridden("inlineCodeTextColorHex")}
-            onReset={mode === "character" ? () => resetField("inlineCodeTextColorHex") : undefined}
-          />
-        </div>
-      </div>
-
-      {/* Background */}
-      <div>
-        <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-fg/35">
-          {t("chatAppearance.backgroundTransparency.label")}
-        </h2>
-        <div className="space-y-4 rounded-xl border border-fg/10 bg-fg/5 px-4 py-3">
-          <ToggleControl
-            label="Transparent Header"
-            description="When a chat background image is active, remove the header scrim and let the image show through."
-            checked={effectiveSettings.transparentHeader}
-            onChange={(v) => updateField("transparentHeader", v)}
-            overridden={isOverridden("transparentHeader")}
-            onReset={mode === "character" ? () => resetField("transparentHeader") : undefined}
-          />
-          <SliderControl
-            label={t("chatAppearance.backgroundTransparency.backgroundDim")}
-            value={effectiveSettings.backgroundDim}
-            min={0}
-            max={80}
-            step={5}
-            unit="%"
-            onChange={(v) => updateField("backgroundDim", v)}
-            overridden={isOverridden("backgroundDim")}
-            onReset={mode === "character" ? () => resetField("backgroundDim") : undefined}
-          />
-          <SliderControl
-            label={t("chatAppearance.backgroundTransparency.backgroundBlur")}
-            value={effectiveSettings.backgroundBlur}
-            min={0}
-            max={20}
-            step={1}
-            unit="px"
-            onChange={(v) => updateField("backgroundBlur", v)}
-            overridden={isOverridden("backgroundBlur")}
-            onReset={mode === "character" ? () => resetField("backgroundBlur") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.backgroundTransparency.bubbleBlur")}
-            value={effectiveSettings.bubbleBlur}
-            options={[
-              { value: "none", label: t("chatAppearance.backgroundTransparency.none") },
-              { value: "light", label: t("chatAppearance.backgroundTransparency.light") },
-              { value: "medium", label: t("chatAppearance.backgroundTransparency.medium") },
-              { value: "heavy", label: t("chatAppearance.backgroundTransparency.heavy") },
-            ]}
-            onChange={(v) => updateField("bubbleBlur", v)}
-            overridden={isOverridden("bubbleBlur")}
-            onReset={mode === "character" ? () => resetField("bubbleBlur") : undefined}
-          />
-          <SliderControl
-            label={t("chatAppearance.backgroundTransparency.bubbleOpacity")}
-            value={effectiveSettings.bubbleOpacity}
-            min={20}
-            max={100}
-            step={5}
-            unit="%"
-            onChange={(v) => updateField("bubbleOpacity", v)}
-            overridden={isOverridden("bubbleOpacity")}
-            onReset={mode === "character" ? () => resetField("bubbleOpacity") : undefined}
-          />
-          <OptionGrid
-            label={t("chatAppearance.textColorMode.label")}
-            value={effectiveSettings.textMode}
-            options={[
-              { value: "auto", label: t("chatAppearance.textColorMode.auto") },
-              { value: "light", label: t("chatAppearance.textColorMode.light") },
-              { value: "dark", label: t("chatAppearance.textColorMode.dark") },
-            ]}
-            onChange={(v) => updateField("textMode", v)}
-            overridden={isOverridden("textMode")}
-            onReset={mode === "character" ? () => resetField("textMode") : undefined}
-          />
-        </div>
-      </div>
-
-      <div className="h-4" />
-    </>
-  );
 
   return (
     <div className="px-3 pt-4 pb-24 lg:px-8 lg:pt-6 lg:pb-12">
@@ -1266,7 +719,30 @@ export function ChatAppearancePage() {
       {/* Desktop: two-column layout with sticky preview on the right */}
       <div className="lg:flex lg:items-start lg:gap-8 lg:max-w-5xl lg:mx-auto">
         {/* Settings column */}
-        <div className="flex-1 min-w-0 space-y-5">{settingsContent}</div>
+        <div className="flex-1 min-w-0 space-y-4">
+          <button
+            type="button"
+            onClick={resetAll}
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-medium transition-all",
+              "border-fg/10 bg-fg/5 text-fg/50 hover:border-fg/20 hover:bg-fg/10 hover:text-fg/70",
+            )}
+          >
+            <RefreshCw size={13} />
+            {mode === "character" ? "Clear all overrides" : "Reset all to defaults"}
+          </button>
+
+          <AppearanceTabBar activeTab={activeTab} onChange={setActiveTab} />
+
+          <ChatAppearanceForm
+            settings={effectiveSettings}
+            mode={mode}
+            activeTab={activeTab}
+            onUpdate={updateField}
+            onResetField={resetField}
+            isOverridden={isOverridden}
+          />
+        </div>
 
         {!isMobileViewport && (
           <div
