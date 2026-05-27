@@ -9,7 +9,7 @@ use tauri::{AppHandle, Emitter};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex as TokioMutex;
 
-use crate::utils::log_info;
+use crate::utils::{log_info, log_info_global, log_warn_global};
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
@@ -568,7 +568,6 @@ impl<'a> GgufReader<'a> {
         Some(())
     }
 
-    /// Read a GGUF value as u64 (coercing integer types) Returns None for non-integer types
     fn read_value_as_u64(&mut self, value_type: u32) -> Option<u64> {
         match value_type {
             0 => self.read_u8().map(|v| v as u64),
@@ -583,6 +582,22 @@ impl<'a> GgufReader<'a> {
             5 => self.read_i32().map(|v| v as u64),
             10 => self.read_u64(),
             11 => self.read_i64().map(|v| v as u64),
+            9 => {
+                let arr_type = self.read_u32()?;
+                let arr_len = self.read_u64()?;
+                let mut first: Option<u64> = None;
+                for i in 0..arr_len {
+                    if i == 0 {
+                        first = self.read_value_as_u64(arr_type);
+                        if first.is_none() {
+                            self.skip_value(arr_type)?;
+                        }
+                    } else {
+                        self.skip_value(arr_type)?;
+                    }
+                }
+                first
+            }
             _ => None,
         }
     }
@@ -593,53 +608,119 @@ impl<'a> GgufReader<'a> {
     }
 }
 
-/// Parse GGUF metadata from a byte buffer (typically the first 512KB–5MB of a GGUF file)
 fn parse_gguf_meta(data: &[u8]) -> Option<GgufModelMeta> {
+    log_info_global(
+        "gguf_parser",
+        format!("parse start: buffer={} bytes", data.len()),
+    );
     let mut reader = GgufReader::new(data);
 
-    // Magic: "GGUF"
     let magic = reader.read_bytes(4)?;
     if magic != b"GGUF" {
+        log_warn_global(
+            "gguf_parser",
+            format!("magic mismatch: got {:02x?}", magic),
+        );
         return None;
     }
 
-    // Version
     let version = reader.read_u32()?;
     if !(2..=3).contains(&version) {
+        log_warn_global("gguf_parser", format!("unsupported version: {}", version));
         return None;
     }
 
-    let _tensor_count = reader.read_u64()?;
+    let tensor_count = reader.read_u64()?;
     let metadata_kv_count = reader.read_u64()?;
+    log_info_global(
+        "gguf_parser",
+        format!(
+            "header: version={} tensors={} kv_pairs={} body_offset={}",
+            version, tensor_count, metadata_kv_count, reader.pos
+        ),
+    );
 
     let mut meta = GgufModelMeta {
         metadata_kv_count,
         ..Default::default()
     };
 
-    // First pass: find architecture name
     let start_pos = reader.pos;
+    let mut pass1_scanned: u64 = 0;
     for _ in 0..metadata_kv_count {
         if reader.remaining() < 8 {
+            log_warn_global(
+                "gguf_parser",
+                format!(
+                    "pass1 short: after {} keys, remaining={}, pos={}",
+                    pass1_scanned,
+                    reader.remaining(),
+                    reader.pos
+                ),
+            );
             break;
         }
+        let key_pos = reader.pos;
         let key = match reader.read_string() {
             Some(k) => k,
-            None => break,
+            None => {
+                log_warn_global(
+                    "gguf_parser",
+                    format!(
+                        "pass1 key read fail at pos={} after {} keys",
+                        key_pos, pass1_scanned
+                    ),
+                );
+                break;
+            }
         };
         let value_type = match reader.read_u32() {
             Some(t) => t,
-            None => break,
+            None => {
+                log_warn_global(
+                    "gguf_parser",
+                    format!(
+                        "pass1 value_type read fail at key='{}' pos={}",
+                        key, reader.pos
+                    ),
+                );
+                break;
+            }
         };
 
         if key == "general.architecture" && value_type == 8 {
             meta.architecture = reader.read_string();
+            log_info_global(
+                "gguf_parser",
+                format!(
+                    "pass1 found architecture={:?} after {} keys",
+                    meta.architecture, pass1_scanned
+                ),
+            );
             break;
-        } else {
-            if reader.skip_value(value_type).is_none() {
-                break;
-            }
+        } else if reader.skip_value(value_type).is_none() {
+            log_warn_global(
+                "gguf_parser",
+                format!(
+                    "pass1 skip_value failed: key='{}' type={} pos={} remaining={}",
+                    key,
+                    value_type,
+                    reader.pos,
+                    reader.remaining()
+                ),
+            );
+            break;
         }
+        pass1_scanned += 1;
+    }
+    if meta.architecture.is_none() {
+        log_warn_global(
+            "gguf_parser",
+            format!(
+                "pass1 finished without finding architecture (scanned {} keys)",
+                pass1_scanned
+            ),
+        );
     }
 
     let arch = meta
@@ -664,77 +745,145 @@ fn parse_gguf_meta(data: &[u8]) -> Option<GgufModelMeta> {
 
     reader.pos = start_pos;
     let mut parsed: u64 = 0;
-    for _ in 0..metadata_kv_count {
+    log_info_global(
+        "gguf_parser",
+        format!("pass2 start at pos={} arch={}", start_pos, arch),
+    );
+    for kv_index in 0..metadata_kv_count {
         if reader.remaining() < 8 {
+            log_warn_global(
+                "gguf_parser",
+                format!(
+                    "pass2 short at kv #{}: remaining={} pos={} buffer_total={}",
+                    kv_index,
+                    reader.remaining(),
+                    reader.pos,
+                    data.len()
+                ),
+            );
             break;
         }
+        let key_pos = reader.pos;
         let key = match reader.read_string() {
             Some(k) => k,
-            None => break,
+            None => {
+                log_warn_global(
+                    "gguf_parser",
+                    format!(
+                        "pass2 key read failed at kv #{} pos={} remaining={}",
+                        kv_index,
+                        key_pos,
+                        reader.remaining()
+                    ),
+                );
+                break;
+            }
         };
         let value_type = match reader.read_u32() {
             Some(t) => t,
-            None => break,
+            None => {
+                log_warn_global(
+                    "gguf_parser",
+                    format!(
+                        "pass2 value_type read failed at kv #{} key='{}' pos={}",
+                        kv_index, key, reader.pos
+                    ),
+                );
+                break;
+            }
         };
 
-        let ok = if key == "general.architecture" {
-            reader.skip_value(value_type).is_some()
-        } else if key == "general.file_type" {
+        let pos_before_value = reader.pos;
+        let mut matched = "";
+        if key == "general.file_type" {
             meta.file_type = reader.read_value_as_u32(value_type);
-            meta.file_type.is_some()
+            matched = "general.file_type";
         } else if key == key_block_count {
             meta.block_count = reader.read_value_as_u64(value_type);
-            meta.block_count.is_some()
+            matched = "block_count";
         } else if key == key_embedding_length {
             meta.embedding_length = reader.read_value_as_u64(value_type);
-            meta.embedding_length.is_some()
+            matched = "embedding_length";
         } else if key == key_head_count {
             meta.head_count = reader.read_value_as_u64(value_type);
-            meta.head_count.is_some()
+            matched = "head_count";
         } else if key == key_head_count_kv {
             meta.head_count_kv = reader.read_value_as_u64(value_type);
-            meta.head_count_kv.is_some()
+            matched = "head_count_kv";
         } else if key == key_context_length {
             meta.context_length = reader.read_value_as_u64(value_type);
-            meta.context_length.is_some()
+            matched = "context_length";
         } else if key == key_feed_forward {
             meta.feed_forward_length = reader.read_value_as_u64(value_type);
-            meta.feed_forward_length.is_some()
+            matched = "feed_forward_length";
         } else if key == key_sliding_window {
             meta.sliding_window = reader.read_value_as_u64(value_type);
-            meta.sliding_window.is_some()
+            matched = "sliding_window";
         } else if key == key_kv_lora_rank {
             meta.kv_lora_rank = reader.read_value_as_u64(value_type);
-            meta.kv_lora_rank.is_some()
+            matched = "kv_lora_rank";
         } else if key == key_key_length {
             meta.key_length = reader.read_value_as_u64(value_type);
-            meta.key_length.is_some()
+            matched = "key_length";
         } else if key == key_value_length {
             meta.value_length = reader.read_value_as_u64(value_type);
-            meta.value_length.is_some()
+            matched = "value_length";
         } else if key == key_expert_count {
             meta.expert_count = reader.read_value_as_u64(value_type);
-            meta.expert_count.is_some()
+            matched = "expert_count";
         } else if key == key_expert_used_count {
             meta.expert_used_count = reader.read_value_as_u64(value_type);
-            meta.expert_used_count.is_some()
+            matched = "expert_used_count";
         } else if key == key_expert_shared_count {
             meta.expert_shared_count = reader.read_value_as_u64(value_type);
-            meta.expert_shared_count.is_some()
+            matched = "expert_shared_count";
         } else if key == key_expert_ffn {
             meta.expert_feed_forward_length = reader.read_value_as_u64(value_type);
-            meta.expert_feed_forward_length.is_some()
-        } else {
-            reader.skip_value(value_type).is_some()
-        };
-
-        if ok {
-            parsed += 1;
-        } else {
-            break;
+            matched = "expert_feed_forward_length";
         }
+
+        if !matched.is_empty() {
+            log_info_global(
+                "gguf_parser",
+                format!(
+                    "pass2 kv #{} key='{}' matched={} type={} pos_before={} pos_after={}",
+                    kv_index, key, matched, value_type, pos_before_value, reader.pos
+                ),
+            );
+        }
+
+        if reader.pos == pos_before_value {
+            if reader.skip_value(value_type).is_none() {
+                log_warn_global(
+                    "gguf_parser",
+                    format!(
+                        "pass2 skip_value failed: kv #{} key='{}' type={} pos={} remaining={}",
+                        kv_index,
+                        key,
+                        value_type,
+                        reader.pos,
+                        reader.remaining()
+                    ),
+                );
+                break;
+            }
+        }
+
+        parsed += 1;
     }
     meta.parsed_kv_count = parsed;
+    log_info_global(
+        "gguf_parser",
+        format!(
+            "parse done: parsed={}/{} arch={:?} blocks={:?} heads_kv={:?} expert_count={:?}",
+            parsed,
+            metadata_kv_count,
+            meta.architecture,
+            meta.block_count,
+            meta.head_count_kv,
+            meta.expert_count
+        ),
+    );
 
     Some(meta)
 }
@@ -746,15 +895,19 @@ fn read_local_gguf_meta(path: &Path) -> Option<GgufModelMeta> {
     primary.truncate(primary_read);
 
     let primary_meta = parse_gguf_meta(&primary);
-    if primary_meta
-        .as_ref()
-        .is_some_and(|meta| meta.parsed_kv_count >= meta.metadata_kv_count)
-    {
+    let essentials_ok = |m: &GgufModelMeta| {
+        m.architecture.is_some()
+            && m.block_count.is_some()
+            && m.embedding_length.is_some()
+            && m.head_count.is_some()
+            && m.context_length.is_some()
+    };
+    if primary_meta.as_ref().is_some_and(essentials_ok) {
         return primary_meta;
     }
 
     let mut file = std::fs::File::open(path).ok()?;
-    let mut fallback = vec![0u8; 5_242_880];
+    let mut fallback = vec![0u8; 10_485_760];
     let fallback_read = file.read(&mut fallback).ok()?;
     fallback.truncate(fallback_read);
 
@@ -796,6 +949,7 @@ fn quant_quality_score(quant: &str) -> f64 {
         "Q5_0" | "Q5_1" => 70.0,
         "Q4_K_M" | "Q4_K_L" | "Q4_K_XL" | "Q4_K" => 75.0,
         "Q4_K_S" => 70.0,
+        "UD-IQ4_XS" | "UD-IQ4_NL" => 80.0,
         "IQ4_XS" | "IQ4_NL" => 72.0,
         "Q4_0" | "Q4_1" => 60.0,
         "UD-Q3_K_XL" => 70.0,
@@ -874,8 +1028,13 @@ fn effective_kv_context(meta: &GgufModelMeta, requested_ctx: u64) -> u64 {
 #[allow(dead_code)]
 fn kv_bytes_per_value(kv_type: &str) -> f64 {
     match kv_type {
+        "f32" => 4.0,
         "f16" => 2.0,
+        "q8_1" => 1.0625,
         "q8_0" => 1.0,
+        "q5_1" => 0.75,
+        "q5_0" => 0.6875,
+        "iq4_nl" => 0.5625,
         "q4_0" => 0.5,
         _ => 2.0,
     }
@@ -947,14 +1106,16 @@ fn score_configuration(
         0.0
     } else {
         let ratio = total_available as f64 / total_needed as f64;
-        if ratio < 1.2 {
-            20.0
+        if ratio < 1.05 {
+            40.0
+        } else if ratio < 1.2 {
+            60.0
         } else if ratio < 1.5 {
-            50.0
+            75.0
         } else if ratio < 2.0 {
-            70.0
-        } else if ratio < 3.0 {
             85.0
+        } else if ratio < 3.0 {
+            95.0
         } else {
             100.0
         }
@@ -1169,7 +1330,11 @@ impl From<&GgufModelMeta> for ModelArchInfo {
             expert_feed_forward_length: m.expert_feed_forward_length,
             is_moe: moe,
             active_weight_ratio: if moe { Some(active_weight_ratio(m)) } else { None },
-            incomplete_parse: m.parsed_kv_count < m.metadata_kv_count,
+            incomplete_parse: m.architecture.is_none()
+                || m.block_count.is_none()
+                || m.embedding_length.is_none()
+                || m.head_count.is_none()
+                || m.context_length.is_none(),
         }
     }
 }
@@ -1222,7 +1387,16 @@ pub struct BestRecommendation {
     pub viable: bool,
 }
 
-const KV_TYPES: &[(&str, f64)] = &[("f16", 2.0), ("q8_0", 1.0), ("q4_0", 0.5)];
+const KV_TYPES: &[(&str, f64)] = &[
+    ("f32", 4.0),
+    ("f16", 2.0),
+    ("q8_1", 1.0625),
+    ("q8_0", 1.0),
+    ("q5_1", 0.75),
+    ("q5_0", 0.6875),
+    ("iq4_nl", 0.5625),
+    ("q4_0", 0.5),
+];
 const MIN_CONTEXT: u64 = 4096;
 
 fn calculate_optimal_context(
@@ -2380,13 +2554,21 @@ async fn fetch_gguf_meta(
     let meta = fetch_gguf_range(&client, &url, 524_287).await;
 
     // If parse was incomplete, retry with 5MB
+    let essentials_missing = |m: &GgufModelMeta| {
+        m.architecture.is_none()
+            || m.block_count.is_none()
+            || m.embedding_length.is_none()
+            || m.head_count.is_none()
+            || m.context_length.is_none()
+    };
+
     if let Some(ref m) = meta {
-        if m.parsed_kv_count < m.metadata_kv_count && m.block_count.is_none() {
+        if essentials_missing(m) {
             log_info(
                 app,
                 "hf_browser",
                 format!(
-                    "GGUF header truncated ({}/{} KVs parsed), retrying with 10MB",
+                    "GGUF essentials missing after 512KB ({}/{} KVs parsed), retrying with 10MB",
                     m.parsed_kv_count, m.metadata_kv_count
                 ),
             );
