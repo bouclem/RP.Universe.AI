@@ -2850,26 +2850,35 @@ async fn process_assistant_turn_legacy(
         .unwrap_or("");
     let model_name = model.get("name").and_then(|v| v.as_str()).unwrap_or("");
 
-    let credentials = settings
+    let credential = settings
         .get("providerCredentials")
-        .and_then(|v| v.as_array());
-    let credential = credentials
-        .and_then(|c| {
-            c.iter()
+        .and_then(|v| v.as_array())
+        .and_then(|credentials| {
+            credentials
+                .iter()
                 .find(|cred| cred.get("providerId").and_then(|v| v.as_str()) == Some(provider_id))
-        })
-        .ok_or_else(|| "No credentials found for provider".to_string())?;
+        });
 
     let api_key = credential
-        .get("apiKey")
+        .and_then(|cred| cred.get("apiKey"))
         .and_then(|v| v.as_str())
         .unwrap_or("");
-    let base_url = credential.get("baseUrl").and_then(|v| v.as_str());
+    let base_url = credential.and_then(|cred| cred.get("baseUrl").and_then(|v| v.as_str()));
 
     let provider_label = credential
-        .get("label")
+        .and_then(|cred| cred.get("label"))
         .and_then(|v| v.as_str())
-        .unwrap_or(provider_id);
+        .unwrap_or_else(|| {
+            if provider_id.eq_ignore_ascii_case("llamacpp") {
+                "llama.cpp (Local)"
+            } else {
+                provider_id
+            }
+        });
+
+    if credential.is_none() && !provider_id.eq_ignore_ascii_case("llamacpp") {
+        return Err("No credentials found for provider".to_string());
+    }
 
     let smart_tool_selection = true;
 
@@ -2943,24 +2952,26 @@ async fn process_assistant_turn_legacy(
 
     let cred = crate::chat_manager::types::ProviderCredential {
         id: credential
-            .get("id")
+            .and_then(|cred| cred.get("id"))
             .and_then(|v| v.as_str())
-            .unwrap_or("")
+            .unwrap_or_else(|| {
+                if provider_id.eq_ignore_ascii_case("llamacpp") {
+                    "builtin-llamacpp"
+                } else {
+                    ""
+                }
+            })
             .to_string(),
         provider_id: provider_id.to_string(),
-        label: credential
-            .get("label")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string(),
+        label: provider_label.to_string(),
         api_key: Some(api_key.to_string()),
         base_url: base_url.map(|s| s.to_string()),
         default_model: None,
         headers: credential
-            .get("headers")
+            .and_then(|cred| cred.get("headers"))
             .cloned()
             .and_then(|value| serde_json::from_value(value).ok()),
-        config: credential.get("config").cloned(),
+        config: credential.and_then(|cred| cred.get("config")).cloned(),
     };
 
     let streaming_enabled = effective_streaming_enabled(&cred, streaming_enabled);

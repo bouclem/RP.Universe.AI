@@ -1,9 +1,10 @@
-use serde_json::{json, Value};
+use serde_json::json;
 use tauri::AppHandle;
 
+use crate::chat_manager::persistence::storage::resolve_credential_for_model;
 use crate::chat_manager::request as chat_request;
 use crate::chat_manager::request_builder::effective_streaming_enabled;
-use crate::chat_manager::types::ProviderCredential;
+use crate::chat_manager::types::{ProviderCredential, Settings};
 use crate::creation_helper::service::send_creation_api_request;
 use crate::storage_manager::settings::internal_read_settings;
 
@@ -20,85 +21,33 @@ pub struct LlmContext {
 pub fn load_context(app: &AppHandle) -> Result<LlmContext, String> {
     let settings_json =
         internal_read_settings(app)?.ok_or_else(|| "No settings found".to_string())?;
-    let settings: Value =
+    let settings: Settings =
         serde_json::from_str(&settings_json).map_err(|e| format!("settings parse: {}", e))?;
-    let advanced = settings.get("advancedSettings");
+    let advanced = settings.advanced_settings.as_ref();
 
     let model_id = advanced
-        .and_then(|a| a.get("creationHelperModelId"))
-        .and_then(|v| v.as_str())
-        .or_else(|| settings.get("defaultModelId").and_then(|v| v.as_str()))
+        .and_then(|a| a.creation_helper_model_id.as_ref())
+        .or(settings.default_model_id.as_ref())
         .ok_or_else(|| "No model configured".to_string())?
         .to_string();
 
     let streaming_enabled_setting = advanced
-        .and_then(|a| a.get("creationHelperStreaming"))
-        .and_then(|v| v.as_bool())
+        .and_then(|a| a.creation_helper_streaming)
         .unwrap_or(true);
 
-    let models = settings.get("models").and_then(|v| v.as_array());
-    let model = models
-        .and_then(|m| {
-            m.iter()
-                .find(|m| m.get("id").and_then(|v| v.as_str()) == Some(model_id.as_str()))
-        })
+    let model = settings
+        .models
+        .iter()
+        .find(|model| model.id == model_id)
         .ok_or_else(|| "Model not found".to_string())?;
-
-    let provider_id = model
-        .get("providerId")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-    let model_name = model
-        .get("name")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-
-    let credentials = settings
-        .get("providerCredentials")
-        .and_then(|v| v.as_array());
-    let credential = credentials
-        .and_then(|c| {
-            c.iter().find(|cred| {
-                cred.get("providerId").and_then(|v| v.as_str()) == Some(provider_id.as_str())
-            })
-        })
+    let credential = resolve_credential_for_model(&settings, model)
         .ok_or_else(|| "No credentials found for provider".to_string())?;
 
-    let api_key = credential
-        .get("apiKey")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-    let base_url = credential
-        .get("baseUrl")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-
-    let provider_label = credential
-        .get("label")
-        .and_then(|v| v.as_str())
-        .unwrap_or(provider_id.as_str())
-        .to_string();
-
-    let cred = ProviderCredential {
-        id: credential
-            .get("id")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string(),
-        provider_id: provider_id.clone(),
-        label: provider_label.clone(),
-        api_key: Some(api_key.clone()),
-        base_url,
-        default_model: None,
-        headers: credential
-            .get("headers")
-            .cloned()
-            .and_then(|value| serde_json::from_value(value).ok()),
-        config: credential.get("config").cloned(),
-    };
+    let provider_id = model.provider_id.clone();
+    let model_name = model.name.clone();
+    let provider_label = credential.label.clone();
+    let api_key = credential.api_key.clone().unwrap_or_default();
+    let cred: ProviderCredential = credential.clone();
 
     let streaming_enabled = effective_streaming_enabled(&cred, streaming_enabled_setting);
 
