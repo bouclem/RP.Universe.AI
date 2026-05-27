@@ -436,6 +436,26 @@ pub(super) fn load_engine(
         }
     }
     if should_reload {
+        if guard.model.is_some() {
+            guard.model = None;
+            guard.model_path = None;
+            guard.model_params_key = None;
+            guard.backend_path_used = None;
+            guard.actual_gpu_layers_used = None;
+            guard.gpu_load_fallback_activated = false;
+            guard.gpu_load_fallback_reason = None;
+            guard.smart_gpu_layer_fallback_activated = false;
+            guard.mtmd_ctx = None;
+            guard.mmproj_path = None;
+            if let Some(app) = app {
+                log_info(
+                    app,
+                    "llama_cpp",
+                    "Dropped previously loaded model before reload to free VRAM",
+                );
+            }
+        }
+
         let mut backend_path_used = "cpu".to_string();
         let mut actual_gpu_layers_used = None;
         let mut gpu_load_fallback_activated = false;
