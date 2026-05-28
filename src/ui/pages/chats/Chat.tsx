@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { Routes } from "../../navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { ArrowLeftRight, ChevronDown, NotebookPen, User, X } from "lucide-react";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
@@ -153,6 +154,7 @@ export function ChatConversationPage() {
   const sessionId = searchParams.get("sessionId") || undefined;
   const jumpToMessageId = searchParams.get("jumpToMessage");
   const {
+    character: layoutCharacter,
     backgroundImageData,
     backgroundImageLoading,
     isBackgroundLight,
@@ -553,12 +555,17 @@ export function ChatConversationPage() {
       character,
       persona: chatController.persona,
       session: chatController.session,
+      hasBackground: !!backgroundImageData,
       personas: widgetPersonas,
       models: widgetModels,
       currentModelId: character?.defaultModelId ?? null,
       fallbackModelId: character?.fallbackModelId ?? null,
       swapPlacesActive: swapPlaces,
+      voiceAutoplayActive:
+        chatController.session?.voiceAutoplay ?? character?.voiceAutoplay ?? false,
       canRegenerate: !!lastAssistantMessage && !chatController.sending,
+      canContinue: messages.length > 0 && !chatController.sending,
+      isGenerating: chatController.sending,
       onSelectPersona: async (personaId) => {
         const current = chatController.session;
         if (!current) return;
@@ -570,13 +577,16 @@ export function ChatConversationPage() {
       },
       onSelectModel: async (modelId) => {
         if (!character) return;
-        await saveCharacter({ id: character.id, defaultModelId: modelId });
+        await saveCharacter({ id: character.id, defaultModelId: modelId ?? null });
         reloadCharacter();
       },
       onSelectFallbackModel: async (modelId) => {
         if (!character) return;
         await saveCharacter({ id: character.id, fallbackModelId: modelId });
         reloadCharacter();
+      },
+      onAuthorNoteSaved: (next) => {
+        if (next) setSessionForHeader(next);
       },
       onRegenerate: async () => {
         if (lastAssistantMessage) {
@@ -587,6 +597,37 @@ export function ChatConversationPage() {
       onNewSession: () => {
         if (!characterId) return;
         navigate(`/chat/${characterId}`);
+      },
+      onContinue: async () => {
+        await chatController.handleContinue({ swapPlaces });
+      },
+      onAbort: async () => {
+        await chatController.handleAbort();
+      },
+      onViewHistory: () => {
+        if (!characterId) return;
+        navigate(`/chat/${characterId}/history`);
+      },
+      onOpenMemories: () => {
+        if (!characterId) return;
+        const sid = chatController.session?.id;
+        navigate(
+          character?.mode === "companion"
+            ? Routes.chatCompanionMemories(characterId, sid)
+            : Routes.chatMemories(characterId, sid),
+        );
+      },
+      onOpenSearch: () => {
+        if (!characterId) return;
+        navigate(Routes.chatSearch(characterId, chatController.session?.id));
+      },
+      onToggleVoiceAutoplay: async () => {
+        const current = chatController.session;
+        if (!current) return;
+        const active = current.voiceAutoplay ?? character?.voiceAutoplay ?? false;
+        const next = { ...current, voiceAutoplay: !active, updatedAt: Date.now() };
+        await saveSession(next);
+        setSessionForHeader(next);
       },
     };
   }, [
@@ -599,23 +640,25 @@ export function ChatConversationPage() {
     characterId,
     navigate,
     reloadCharacter,
+    backgroundImageData,
   ]);
 
   const persistWidgetSlots = useCallback(
     async (slots: WidgetSlots) => {
-      if (!character) return;
-      const fresh = await getCharacter(character.id);
-      const existing = (fresh?.chatAppearance ?? character.chatAppearance ?? {}) as Record<
+      const target = layoutCharacter ?? character;
+      if (!target) return;
+      const fresh = await getCharacter(target.id);
+      const existing = (fresh?.chatAppearance ?? target.chatAppearance ?? {}) as Record<
         string,
         unknown
       >;
-      await updateCharacterChatAppearance(character.id, {
+      await updateCharacterChatAppearance(target.id, {
         ...existing,
         chatWidgetSlots: slots,
       });
       reloadCharacter();
     },
-    [character, reloadCharacter],
+    [layoutCharacter, character, reloadCharacter],
   );
 
   const beetrootRain = useBeetrootRain();
@@ -3398,11 +3441,11 @@ export function ChatConversationPage() {
       )}
 
       {/* Desktop Appearance Drawer */}
-      {!isMobile && character && (
+      {!isMobile && (layoutCharacter ?? character) && (
         <ChatAppearanceDrawer
           open={appearanceDrawerOpen}
           onClose={() => setAppearanceDrawerOpen(false)}
-          character={character}
+          character={(layoutCharacter ?? character)!}
           onCharacterUpdate={() => reloadCharacter()}
           setDraftOverride={setDraftAppearanceOverride}
         />

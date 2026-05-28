@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { ImagePlus, Loader2, Upload } from "lucide-react";
 import { BottomMenu } from "../../../../../components";
 import type {
   BoxNode,
@@ -7,12 +9,23 @@ import type {
   ButtonNode,
   DividerNode,
   ImageNode,
+  ImageShape,
   ImageSource,
   ScratchPadNode,
   SelectorKind,
   SelectorNode,
   WidgetNode,
 } from "../../../../../../core/storage/chatWidgetSchemas";
+import {
+  convertFilePathToDataUrl,
+  convertToImageRef,
+} from "../../../../../../core/storage/images";
+import {
+  listImageLibraryItems,
+  type ImageLibraryItem,
+} from "../../../../../../core/storage/repo";
+import { useImageData } from "../../../../../hooks/useImageData";
+import { cn } from "../../../../../design-tokens";
 import { WIDGET_TYPE_LABEL } from "./widgetFactories";
 
 interface FieldProps {
@@ -302,29 +315,175 @@ function ImageForm({
           }}
         />
       </Field>
-      {(sourceKind === "library" || sourceKind === "upload") && (
-        <Field
-          label="Image path"
-          hint="Paste an image ID or path. Picker UI lands in a follow-up."
-        >
-          <input
-            type="text"
-            className={TEXT_INPUT_CLASS}
-            value={
-              node.source.kind === "library" || node.source.kind === "upload"
-                ? node.source.path
-                : ""
-            }
-            onChange={(e) =>
-              updateSource({
-                kind: sourceKind,
-                path: e.target.value,
-              } as ImageSource)
-            }
-          />
-        </Field>
+      {sourceKind === "upload" && (
+        <UploadField
+          path={node.source.kind === "upload" ? node.source.path : ""}
+          onPick={(id) => updateSource({ kind: "upload", path: id })}
+        />
       )}
+      {sourceKind === "library" && (
+        <LibraryField
+          path={node.source.kind === "library" ? node.source.path : ""}
+          onPick={(id) => updateSource({ kind: "library", path: id })}
+        />
+      )}
+      <Field label="Shape">
+        <Segmented<ImageShape>
+          value={node.shape ?? "auto"}
+          options={[
+            { value: "auto", label: "Auto" },
+            { value: "square", label: "Square" },
+            { value: "wide", label: "Wide" },
+            { value: "circle", label: "Circle" },
+          ]}
+          onChange={(v) => setNode({ ...node, shape: v })}
+        />
+      </Field>
     </>
+  );
+}
+
+function UploadField({
+  path,
+  onPick,
+}: {
+  path: string;
+  onPick: (imageId: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const previewUrl = useImageData(path || null);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("read failed"));
+        reader.readAsDataURL(file);
+      });
+      const id = await convertToImageRef(dataUrl);
+      if (id) onPick(id);
+    } catch (err) {
+      console.error("Widget image upload failed:", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Field label="Upload">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => void handleFile(e.target.files?.[0])}
+      />
+      <div className="flex items-center gap-3">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-fg/10 bg-fg/5">
+          {previewUrl ? (
+            <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-fg/30">
+              <ImagePlus size={18} />
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-lg border border-fg/15 bg-fg/5 px-3 py-2 text-sm text-fg/80 transition hover:bg-fg/10 disabled:opacity-50"
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+          {path ? "Replace image" : "Choose file"}
+        </button>
+      </div>
+    </Field>
+  );
+}
+
+function LibraryField({
+  path,
+  onPick,
+}: {
+  path: string;
+  onPick: (imageId: string) => void;
+}) {
+  const [items, setItems] = useState<ImageLibraryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    void listImageLibraryItems()
+      .then((list) => {
+        if (!cancelled) setItems(list);
+      })
+      .catch((err) => console.error("Failed to load image library:", err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handlePick = async (item: ImageLibraryItem) => {
+    setBusyId(item.id);
+    try {
+      const dataUrl = await convertFilePathToDataUrl(item.filePath);
+      if (!dataUrl) return;
+      const id = await convertToImageRef(dataUrl);
+      if (id) onPick(id);
+    } catch (err) {
+      console.error("Failed to pick library image:", err);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <Field label="Library" hint={path ? "Tap an image to replace." : undefined}>
+      {loading ? (
+        <div className="flex items-center gap-2 px-1 py-3 text-[12px] text-fg/40">
+          <Loader2 size={14} className="animate-spin" /> Loading…
+        </div>
+      ) : items.length === 0 ? (
+        <p className="px-1 py-3 text-[12px] italic text-fg/40">
+          No images in your library yet.
+        </p>
+      ) : (
+        <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto pr-1">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => void handlePick(item)}
+              className={cn(
+                "relative aspect-square overflow-hidden rounded-lg border transition",
+                "border-fg/10 hover:border-accent/50",
+              )}
+            >
+              <img
+                src={convertFileSrc(item.filePath)}
+                alt={item.filename}
+                className="h-full w-full object-cover"
+              />
+              {busyId === item.id && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <Loader2 size={16} className="animate-spin text-white" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </Field>
   );
 }
 
@@ -360,6 +519,7 @@ function SelectorForm({
             { value: "persona", label: "Persona" },
             { value: "model", label: "Model" },
             { value: "fallback_model", label: "Fallback" },
+            { value: "author_note", label: "Author's note" },
           ]}
           onChange={(v) => setNode({ ...node, kind: v })}
         />
@@ -398,8 +558,14 @@ function ButtonForm({
           value={node.action}
           options={[
             { value: "regenerate", label: "Regenerate" },
+            { value: "continue", label: "Continue" },
             { value: "swap_places", label: "Swap places" },
+            { value: "abort", label: "Stop" },
             { value: "new_session", label: "New session" },
+            { value: "view_history", label: "History" },
+            { value: "open_memories", label: "Memories" },
+            { value: "open_search", label: "Search" },
+            { value: "toggle_voice_autoplay", label: "Voice" },
           ]}
           onChange={(v) => setNode({ ...node, action: v })}
         />

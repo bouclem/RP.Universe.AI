@@ -1,7 +1,12 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Check, Cpu, User, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ChevronRight, Cpu, NotebookPen, TriangleAlert, User } from "lucide-react";
 import type { SelectorNode } from "../../../../../core/storage/chatWidgetSchemas";
-import { BottomMenu, MenuButton } from "../../../../components";
+import { cn, interactive, radius, typography } from "../../../../design-tokens";
+import { AvatarImage } from "../../../../components/AvatarImage";
+import { ModelSelectionBottomMenu } from "../../../../components/ModelSelectionBottomMenu";
+import { useAvatar } from "../../../../hooks/useAvatar";
+import { PersonaSelector } from "../../../group-chats/components/settings";
+import { AuthorNoteBottomMenu } from "../AuthorNoteBottomMenu";
 import { useWidgetContext } from "./WidgetContext";
 
 interface WidgetSelectorProps {
@@ -12,122 +17,217 @@ const DEFAULT_LABEL: Record<SelectorNode["kind"], string> = {
   persona: "Persona",
   model: "Model",
   fallback_model: "Fallback model",
+  author_note: "Author's note",
 };
-
-interface SelectorOption {
-  id: string;
-  label: string;
-  sublabel?: string;
-  isCurrent: boolean;
-}
 
 export function WidgetSelector({ node }: WidgetSelectorProps) {
   const ctx = useWidgetContext();
   const [open, setOpen] = useState(false);
-
-  const { currentLabel, options, onSelect } = useMemo(() => {
-    if (node.kind === "persona") {
-      const currentId = ctx.persona?.id ?? null;
-      const opts: SelectorOption[] = ctx.personas.map((p) => ({
-        id: p.id,
-        label: p.title,
-        sublabel: p.nickname ?? undefined,
-        isCurrent: p.id === currentId,
-      }));
-      return {
-        currentLabel: ctx.persona?.title ?? "None",
-        options: opts,
-        onSelect: (id: string | null) => void ctx.onSelectPersona(id),
-      };
-    }
-    if (node.kind === "model") {
-      const currentId = ctx.currentModelId;
-      const opts: SelectorOption[] = ctx.models.map((m) => ({
-        id: m.id,
-        label: m.name,
-        sublabel: m.providerId ?? undefined,
-        isCurrent: m.id === currentId,
-      }));
-      const current = ctx.models.find((m) => m.id === currentId);
-      return {
-        currentLabel: current?.name ?? "Not set",
-        options: opts,
-        onSelect: (id: string | null) => {
-          if (id != null) void ctx.onSelectModel(id);
-        },
-      };
-    }
-    const currentId = ctx.fallbackModelId;
-    const opts: SelectorOption[] = ctx.models.map((m) => ({
-      id: m.id,
-      label: m.name,
-      sublabel: m.providerId ?? undefined,
-      isCurrent: m.id === currentId,
-    }));
-    const current = ctx.models.find((m) => m.id === currentId);
-    return {
-      currentLabel: current?.name ?? "None",
-      options: opts,
-      onSelect: (id: string | null) => void ctx.onSelectFallbackModel(id),
-    };
-  }, [ctx, node.kind]);
-
   const label = node.title ?? DEFAULT_LABEL[node.kind];
-  const allowClear = node.kind === "persona" || node.kind === "fallback_model";
+
+  if (node.kind === "persona") {
+    return (
+      <PersonaSelectorWidget
+        label={label}
+        open={open}
+        setOpen={setOpen}
+      />
+    );
+  }
+
+  if (node.kind === "author_note") {
+    const note = ctx.session?.authorNote?.trim();
+    return (
+      <>
+        <ChipRow
+          icon={<NotebookPen className="h-4 w-4" />}
+          label={label}
+          value={note ? note : "Add a note"}
+          onClick={() => setOpen(true)}
+        />
+        <AuthorNoteBottomMenu
+          isOpen={open}
+          onClose={() => setOpen(false)}
+          session={ctx.session}
+          onSaved={ctx.onAuthorNoteSaved}
+        />
+      </>
+    );
+  }
+
+  const isFallback = node.kind === "fallback_model";
+  const currentId = isFallback ? ctx.fallbackModelId : ctx.currentModelId;
+  const current = ctx.models.find((m) => m.id === currentId);
+  const value = current?.displayName ?? current?.name ?? (isFallback ? "None" : "App default");
+  const onSelect = isFallback ? ctx.onSelectFallbackModel : ctx.onSelectModel;
 
   return (
-    <section className="flex flex-col gap-1.5">
-      <header className="flex flex-col gap-0.5 px-0.5">
-        <h3 className="text-sm font-semibold text-fg/75">{label}</h3>
-        {node.description && (
-          <p className="text-[11px] leading-snug text-fg/45">{node.description}</p>
-        )}
-      </header>
-      <button
-        type="button"
+    <>
+      <ChipRow
+        icon={isFallback ? <TriangleAlert className="h-4 w-4" /> : <Cpu className="h-4 w-4" />}
+        label={label}
+        value={value}
         onClick={() => setOpen(true)}
-        className="flex items-center justify-between gap-2 rounded-2xl border border-fg/12 bg-fg/4 px-3 py-2.5 text-left text-sm text-fg/80 transition hover:bg-fg/8"
-      >
-        <span className="min-w-0 flex-1 truncate">{currentLabel}</span>
-        <ChevronDown size={14} strokeWidth={2.2} className="shrink-0 text-fg/50" />
-      </button>
-      <BottomMenu isOpen={open} onClose={() => setOpen(false)} title={label}>
-        <div className="flex flex-col gap-2">
-          {allowClear && (
-            <MenuButton
-              icon={X}
-              title="Clear selection"
-              onClick={() => {
-                onSelect(null);
-                setOpen(false);
-              }}
-            />
-          )}
-          {options.length === 0 ? (
-            <div className="px-4 py-3 text-[12px] italic text-fg/40">
-              No options available.
+      />
+      <ModelSelectionBottomMenu
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title={label}
+        models={ctx.models}
+        selectedModelIds={currentId ? [currentId] : []}
+        searchPlaceholder="Search models..."
+        theme="dark"
+        tone="emerald"
+        includeExitIcon={false}
+        location="bottom"
+        onSelectModel={(modelId) => {
+          void onSelect(modelId);
+          setOpen(false);
+        }}
+        clearOption={{
+          label: isFallback ? "No fallback model" : "Use global default model",
+          icon: Cpu,
+          selected: !currentId,
+          onClick: () => {
+            void onSelect(null);
+            setOpen(false);
+          },
+        }}
+      />
+    </>
+  );
+}
+
+function PersonaSelectorWidget({
+  label,
+  open,
+  setOpen,
+}: {
+  label: string;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+}) {
+  const ctx = useWidgetContext();
+  const session = ctx.session;
+  const personas = ctx.personas;
+
+  const selectedPersonaId = (() => {
+    if (!session) return undefined;
+    if (session.personaDisabled || session.personaId === "") return "";
+    if (session.personaId) return session.personaId;
+    return personas.find((p) => p.isDefault)?.id;
+  })();
+
+  const personaForAvatar =
+    selectedPersonaId && selectedPersonaId !== ""
+      ? (personas.find((p) => p.id === selectedPersonaId) ?? null)
+      : null;
+  const avatarUrl = useAvatar(
+    "persona",
+    personaForAvatar?.id ?? "",
+    personaForAvatar?.avatarPath,
+    "round",
+  );
+
+  const value = (() => {
+    if (!session) return "Open a chat session first";
+    if (session.personaDisabled || session.personaId === "") return "None";
+    if (!session.personaId) {
+      const def = personas.find((p) => p.isDefault);
+      if (!def) return "None";
+      return def.nickname ? `${def.title} (${def.nickname}) (default)` : `${def.title} (default)`;
+    }
+    const p = personas.find((p) => p.id === session.personaId);
+    if (!p) return "Custom persona";
+    return p.nickname ? `${p.title} (${p.nickname})` : p.title;
+  })();
+
+  return (
+    <>
+      <ChipRow
+        icon={
+          avatarUrl ? (
+            <div className="h-full w-full overflow-hidden rounded-full">
+              <AvatarImage
+                src={avatarUrl}
+                alt={personaForAvatar?.title ?? "Persona"}
+                crop={personaForAvatar?.avatarCrop}
+                applyCrop
+              />
             </div>
           ) : (
-            options.map((opt) => (
-              <MenuButton
-                key={opt.id}
-                icon={node.kind === "persona" ? User : Cpu}
-                title={opt.label}
-                description={opt.sublabel}
-                rightElement={
-                  opt.isCurrent ? (
-                    <Check className="h-4 w-4 text-accent" />
-                  ) : undefined
-                }
-                onClick={() => {
-                  onSelect(opt.id);
-                  setOpen(false);
-                }}
-              />
-            ))
+            <User className="h-4 w-4" />
+          )
+        }
+        label={label}
+        value={value}
+        onClick={() => setOpen(true)}
+      />
+      <PersonaSelector
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        personas={personas}
+        selectedPersonaId={selectedPersonaId}
+        onSelect={(personaId) => {
+          void ctx.onSelectPersona(personaId);
+          setOpen(false);
+        }}
+      />
+    </>
+  );
+}
+
+interface ChipRowProps {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  onClick: () => void;
+}
+
+function ChipRow({ icon, label, value, onClick }: ChipRowProps) {
+  const { hasBackground } = useWidgetContext();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group flex min-h-14 w-full items-center justify-between",
+        radius.md,
+        "border p-4 text-left",
+        hasBackground
+          ? "border-fg/12 bg-surface-el/85 backdrop-blur-md"
+          : "border-fg/10 bg-surface-el",
+        interactive.transition.default,
+        interactive.active.scale,
+        "hover:border-fg/20 hover:bg-fg/6",
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className={cn(
+            "flex h-10 w-10 items-center justify-center overflow-hidden",
+            radius.full,
+            "border border-fg/15 bg-fg/8 text-fg/80",
           )}
+        >
+          {icon}
         </div>
-      </BottomMenu>
-    </section>
+        <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              typography.overline.size,
+              typography.overline.weight,
+              typography.overline.tracking,
+              typography.overline.transform,
+              "text-fg/50",
+            )}
+          >
+            {label}
+          </div>
+          <div className={cn(typography.bodySmall.size, "truncate text-fg")}>{value}</div>
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-fg/40 transition-colors group-hover:text-fg/80" />
+    </button>
   );
 }

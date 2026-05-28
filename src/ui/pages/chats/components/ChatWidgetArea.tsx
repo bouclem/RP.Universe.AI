@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { ChatWidgetLayout } from "../utils/chatWidgetLayout";
 import type { WidgetNode } from "../../../../core/storage/schemas";
+import { cn } from "../../../design-tokens";
 import { WidgetList } from "./widgets";
 
 interface WidgetAreaPanelProps {
@@ -11,7 +12,10 @@ interface WidgetAreaPanelProps {
 function WidgetAreaPanel({ side, nodes }: WidgetAreaPanelProps) {
   return (
     <aside
-      className="relative z-10 flex flex-1 basis-0 flex-col self-stretch"
+      className={cn(
+        "relative z-10 flex flex-1 basis-0 flex-col self-stretch",
+        side === "left" ? "border-r border-fg/10" : "border-l border-fg/10",
+      )}
       style={{ minWidth: 0 }}
       aria-label={`${side} widget area`}
     >

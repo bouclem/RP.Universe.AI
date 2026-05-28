@@ -1,38 +1,38 @@
-import { useAvatar } from "../../../../hooks/useAvatar";
+import { cn } from "../../../../design-tokens";
+import { CharacterAvatar } from "../CharacterAvatar";
 import { useWidgetContext } from "./WidgetContext";
+import { widgetCardClass } from "./widgetSurface";
 
 export function WidgetCharacterInfo() {
-  const { character } = useWidgetContext();
-  const avatarUrl = useAvatar(
-    "character",
-    character?.id,
-    character?.avatarPath,
-    "round",
-  );
+  const { character, hasBackground } = useWidgetContext();
 
   if (!character) {
     return (
-      <section className="rounded-2xl border border-fg/10 bg-fg/3 px-3 py-3 text-[12px] italic text-fg/40">
+      <section
+        className={cn(
+          "rounded-xl border px-3 py-3 text-[12px] italic text-fg/40",
+          widgetCardClass(hasBackground),
+        )}
+      >
         No character loaded.
       </section>
     );
   }
 
   return (
-    <section className="flex flex-col gap-2 rounded-2xl border border-fg/12 bg-fg/4 px-3 py-3">
+    <section
+      className={cn(
+        "flex flex-col gap-2 rounded-xl border px-3 py-3",
+        widgetCardClass(hasBackground),
+      )}
+    >
       <header className="flex items-center gap-3">
-        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-fg/10">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={character.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-fg/40">
-              {character.name.slice(0, 1).toUpperCase()}
-            </div>
+        <div
+          className={cn(
+            "relative h-12 w-12 shrink-0 overflow-hidden rounded-full ring-1 ring-white/15",
           )}
+        >
+          <CharacterAvatar character={character} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-fg/85">
@@ -46,7 +46,7 @@ export function WidgetCharacterInfo() {
         </div>
       </header>
       {character.description && (
-        <p className="text-[12px] leading-snug text-fg/65 line-clamp-6">
+        <p className="line-clamp-6 text-[12px] leading-relaxed text-fg/65">
           {character.description}
         </p>
       )}

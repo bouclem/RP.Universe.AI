@@ -13,7 +13,7 @@ export function WidgetEmptyState({ editing, onAdd }: WidgetEmptyStateProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={`mx-3 mb-4 flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl px-4 py-8 text-center ${
+      className={`mx-3 mb-4 flex flex-1 flex-col items-center justify-center gap-2 rounded-xl px-4 py-8 text-center ${
         editing ? "border border-dashed border-fg/15 bg-fg/[0.02]" : ""
       }`}
     >

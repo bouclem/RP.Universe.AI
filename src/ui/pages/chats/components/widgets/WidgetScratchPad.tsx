@@ -1,11 +1,15 @@
 import type { ScratchPadNode } from "../../../../../core/storage/chatWidgetSchemas";
+import { cn } from "../../../../design-tokens";
 import { MarkdownRenderer } from "../MarkdownRenderer";
+import { useWidgetContext } from "./WidgetContext";
+import { widgetCardClass } from "./widgetSurface";
 
 interface WidgetScratchPadProps {
   node: ScratchPadNode;
 }
 
 export function WidgetScratchPad({ node }: WidgetScratchPadProps) {
+  const { hasBackground } = useWidgetContext();
   const content = node.content?.trim() ?? "";
   return (
     <section className="flex flex-col gap-1.5">
@@ -19,7 +23,12 @@ export function WidgetScratchPad({ node }: WidgetScratchPadProps) {
           )}
         </header>
       )}
-      <div className="rounded-2xl border border-fg/10 bg-fg/3 px-3 py-2 text-sm text-fg/80">
+      <div
+        className={cn(
+          "rounded-xl border px-3 py-2 text-sm text-fg/80",
+          widgetCardClass(hasBackground),
+        )}
+      >
         {content ? (
           <MarkdownRenderer content={content} />
         ) : (

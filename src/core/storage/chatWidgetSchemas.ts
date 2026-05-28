@@ -8,15 +8,26 @@ export type BoxVariant =
   | "success"
   | "danger";
 
-export type SelectorKind = "persona" | "model" | "fallback_model";
+export type SelectorKind = "persona" | "model" | "fallback_model" | "author_note";
 
-export type ButtonAction = "regenerate" | "swap_places" | "new_session";
+export type ButtonAction =
+  | "regenerate"
+  | "swap_places"
+  | "new_session"
+  | "continue"
+  | "abort"
+  | "view_history"
+  | "open_memories"
+  | "open_search"
+  | "toggle_voice_autoplay";
 
 export type ImageSource =
   | { kind: "character_avatar" }
   | { kind: "persona_avatar" }
   | { kind: "library"; path: string }
   | { kind: "upload"; path: string };
+
+export type ImageShape = "auto" | "square" | "wide" | "circle";
 
 interface NodeBase {
   id: string;
@@ -55,6 +66,7 @@ export interface ImageNode extends NodeBase {
   title?: string;
   description?: string;
   source: ImageSource;
+  shape?: ImageShape;
 }
 
 export interface SelectorNode extends NodeBase {
@@ -126,18 +138,29 @@ export const widgetNodeSchema: z.ZodType<WidgetNode> = z.lazy(() =>
       title: z.string().optional(),
       description: z.string().optional(),
       source: imageSourceSchema,
+      shape: z.enum(["auto", "square", "wide", "circle"]).optional(),
     }),
     z.object({
       id: z.string(),
       type: z.literal("selector"),
-      kind: z.enum(["persona", "model", "fallback_model"]),
+      kind: z.enum(["persona", "model", "fallback_model", "author_note"]),
       title: z.string().optional(),
       description: z.string().optional(),
     }),
     z.object({
       id: z.string(),
       type: z.literal("button"),
-      action: z.enum(["regenerate", "swap_places", "new_session"]),
+      action: z.enum([
+        "regenerate",
+        "swap_places",
+        "new_session",
+        "continue",
+        "abort",
+        "view_history",
+        "open_memories",
+        "open_search",
+        "toggle_voice_autoplay",
+      ]),
       title: z.string().optional(),
       description: z.string().optional(),
     }),

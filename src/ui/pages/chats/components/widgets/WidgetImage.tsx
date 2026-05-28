@@ -1,14 +1,17 @@
 import type { ImageNode } from "../../../../../core/storage/chatWidgetSchemas";
+import { cn } from "../../../../design-tokens";
 import { useAvatar } from "../../../../hooks/useAvatar";
 import { useImageData } from "../../../../hooks/useImageData";
 import { useWidgetContext } from "./WidgetContext";
+import { widgetCardClass } from "./widgetSurface";
 
 interface WidgetImageProps {
   node: ImageNode;
 }
 
 export function WidgetImage({ node }: WidgetImageProps) {
-  const { character, persona } = useWidgetContext();
+  const { character, persona, hasBackground } = useWidgetContext();
+  const shape = node.shape ?? "auto";
   const characterAvatarUrl = useAvatar(
     "character",
     character?.id,
@@ -57,11 +60,33 @@ export function WidgetImage({ node }: WidgetImageProps) {
           )}
         </header>
       )}
-      <div className="overflow-hidden rounded-2xl border border-fg/10 bg-fg/3">
+      <div
+        className={cn(
+          "overflow-hidden border",
+          shape === "circle" ? "mx-auto rounded-full" : "rounded-xl",
+          shape === "circle" && "aspect-square w-1/2 max-w-[160px]",
+          widgetCardClass(hasBackground),
+        )}
+      >
         {url ? (
-          <img src={url} alt={alt} className="block h-auto w-full object-cover" />
+          <img
+            src={url}
+            alt={alt}
+            className={cn(
+              "block w-full",
+              shape === "auto" ? "h-auto object-cover" : "h-full object-cover",
+              shape === "square" && "aspect-square",
+              shape === "wide" && "aspect-video",
+              shape === "circle" && "aspect-square",
+            )}
+          />
         ) : (
-          <div className="flex aspect-video items-center justify-center text-[12px] italic text-fg/35">
+          <div
+            className={cn(
+              "flex items-center justify-center text-[12px] italic text-fg/35",
+              shape === "circle" ? "aspect-square" : "aspect-video",
+            )}
+          >
             No image
           </div>
         )}

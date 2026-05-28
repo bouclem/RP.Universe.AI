@@ -2,19 +2,30 @@ import type {
   BoxNode,
   BoxVariant,
 } from "../../../../../core/storage/chatWidgetSchemas";
+import { cn } from "../../../../design-tokens";
 import { WidgetRenderer } from "./WidgetRenderer";
+import { useWidgetContext } from "./WidgetContext";
 
 interface WidgetBoxProps {
   node: BoxNode;
 }
 
 const VARIANT_STYLES: Record<BoxVariant, string> = {
-  default: "border-fg/12 bg-fg/4",
-  subtle: "border-fg/8 bg-fg/2",
-  info: "border-info/30 bg-info/8",
-  warning: "border-warning/30 bg-warning/8",
-  success: "border-accent/30 bg-accent/8",
-  danger: "border-danger/30 bg-danger/8",
+  default: "border-fg/10 bg-fg/5",
+  subtle: "border-fg/8 bg-fg/[0.03]",
+  info: "border-info/30 bg-info/10",
+  warning: "border-warning/30 bg-warning/10",
+  success: "border-accent/30 bg-accent/10",
+  danger: "border-danger/30 bg-danger/10",
+};
+
+const VARIANT_STYLES_BG: Record<BoxVariant, string> = {
+  default: "border-fg/12 bg-surface-el/80",
+  subtle: "border-fg/10 bg-surface-el/60",
+  info: "border-info/40 bg-info/25",
+  warning: "border-warning/40 bg-warning/25",
+  success: "border-accent/40 bg-accent/25",
+  danger: "border-danger/40 bg-danger/25",
 };
 
 const VARIANT_TITLE: Record<BoxVariant, string> = {
@@ -27,10 +38,16 @@ const VARIANT_TITLE: Record<BoxVariant, string> = {
 };
 
 export function WidgetBox({ node }: WidgetBoxProps) {
+  const { hasBackground } = useWidgetContext();
   const variant: BoxVariant = node.variant ?? "default";
   return (
     <section
-      className={`flex flex-col gap-2 rounded-2xl border px-3 py-3 ${VARIANT_STYLES[variant]}`}
+      className={cn(
+        "flex flex-col gap-2 rounded-xl border px-3 py-3",
+        hasBackground
+          ? cn(VARIANT_STYLES_BG[variant], "backdrop-blur-md")
+          : VARIANT_STYLES[variant],
+      )}
     >
       {(node.title || node.description) && (
         <header className="flex flex-col gap-0.5">

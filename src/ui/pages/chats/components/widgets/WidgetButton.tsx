@@ -1,6 +1,17 @@
 import { useMemo } from "react";
-import { ArrowLeftRight, Plus, RefreshCw } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ArrowRightToLine,
+  Brain,
+  History,
+  Plus,
+  RefreshCw,
+  Search,
+  Square,
+  Volume2,
+} from "lucide-react";
 import type { ButtonNode } from "../../../../../core/storage/chatWidgetSchemas";
+import { cn, interactive } from "../../../../design-tokens";
 import { useWidgetContext } from "./WidgetContext";
 
 interface WidgetButtonProps {
@@ -11,16 +22,40 @@ const DEFAULT_LABEL: Record<ButtonNode["action"], string> = {
   regenerate: "Regenerate last reply",
   swap_places: "Swap places",
   new_session: "New session",
+  continue: "Continue",
+  abort: "Stop generating",
+  view_history: "View chat history",
+  open_memories: "Memories",
+  open_search: "Search chat",
+  toggle_voice_autoplay: "Voice autoplay",
 };
 
 function ActionIcon({ action }: { action: ButtonNode["action"] }) {
-  if (action === "regenerate") return <RefreshCw size={14} strokeWidth={2.2} />;
-  if (action === "swap_places") return <ArrowLeftRight size={14} strokeWidth={2.2} />;
-  return <Plus size={14} strokeWidth={2.2} />;
+  switch (action) {
+    case "regenerate":
+      return <RefreshCw size={14} strokeWidth={2.2} />;
+    case "swap_places":
+      return <ArrowLeftRight size={14} strokeWidth={2.2} />;
+    case "new_session":
+      return <Plus size={14} strokeWidth={2.2} />;
+    case "continue":
+      return <ArrowRightToLine size={14} strokeWidth={2.2} />;
+    case "abort":
+      return <Square size={13} strokeWidth={2.4} />;
+    case "view_history":
+      return <History size={14} strokeWidth={2.2} />;
+    case "open_memories":
+      return <Brain size={14} strokeWidth={2.2} />;
+    case "open_search":
+      return <Search size={14} strokeWidth={2.2} />;
+    case "toggle_voice_autoplay":
+      return <Volume2 size={14} strokeWidth={2.2} />;
+  }
 }
 
 export function WidgetButton({ node }: WidgetButtonProps) {
   const ctx = useWidgetContext();
+  const hasBackground = ctx.hasBackground;
   const { handler, disabled, isToggle, toggled } = useMemo(() => {
     switch (node.action) {
       case "regenerate":
@@ -44,6 +79,48 @@ export function WidgetButton({ node }: WidgetButtonProps) {
           isToggle: false,
           toggled: false,
         };
+      case "continue":
+        return {
+          handler: ctx.onContinue,
+          disabled: !ctx.canContinue,
+          isToggle: false,
+          toggled: false,
+        };
+      case "abort":
+        return {
+          handler: ctx.onAbort,
+          disabled: !ctx.isGenerating,
+          isToggle: false,
+          toggled: false,
+        };
+      case "view_history":
+        return {
+          handler: ctx.onViewHistory,
+          disabled: !ctx.character,
+          isToggle: false,
+          toggled: false,
+        };
+      case "open_memories":
+        return {
+          handler: ctx.onOpenMemories,
+          disabled: !ctx.character || !ctx.session,
+          isToggle: false,
+          toggled: false,
+        };
+      case "open_search":
+        return {
+          handler: ctx.onOpenSearch,
+          disabled: !ctx.character,
+          isToggle: false,
+          toggled: false,
+        };
+      case "toggle_voice_autoplay":
+        return {
+          handler: ctx.onToggleVoiceAutoplay,
+          disabled: !ctx.session,
+          isToggle: true,
+          toggled: ctx.voiceAutoplayActive,
+        };
     }
   }, [ctx, node.action]);
 
@@ -54,13 +131,20 @@ export function WidgetButton({ node }: WidgetButtonProps) {
         type="button"
         onClick={() => void handler()}
         disabled={disabled}
-        className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-left text-sm transition ${
+        className={cn(
+          "flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-sm",
+          interactive.transition.fast,
           disabled
-            ? "cursor-not-allowed border-fg/8 bg-fg/2 text-fg/30"
+            ? "cursor-not-allowed border-fg/8 bg-fg/[0.03] text-fg/30"
             : isToggle && toggled
-              ? "border-accent/40 bg-accent/12 text-accent"
-              : "border-fg/12 bg-fg/4 text-fg/80 hover:bg-fg/8"
-        }`}
+              ? "border-accent/40 bg-accent/15 text-accent"
+              : cn(
+                  hasBackground
+                    ? "border-fg/12 bg-surface-el/85 backdrop-blur-md text-fg/80 hover:border-fg/30 hover:bg-surface-el"
+                    : "border-fg/15 bg-fg/5 text-fg/80 hover:border-fg/30 hover:bg-fg/10",
+                  interactive.active.scale,
+                ),
+        )}
       >
         <span className="min-w-0 flex-1 truncate">{label}</span>
         <span className="shrink-0">

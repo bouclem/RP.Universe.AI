@@ -1,16 +1,25 @@
 import { Reorder, useDragControls } from "framer-motion";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { WidgetNode } from "../../../../../core/storage/schemas";
+import type { BoxNode } from "../../../../../core/storage/chatWidgetSchemas";
 import { WidgetRenderer } from "./WidgetRenderer";
+import { WidgetEditList } from "./WidgetEditList";
 
 interface WidgetEditWrapperProps {
   node: WidgetNode;
   onEdit: () => void;
   onDelete: () => void;
+  onChildrenChange?: (children: WidgetNode[]) => void;
 }
 
-export function WidgetEditWrapper({ node, onEdit, onDelete }: WidgetEditWrapperProps) {
+export function WidgetEditWrapper({
+  node,
+  onEdit,
+  onDelete,
+  onChildrenChange,
+}: WidgetEditWrapperProps) {
   const controls = useDragControls();
+  const isEditableBox = node.type === "box" && !!onChildrenChange;
   return (
     <Reorder.Item
       value={node}
@@ -24,23 +33,23 @@ export function WidgetEditWrapper({ node, onEdit, onDelete }: WidgetEditWrapperP
       exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.14 } }}
       whileDrag={{ zIndex: 30, boxShadow: "0 16px 32px rgba(0,0,0,0.28)" }}
       transition={{ layout: { duration: 0.18, ease: "easeOut" }, duration: 0.2, ease: "easeOut" }}
-      className="relative rounded-2xl border border-dashed border-fg/20 bg-fg/[0.02] p-2"
+      className="relative rounded-xl border border-dashed border-fg/30 bg-black/30 p-2"
       style={{ position: "relative" }}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <button
           type="button"
           onPointerDown={(e) => controls.start(e)}
-          className="flex h-6 w-6 cursor-grab items-center justify-center rounded-md text-fg/40 transition hover:bg-fg/8 hover:text-fg/80 active:cursor-grabbing"
+          className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md border border-fg/20 bg-surface-el text-fg/80 shadow-sm transition hover:bg-fg/15 hover:text-fg active:cursor-grabbing"
           aria-label="Drag to reorder"
         >
           <GripVertical size={14} />
         </button>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={onEdit}
-            className="flex h-6 w-6 items-center justify-center rounded-md text-fg/50 transition hover:bg-fg/10 hover:text-fg"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-fg/20 bg-surface-el text-fg/80 shadow-sm transition hover:bg-fg/15 hover:text-fg"
             aria-label="Edit widget"
           >
             <Pencil size={13} strokeWidth={2.2} />
@@ -48,16 +57,44 @@ export function WidgetEditWrapper({ node, onEdit, onDelete }: WidgetEditWrapperP
           <button
             type="button"
             onClick={onDelete}
-            className="flex h-6 w-6 items-center justify-center rounded-md text-fg/50 transition hover:bg-danger/15 hover:text-danger"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-fg/20 bg-surface-el text-fg/80 shadow-sm transition hover:border-danger/50 hover:bg-danger/25 hover:text-danger"
             aria-label="Delete widget"
           >
             <Trash2 size={13} strokeWidth={2.2} />
           </button>
         </div>
       </div>
-      <div className="pointer-events-none select-none">
-        <WidgetRenderer node={node} />
-      </div>
+      {isEditableBox ? (
+        <BoxEditShell node={node as BoxNode} onChildrenChange={onChildrenChange!} />
+      ) : (
+        <div className="pointer-events-none select-none">
+          <WidgetRenderer node={node} />
+        </div>
+      )}
     </Reorder.Item>
+  );
+}
+
+function BoxEditShell({
+  node,
+  onChildrenChange,
+}: {
+  node: BoxNode;
+  onChildrenChange: (children: WidgetNode[]) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-fg/15 bg-surface-el/90 px-2.5 py-2.5 backdrop-blur-md">
+      {(node.title || node.description) && (
+        <header className="flex flex-col gap-0.5">
+          {node.title && (
+            <h3 className="text-sm font-semibold text-fg/75">{node.title}</h3>
+          )}
+          {node.description && (
+            <p className="text-[11px] leading-snug text-fg/45">{node.description}</p>
+          )}
+        </header>
+      )}
+      <WidgetEditList nodes={node.children} onChange={onChildrenChange} nested />
+    </div>
   );
 }

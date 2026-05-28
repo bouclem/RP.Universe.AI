@@ -1,32 +1,45 @@
+import { User } from "lucide-react";
+import { cn } from "../../../../design-tokens";
+import { AvatarImage } from "../../../../components/AvatarImage";
 import { useAvatar } from "../../../../hooks/useAvatar";
 import { useWidgetContext } from "./WidgetContext";
+import { widgetCardClass } from "./widgetSurface";
 
 export function WidgetPersonaInfo() {
-  const { persona } = useWidgetContext();
-  const avatarUrl = useAvatar("persona", persona?.id, persona?.avatarPath, "round");
+  const { persona, hasBackground } = useWidgetContext();
+  const avatarUrl = useAvatar("persona", persona?.id ?? "", persona?.avatarPath, "round");
 
   if (!persona) {
     return (
-      <section className="rounded-2xl border border-fg/10 bg-fg/3 px-3 py-3 text-[12px] italic text-fg/40">
+      <section
+        className={cn(
+          "rounded-xl border px-3 py-3 text-[12px] italic text-fg/40",
+          widgetCardClass(hasBackground),
+        )}
+      >
         No persona selected.
       </section>
     );
   }
 
   return (
-    <section className="flex flex-col gap-2 rounded-2xl border border-fg/12 bg-fg/4 px-3 py-3">
+    <section
+      className={cn(
+        "flex flex-col gap-2 rounded-xl border px-3 py-3",
+        widgetCardClass(hasBackground),
+      )}
+    >
       <header className="flex items-center gap-3">
-        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-fg/10">
+        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-fg/15 bg-fg/5 ring-1 ring-white/15">
           {avatarUrl ? (
-            <img
+            <AvatarImage
               src={avatarUrl}
               alt={persona.title}
-              className="h-full w-full object-cover"
+              crop={persona.avatarCrop}
+              applyCrop
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-fg/40">
-              {persona.title.slice(0, 1).toUpperCase()}
-            </div>
+            <User className="h-5 w-5 text-fg/60" />
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -39,7 +52,7 @@ export function WidgetPersonaInfo() {
         </div>
       </header>
       {persona.description && (
-        <p className="text-[12px] leading-snug text-fg/65 line-clamp-6">
+        <p className="line-clamp-6 text-[12px] leading-relaxed text-fg/65">
           {persona.description}
         </p>
       )}

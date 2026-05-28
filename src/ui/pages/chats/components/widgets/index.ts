@@ -5,6 +5,7 @@ export {
   useWidgetContext,
   type WidgetActionContext,
 } from "./WidgetContext";
+export { widgetCardClass } from "./widgetSurface";
 export {
   WidgetEditProvider,
   useWidgetEdit,

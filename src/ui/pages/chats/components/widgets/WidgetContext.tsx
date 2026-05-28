@@ -10,18 +10,29 @@ export interface WidgetActionContext {
   character: Character | null;
   persona: Persona | null;
   session: Session | null;
+  hasBackground: boolean;
   personas: Persona[];
   models: Model[];
   currentModelId: string | null;
   fallbackModelId: string | null;
   swapPlacesActive: boolean;
+  voiceAutoplayActive: boolean;
   canRegenerate: boolean;
+  canContinue: boolean;
+  isGenerating: boolean;
   onSelectPersona: (personaId: string | null) => void | Promise<void>;
-  onSelectModel: (modelId: string) => void | Promise<void>;
+  onSelectModel: (modelId: string | null) => void | Promise<void>;
   onSelectFallbackModel: (modelId: string | null) => void | Promise<void>;
+  onAuthorNoteSaved: (session: Session | null) => void;
   onRegenerate: () => void | Promise<void>;
   onToggleSwapPlaces: () => void;
   onNewSession: () => void | Promise<void>;
+  onContinue: () => void | Promise<void>;
+  onAbort: () => void | Promise<void>;
+  onViewHistory: () => void;
+  onOpenMemories: () => void;
+  onOpenSearch: () => void;
+  onToggleVoiceAutoplay: () => void | Promise<void>;
 }
 
 const WidgetContext = createContext<WidgetActionContext | null>(null);
