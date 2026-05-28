@@ -70,9 +70,15 @@ import { getChatWidgetLayout, useViewportWidth } from "./utils/chatWidgetLayout"
 import { ChatWidgetArea } from "./components/ChatWidgetArea";
 import {
   WidgetContextProvider,
+  WidgetEditProvider,
   type WidgetActionContext,
+  type WidgetSlots,
 } from "./components/widgets";
-import { saveCharacter } from "../../../core/storage";
+import {
+  getCharacter,
+  saveCharacter,
+  updateCharacterChatAppearance,
+} from "../../../core/storage";
 import { BottomMenu, GuidedTour, MenuButton, useGuidedTour } from "../../components";
 import { AvatarImage } from "../../components/AvatarImage";
 import { useAvatar } from "../../hooks/useAvatar";
@@ -594,6 +600,23 @@ export function ChatConversationPage() {
     navigate,
     reloadCharacter,
   ]);
+
+  const persistWidgetSlots = useCallback(
+    async (slots: WidgetSlots) => {
+      if (!character) return;
+      const fresh = await getCharacter(character.id);
+      const existing = (fresh?.chatAppearance ?? character.chatAppearance ?? {}) as Record<
+        string,
+        unknown
+      >;
+      await updateCharacterChatAppearance(character.id, {
+        ...existing,
+        chatWidgetSlots: slots,
+      });
+      reloadCharacter();
+    },
+    [character, reloadCharacter],
+  );
 
   const beetrootRain = useBeetrootRain();
   useBeetrootEasterEgg({ messages, fire: beetrootRain.fire });
@@ -2264,6 +2287,10 @@ export function ChatConversationPage() {
       )}
 
       <WidgetContextProvider value={widgetCtxValue}>
+      <WidgetEditProvider
+        slots={chatAppearance.chatWidgetSlots}
+        onPersist={persistWidgetSlots}
+      >
       <ChatWidgetArea
         widgetLayout={widgetLayout}
         leftNodes={widgetLeftNodes}
@@ -2520,6 +2547,7 @@ export function ChatConversationPage() {
       </div>
       )}
       </ChatWidgetArea>
+      </WidgetEditProvider>
       </WidgetContextProvider>
 
       {!footerInside && (

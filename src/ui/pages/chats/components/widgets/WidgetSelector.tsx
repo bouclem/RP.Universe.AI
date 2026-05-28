@@ -57,7 +57,6 @@ export function WidgetSelector({ node }: WidgetSelectorProps) {
         },
       };
     }
-    // fallback_model
     const currentId = ctx.fallbackModelId;
     const opts: SelectorOption[] = ctx.models.map((m) => ({
       id: m.id,

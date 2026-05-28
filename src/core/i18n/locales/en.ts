@@ -3201,6 +3201,8 @@ export const enMessages = {
           left: "Left only",
           right: "Right only",
         },
+        widgetEditHint:
+          "Use the pencil icon at the top of the widget area to add and arrange widgets.",
       },
     },
     avatar: {

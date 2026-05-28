@@ -5,3 +5,9 @@ export {
   useWidgetContext,
   type WidgetActionContext,
 } from "./WidgetContext";
+export {
+  WidgetEditProvider,
+  useWidgetEdit,
+  type WidgetSlots,
+  type WidgetSide,
+} from "./WidgetEditContext";

@@ -2734,8 +2734,6 @@ export const ChatAppearanceSettingsSchema = z.object({
   avatarShape: z.enum(["circle", "rounded", "hidden"]).default("circle"),
   avatarSize: z.enum(["small", "medium", "large"]).default("medium"),
 
-  // Chat column (desktop layout) — controls max width and alignment of the
-  // messages column, and optionally the surrounding header + footer.
   chatColumnWidth: z
     .enum(["narrow", "normal", "wide", "xl", "full", "custom"])
     .default("full"),
@@ -2744,9 +2742,6 @@ export const ChatAppearanceSettingsSchema = z.object({
   chatHeaderMoves: z.boolean().default(false),
   chatFooterMoves: z.boolean().default(false),
 
-  // Widget area — desktop panels flanking the messages column when there is
-  // spare horizontal room. Slot contents stay empty for now; future work will
-  // introduce widget nodes and organizers (dividers, rows, etc.).
   chatWidgetAreaEnabled: z.boolean().default(false),
   chatWidgetCenterMode: z.enum(["both", "left", "right"]).default("both"),
   chatWidgetSlots: z

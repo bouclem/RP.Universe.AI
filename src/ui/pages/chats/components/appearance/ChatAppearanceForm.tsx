@@ -4,7 +4,6 @@ import type { ChatAppearanceSettings } from "../../../../../core/storage/schemas
 import { cn } from "../../../../design-tokens";
 import { Switch } from "../../../../components/Switch";
 import { NumberInput } from "../../../../components/NumberInput";
-import { WidgetSlotEditor } from "../widgets/editor/WidgetSlotEditor";
 import { normalizeHexColor } from "../../../../../core/utils/imageAnalysis";
 import { useI18n } from "../../../../../core/i18n/context";
 
@@ -521,28 +520,9 @@ export function ChatAppearanceForm({
             />
           )}
         {settings.chatColumnWidth !== "full" && settings.chatWidgetAreaEnabled && (
-          <div className="flex flex-col gap-3 pt-1">
-            <WidgetSlotEditor
-              label="Left slot"
-              nodes={settings.chatWidgetSlots.left}
-              onChange={(left) =>
-                onUpdate("chatWidgetSlots", {
-                  ...settings.chatWidgetSlots,
-                  left,
-                })
-              }
-            />
-            <WidgetSlotEditor
-              label="Right slot"
-              nodes={settings.chatWidgetSlots.right}
-              onChange={(right) =>
-                onUpdate("chatWidgetSlots", {
-                  ...settings.chatWidgetSlots,
-                  right,
-                })
-              }
-            />
-          </div>
+          <p className="rounded-lg border border-fg/10 bg-fg/3 px-3 py-2 text-[11px] text-fg/45">
+            {t("chatAppearance.layout.chatColumn.widgetEditHint")}
+          </p>
         )}
         </div>
       </div>
