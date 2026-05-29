@@ -3,8 +3,12 @@ import type { CompanionStateNode } from "../../../../../core/storage/chatWidgetS
 import { cn } from "../../../../design-tokens";
 import { useWidgetContext } from "./WidgetContext";
 import { widgetCardClass } from "./widgetSurface";
+import { RELATIONSHIP_AXIS_ANCHORS } from "../../../characters/utils/companionDefaults";
 
-const RELATIONSHIP_METERS: { key: string; label: string }[] = [
+const RELATIONSHIP_METERS: {
+  key: keyof typeof RELATIONSHIP_AXIS_ANCHORS;
+  label: string;
+}[] = [
   { key: "closeness", label: "Closeness" },
   { key: "trust", label: "Trust" },
   { key: "affection", label: "Affection" },
@@ -12,7 +16,17 @@ const RELATIONSHIP_METERS: { key: string; label: string }[] = [
   { key: "stability", label: "Stability" },
 ];
 
-function Meter({ label, value }: { label: string; value: number }) {
+function Meter({
+  label,
+  value,
+  low,
+  high,
+}: {
+  label: string;
+  value: number;
+  low: string;
+  high: string;
+}) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
     <div className="flex flex-col gap-1">
@@ -22,6 +36,10 @@ function Meter({ label, value }: { label: string; value: number }) {
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-fg/10">
         <div className="h-full rounded-full bg-accent/70" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="flex items-center justify-between text-[9px] text-fg/35">
+        <span>{low}</span>
+        <span>{high}</span>
       </div>
     </div>
   );
@@ -58,6 +76,8 @@ export function WidgetCompanionState({ node }: { node: CompanionStateNode }) {
               key={m.key}
               label={m.label}
               value={(relationship as Record<string, number>)[m.key] ?? 0}
+              low={RELATIONSHIP_AXIS_ANCHORS[m.key].low}
+              high={RELATIONSHIP_AXIS_ANCHORS[m.key].high}
             />
           ))}
         </div>

@@ -52,6 +52,7 @@ import {
   type CompanionMemoryItem,
 } from "./companionUi";
 import { useI18n } from "../../../core/i18n/context";
+import { RELATIONSHIP_AXIS_ANCHORS } from "../characters/utils/companionDefaults";
 
 type MemoryFilter = "all" | "active" | "superseded";
 
@@ -131,10 +132,14 @@ function StatTile({
   label,
   value,
   tone = "default",
+  low,
+  high,
 }: {
   label: string;
   value: number;
   tone?: "default" | "warm" | "warning";
+  low?: string;
+  high?: string;
 }) {
   const barTone =
     tone === "warm"
@@ -152,6 +157,12 @@ function StatTile({
       <div className="mt-1.5 h-[3px] rounded-full bg-fg/6">
         <div className={cn("h-full rounded-full", barTone)} style={{ width: `${pct}%` }} />
       </div>
+      {low && high && (
+        <div className="mt-1 flex items-center justify-between text-[9px] text-fg/40">
+          <span>{low}</span>
+          <span>{high}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -760,20 +771,28 @@ export function CompanionMemoryPage() {
               <StatTile
                 label="Closeness"
                 value={relationshipState?.closeness ?? companion?.relationshipDefaults?.closeness ?? 0.2}
+                low={RELATIONSHIP_AXIS_ANCHORS.closeness.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.closeness.high}
               />
               <StatTile
                 label="Trust"
                 value={relationshipState?.trust ?? companion?.relationshipDefaults?.trust ?? 0.3}
+                low={RELATIONSHIP_AXIS_ANCHORS.trust.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.trust.high}
               />
               <StatTile
                 label="Affection"
                 value={relationshipState?.affection ?? companion?.relationshipDefaults?.affection ?? 0.15}
                 tone="warm"
+                low={RELATIONSHIP_AXIS_ANCHORS.affection.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.affection.high}
               />
               <StatTile
                 label="Tension"
                 value={relationshipState?.tension ?? companion?.relationshipDefaults?.tension ?? 0}
                 tone="warning"
+                low={RELATIONSHIP_AXIS_ANCHORS.tension.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.tension.high}
               />
             </div>
 

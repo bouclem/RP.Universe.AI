@@ -30,6 +30,7 @@ import {
   useCompanionSessionData,
 } from "./companionUi";
 import { useI18n } from "../../../core/i18n/context";
+import { RELATIONSHIP_AXIS_ANCHORS } from "../characters/utils/companionDefaults";
 
 function PageHeader({
   title,
@@ -97,11 +98,15 @@ function StatTile({
   value,
   baseline,
   tone = "default",
+  low,
+  high,
 }: {
   label: string;
   value: number;
   baseline?: number;
   tone?: "default" | "warm" | "warning";
+  low?: string;
+  high?: string;
 }) {
   const barTone =
     tone === "warm" ? "bg-amber-400" : tone === "warning" ? "bg-rose-400" : "bg-accent";
@@ -132,6 +137,12 @@ function StatTile({
       <div className="mt-1.5 h-[3px] rounded-full bg-fg/6">
         <div className={cn("h-full rounded-full", barTone)} style={{ width: `${pct}%` }} />
       </div>
+      {low && high && (
+        <div className="mt-1 flex items-center justify-between text-[9px] text-fg/40">
+          <span>{low}</span>
+          <span>{high}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -342,25 +353,38 @@ export function CompanionRelationshipPage() {
                 label={t("chats.companionRelationship.closeness")}
                 value={relationshipState?.closeness ?? companion?.relationshipDefaults?.closeness ?? 0.2}
                 baseline={companion?.relationshipDefaults?.closeness}
+                low={RELATIONSHIP_AXIS_ANCHORS.closeness.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.closeness.high}
               />
               <StatTile
                 label={t("chats.companionRelationship.trust")}
                 value={relationshipState?.trust ?? companion?.relationshipDefaults?.trust ?? 0.3}
                 baseline={companion?.relationshipDefaults?.trust}
+                low={RELATIONSHIP_AXIS_ANCHORS.trust.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.trust.high}
               />
               <StatTile
                 label={t("chats.companionRelationship.affection")}
                 value={relationshipState?.affection ?? companion?.relationshipDefaults?.affection ?? 0.15}
                 baseline={companion?.relationshipDefaults?.affection}
                 tone="warm"
+                low={RELATIONSHIP_AXIS_ANCHORS.affection.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.affection.high}
               />
               <StatTile
                 label={t("chats.companionRelationship.tension")}
                 value={relationshipState?.tension ?? companion?.relationshipDefaults?.tension ?? 0}
                 baseline={companion?.relationshipDefaults?.tension}
                 tone="warning"
+                low={RELATIONSHIP_AXIS_ANCHORS.tension.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.tension.high}
               />
-              <StatTile label={t("chats.companionRelationship.stability")} value={stability} />
+              <StatTile
+                label={t("chats.companionRelationship.stability")}
+                value={stability}
+                low={RELATIONSHIP_AXIS_ANCHORS.stability.low}
+                high={RELATIONSHIP_AXIS_ANCHORS.stability.high}
+              />
               <div className="rounded-xl border border-fg/8 bg-fg/2 px-3 py-2.5">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-fg/45">
                   {t("chats.companionRelationship.interactions")}

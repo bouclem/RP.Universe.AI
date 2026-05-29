@@ -108,3 +108,14 @@ export function normalizeCompanionConfig(
     },
   };
 }
+
+export const RELATIONSHIP_AXIS_ANCHORS: Record<
+  "closeness" | "trust" | "affection" | "tension" | "stability",
+  { low: string; high: string }
+> = {
+  closeness: { low: "Strangers", high: "Intimate" },
+  trust: { low: "Wary", high: "Trusting" },
+  affection: { low: "Neutral", high: "Affectionate" },
+  tension: { low: "Easy", high: "Charged" },
+  stability: { low: "Volatile", high: "Stable" },
+};
