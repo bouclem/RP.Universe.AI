@@ -53,6 +53,7 @@ import {
 } from "./companionUi";
 import { useI18n } from "../../../core/i18n/context";
 import { RELATIONSHIP_AXIS_ANCHORS } from "../characters/utils/companionDefaults";
+import { storageBridge } from "../../../core/storage/files";
 
 type MemoryFilter = "all" | "active" | "superseded";
 
@@ -512,6 +513,7 @@ export function CompanionMemoryPage() {
   const [editingValue, setEditingValue] = useState("");
   const [editingCategory, setEditingCategory] = useState<CompanionMemoryCategory>("relationship");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [triggering, setTriggering] = useState(false);
 
   const companion = character?.companion ?? null;
   const companionState = session?.companionState;
@@ -545,6 +547,21 @@ export function CompanionMemoryPage() {
       listeners.forEach((unlisten) => unlisten());
     };
   }, [reload, session?.id]);
+
+  const memoryProcessing = session?.memoryStatus === "processing";
+
+  const handleTriggerMemory = useCallback(async () => {
+    if (!session?.id || triggering || memoryProcessing) return;
+    setTriggering(true);
+    try {
+      await storageBridge.triggerDynamicMemory(session.id);
+      await reload();
+    } catch (err) {
+      console.error("Failed to trigger companion memory processing:", err);
+    } finally {
+      setTriggering(false);
+    }
+  }, [session?.id, triggering, memoryProcessing, reload]);
 
   const filteredItems = useMemo(() => {
     return memoryItems.filter((item) => {
@@ -742,16 +759,35 @@ export function CompanionMemoryPage() {
         subtitle={session.title || character.name}
         onBack={() => backOrReplace(Routes.chatSession(character.id, session.id))}
         right={
-          <button
-            onClick={() => go(Routes.chatCompanionRelationship(character.id, session.id))}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border border-fg/10 bg-fg/4 px-2.5 py-1.5 text-[11px] font-medium text-fg/70",
-              "hover:border-fg/20 hover:bg-fg/8 hover:text-fg",
-              interactive.transition.fast,
-            )}
-          >
-            <Heart size={12} /> Relationship
-          </button>
+          <>
+            <button
+              onClick={handleTriggerMemory}
+              disabled={triggering || memoryProcessing}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border border-fg/10 bg-fg/4 px-2.5 py-1.5 text-[11px] font-medium text-fg/70",
+                "hover:border-fg/20 hover:bg-fg/8 hover:text-fg disabled:opacity-50",
+                interactive.transition.fast,
+              )}
+              title="Run companion memory extraction on this chat now"
+            >
+              {triggering || memoryProcessing ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Sparkles size={12} />
+              )}
+              {triggering || memoryProcessing ? "Processing" : "Process memory"}
+            </button>
+            <button
+              onClick={() => go(Routes.chatCompanionRelationship(character.id, session.id))}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border border-fg/10 bg-fg/4 px-2.5 py-1.5 text-[11px] font-medium text-fg/70",
+                "hover:border-fg/20 hover:bg-fg/8 hover:text-fg",
+                interactive.transition.fast,
+              )}
+            >
+              <Heart size={12} /> Relationship
+            </button>
+          </>
         }
       />
 
