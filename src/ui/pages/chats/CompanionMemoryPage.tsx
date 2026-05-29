@@ -538,6 +538,9 @@ export function CompanionMemoryPage() {
   const [developerMode, setDeveloperMode] = useState(false);
   const [nowTick, setNowTick] = useState(0);
   const liveOutputRef = useRef<HTMLPreElement | null>(null);
+  const [showSummaryEditor, setShowSummaryEditor] = useState(false);
+  const [summaryDraft, setSummaryDraft] = useState("");
+  const [savingSummary, setSavingSummary] = useState(false);
 
   const companion = character?.companion ?? null;
   const companionState = session?.companionState;
@@ -671,6 +674,25 @@ export function CompanionMemoryPage() {
       void handleTriggerMemory();
     }
   }, [memoryCycleActive, handleCancelMemory, handleTriggerMemory]);
+
+  useEffect(() => {
+    if (!showSummaryEditor) setSummaryDraft(session?.memorySummary ?? "");
+  }, [session?.memorySummary, showSummaryEditor]);
+
+  const handleSaveSummary = useCallback(async () => {
+    if (!session || savingSummary) return;
+    setSavingSummary(true);
+    try {
+      const updated = { ...session, memorySummary: summaryDraft };
+      await saveSession(updated, { preserveDynamicMemory: false });
+      setSession(updated);
+      setShowSummaryEditor(false);
+    } catch (err) {
+      console.error("Failed to save companion context summary:", err);
+    } finally {
+      setSavingSummary(false);
+    }
+  }, [session, savingSummary, summaryDraft, setSession]);
 
   const filteredItems = useMemo(() => {
     return memoryItems.filter((item) => {
@@ -1029,6 +1051,35 @@ export function CompanionMemoryPage() {
                 )}
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={() => setShowSummaryEditor(true)}
+              className={cn(
+                "w-full rounded-xl border border-emerald-400/22 bg-emerald-400/8 px-4 py-3 text-left",
+                "transition-all hover:border-emerald-400/30 hover:bg-emerald-400/10 active:scale-[0.99]",
+              )}
+            >
+              <div className="mb-1.5 flex items-center gap-2">
+                <Sparkles size={13} className="shrink-0 text-emerald-500" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">
+                  Context summary
+                </span>
+                {session?.memorySummaryTokenCount && session.memorySummaryTokenCount > 0 ? (
+                  <span className="ml-auto text-[10px] text-fg/45">
+                    {session.memorySummaryTokenCount.toLocaleString()} tokens
+                  </span>
+                ) : null}
+              </div>
+              <p
+                className={cn(
+                  "min-h-14 text-[13px] leading-relaxed line-clamp-4",
+                  summaryDraft ? "text-fg/78" : "italic text-fg/42",
+                )}
+              >
+                {summaryDraft || "Tap to add a context summary..."}
+              </p>
+            </button>
           </section>
 
           {/* Memory store */}
@@ -1235,6 +1286,64 @@ export function CompanionMemoryPage() {
           </section>
         </motion.div>
       </main>
+
+      <BottomMenu
+        isOpen={showSummaryEditor}
+        onClose={() => setShowSummaryEditor(false)}
+        title="Context summary"
+      >
+        <div className="space-y-4 text-fg">
+          <textarea
+            value={summaryDraft}
+            onChange={(event) => setSummaryDraft(event.target.value)}
+            rows={6}
+            className={cn(
+              "w-full p-3",
+              radius.lg,
+              "border border-fg/10 bg-surface-el/40",
+              "resize-none text-sm leading-relaxed text-fg/90",
+              "focus:border-fg/20 focus:outline-none focus:ring-1 focus:ring-fg/10",
+              "placeholder:text-fg/30",
+            )}
+            placeholder="Short recap used to keep context consistent across companion messages..."
+            autoFocus
+          />
+          {session?.memorySummaryTokenCount && session.memorySummaryTokenCount > 0 ? (
+            <p className="text-[10px] text-fg/30">
+              {session.memorySummaryTokenCount.toLocaleString()} tokens
+            </p>
+          ) : null}
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setSummaryDraft(session?.memorySummary ?? "");
+                setShowSummaryEditor(false);
+              }}
+              className={cn(
+                "flex-1 px-4 py-2.5",
+                radius.lg,
+                "border border-fg/10 bg-fg/5 text-sm font-medium text-fg/60",
+                "transition-all hover:border-fg/15 hover:bg-fg/8 hover:text-fg/80 active:scale-[0.98]",
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => void handleSaveSummary()}
+              disabled={savingSummary || summaryDraft === (session?.memorySummary ?? "")}
+              className={cn(
+                "flex-1 px-4 py-2.5 flex items-center justify-center gap-2",
+                radius.lg,
+                "border border-emerald-400/30 bg-emerald-500/15 text-sm font-semibold text-emerald-200",
+                "transition-all hover:border-emerald-400/50 hover:bg-emerald-500/25 active:scale-[0.98]",
+                "disabled:pointer-events-none disabled:opacity-40",
+              )}
+            >
+              {savingSummary ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      </BottomMenu>
 
       <BottomMenu
         isOpen={showLiveOutput}
