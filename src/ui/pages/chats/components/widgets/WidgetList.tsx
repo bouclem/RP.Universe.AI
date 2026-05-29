@@ -79,7 +79,7 @@ interface ToolbarProps {
 
 function Toolbar({ editing, saving, onEnter, onAdd, onRevert, onDone }: ToolbarProps) {
   return (
-    <div className="flex min-h-[44px] items-center justify-end gap-2 px-2 py-2">
+    <div className="sticky top-0 z-20 flex min-h-[44px] items-center justify-end gap-2 px-2 py-2 bg-base/70 backdrop-blur-md">
       <AnimatePresence mode="wait" initial={false}>
         {editing ? (
           <motion.div
