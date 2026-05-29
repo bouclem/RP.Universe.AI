@@ -13,6 +13,7 @@ import { WidgetDice } from "./WidgetDice";
 import { WidgetMemory } from "./WidgetMemory";
 import { WidgetCompanionState } from "./WidgetCompanionState";
 import { WidgetSessionInfo } from "./WidgetSessionInfo";
+import { WidgetAuthorNote } from "./WidgetAuthorNote";
 
 interface WidgetRendererProps {
   node: WidgetNode;
@@ -48,5 +49,7 @@ export function WidgetRenderer({ node }: WidgetRendererProps) {
       return <WidgetCompanionState node={node} />;
     case "session_info":
       return <WidgetSessionInfo node={node} />;
+    case "author_note":
+      return <WidgetAuthorNote node={node} />;
   }
 }

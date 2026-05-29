@@ -3,6 +3,7 @@ import { Image as ImageIcon, ImagePlus, Loader2, Plus, Trash2, Upload } from "lu
 import { BottomMenu } from "../../../../../components";
 import { NumberInput } from "../../../../../components/NumberInput";
 import type {
+  AuthorNoteNode,
   BoxNode,
   BoxVariant,
   ButtonAction,
@@ -271,7 +272,46 @@ function renderBody(
           {design}
         </>
       );
+    case "author_note":
+      return (
+        <>
+          <AuthorNoteForm node={draft} setNode={setDraft} />
+          {design}
+        </>
+      );
   }
+}
+
+function AuthorNoteForm({
+  node,
+  setNode,
+}: {
+  node: AuthorNoteNode;
+  setNode: (n: AuthorNoteNode) => void;
+}) {
+  return (
+    <>
+      <Field label="Title">
+        <input
+          type="text"
+          className={TEXT_INPUT_CLASS}
+          value={node.title ?? ""}
+          onChange={(e) => setNode({ ...node, title: e.target.value })}
+        />
+      </Field>
+      <Field
+        label="Description (optional)"
+        hint="The note itself is edited inline from the widget and saved to this chat."
+      >
+        <input
+          type="text"
+          className={TEXT_INPUT_CLASS}
+          value={node.description ?? ""}
+          onChange={(e) => setNode({ ...node, description: e.target.value })}
+        />
+      </Field>
+    </>
+  );
 }
 
 function TitleOnlyForm({

@@ -37,6 +37,7 @@ export interface WidgetActionContext {
   onOpenSearch: () => void;
   onToggleVoiceAutoplay: () => void | Promise<void>;
   onUpdateScratchPad: (nodeId: string, content: string) => void | Promise<void>;
+  onUpdateAuthorNote: (content: string) => void | Promise<void>;
   onUpdateNode: (nodeId: string, patch: Record<string, unknown>) => void | Promise<void>;
   onInsertText: (text: string) => void;
 }

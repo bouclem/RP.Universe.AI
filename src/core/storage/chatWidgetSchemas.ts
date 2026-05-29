@@ -137,6 +137,12 @@ export interface SessionInfoNode extends NodeBase {
   title?: string;
 }
 
+export interface AuthorNoteNode extends NodeBase {
+  type: "author_note";
+  title?: string;
+  description?: string;
+}
+
 export type WidgetNode =
   | DividerNode
   | BoxNode
@@ -151,7 +157,8 @@ export type WidgetNode =
   | DiceNode
   | MemoryNode
   | CompanionStateNode
-  | SessionInfoNode;
+  | SessionInfoNode
+  | AuthorNoteNode;
 
 const imageSourceSchema: z.ZodType<ImageSource> = z.union([
   z.object({ kind: z.literal("character_avatar") }),
@@ -292,6 +299,13 @@ export const widgetNodeSchema: z.ZodType<WidgetNode> = z.lazy(() =>
       design: z.enum(["default", "minimal", "solid", "outline"]).optional(),
       type: z.literal("session_info"),
       title: z.string().optional(),
+    }),
+    z.object({
+      id: z.string(),
+      design: z.enum(["default", "minimal", "solid", "outline"]).optional(),
+      type: z.literal("author_note"),
+      title: z.string().optional(),
+      description: z.string().optional(),
     }),
   ]),
 );

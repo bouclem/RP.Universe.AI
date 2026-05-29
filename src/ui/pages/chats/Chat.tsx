@@ -54,6 +54,7 @@ import {
   listPersonas,
   readSettings,
   saveSession,
+  updateSessionAuthorNote,
   SETTINGS_UPDATED_EVENT,
   SESSION_UPDATED_EVENT,
   updateSessionBackgroundImage,
@@ -677,6 +678,15 @@ export function ChatConversationPage() {
           },
         });
         reloadCharacter();
+      },
+      onUpdateAuthorNote: async (content) => {
+        const current = chatController.session;
+        if (!current) return;
+        const trimmed = content.trim();
+        const nextNote = trimmed.length > 0 ? trimmed : null;
+        await updateSessionAuthorNote(current.id, nextNote);
+        const next = { ...current, authorNote: nextNote, updatedAt: Date.now() };
+        setSessionForHeader(next);
       },
       onUpdateNode: async (nodeId, patch) => {
         const target = character;

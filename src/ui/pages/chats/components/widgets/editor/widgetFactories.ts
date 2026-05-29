@@ -18,6 +18,7 @@ export const WIDGET_TYPE_LABEL: Record<WidgetType, string> = {
   memory: "Memories",
   companion_state: "Companion state",
   session_info: "Session info",
+  author_note: "Author note",
 };
 
 export const WIDGET_TYPE_DESC: Record<WidgetType, string> = {
@@ -35,6 +36,7 @@ export const WIDGET_TYPE_DESC: Record<WidgetType, string> = {
   memory: "What this chat remembers.",
   companion_state: "Relationship and mood for companion characters.",
   session_info: "Message count, tokens, and current scene.",
+  author_note: "Edit this chat's author note inline.",
 };
 
 export function createWidgetNode(type: WidgetType): WidgetNode {
@@ -89,6 +91,8 @@ export function createWidgetNode(type: WidgetType): WidgetNode {
       return { id, type: "companion_state", title: "Companion" };
     case "session_info":
       return { id, type: "session_info", title: "Session" };
+    case "author_note":
+      return { id, type: "author_note", title: "Author note" };
   }
 }
 
@@ -169,5 +173,7 @@ export function widgetSummary(node: WidgetNode): string {
       return node.title || "Companion state";
     case "session_info":
       return node.title || "Session info";
+    case "author_note":
+      return node.title || "Author note";
   }
 }

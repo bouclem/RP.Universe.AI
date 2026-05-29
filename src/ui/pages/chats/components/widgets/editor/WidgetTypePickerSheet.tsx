@@ -3,6 +3,7 @@ import {
   Box as BoxIcon,
   Brain,
   Dices,
+  FileText,
   Gauge,
   Image as ImageIcon,
   Info,
@@ -30,6 +31,7 @@ const TYPE_ORDER: WidgetType[] = [
   "memory",
   "stat_tracker",
   "scratch_pad",
+  "author_note",
   "quick_snippets",
   "dice",
   "session_info",
@@ -55,6 +57,7 @@ const TYPE_ICON: Record<WidgetType, LucideIcon> = {
   memory: Brain,
   companion_state: Sparkles,
   session_info: Info,
+  author_note: FileText,
 };
 
 interface WidgetTypePickerSheetProps {
