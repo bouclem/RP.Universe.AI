@@ -123,7 +123,7 @@ export function ModelSelectionBottomMenu({
   rightAction,
   theme = "default",
   tone = "accent",
-  includeExitIcon = true,
+  includeExitIcon = false,
   location = "bottom",
 }: ModelSelectionBottomMenuProps) {
   const [internalQuery, setInternalQuery] = useState("");
@@ -159,11 +159,14 @@ export function ModelSelectionBottomMenu({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      rightAction={rightAction}
+      rightAction={rightAction ? <span className="hidden sm:flex">{rightAction}</span> : undefined}
       includeExitIcon={includeExitIcon}
       location={location}
     >
       <div className="space-y-4">
+        {rightAction && (
+          <div className="flex justify-end sm:hidden">{rightAction}</div>
+        )}
         <div className="relative">
           <input
             type="text"
