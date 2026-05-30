@@ -546,6 +546,7 @@ pub(crate) async fn llamacpp_context_info(
             available_memory_bytes,
             available_vram_bytes,
             None,
+            512,
             resolved_offload_kqv,
             llama_kv_type.as_deref(),
             flash_attention_policy,

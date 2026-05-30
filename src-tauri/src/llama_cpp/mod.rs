@@ -925,6 +925,7 @@ mod desktop {
                     available_memory_bytes,
                     available_vram_bytes,
                     requested_context,
+                    llama_batch_size,
                     resolved_offload_kqv,
                     llama_kv_type_raw.as_deref(),
                     resolved_flash_attention_policy,

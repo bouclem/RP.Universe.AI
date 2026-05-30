@@ -151,22 +151,29 @@ fn push_unique(out: &mut Vec<u32>, value: u32) {
     }
 }
 
-const COMPUTE_RESERVE_BYTES_PER_CTX_FLASH: u64 = 6 * 1024;
-const COMPUTE_RESERVE_BYTES_PER_CTX_NO_FLASH: u64 = 16 * 1024;
+const ATTENTION_SCORE_BYTES: u64 = 4;
+const COMPUTE_BUFFER_SAFETY_FACTOR: u64 = 2;
+const COMPUTE_RESERVE_FLOOR_BYTES: u64 = 256 * 1024 * 1024;
 
 fn estimated_runtime_reserve_bytes(
+    metadata: &LlamaModelMetadata,
     available_vram_bytes: u64,
     planned_context: u32,
+    n_batch: u32,
     flash_attention_policy: llama_flash_attn_type,
 ) -> u64 {
-    let base_reserve = (available_vram_bytes / 10).max(256 * 1024 * 1024);
-    let per_ctx_bytes = if flash_attention_policy == llama_cpp_sys_2::LLAMA_FLASH_ATTN_TYPE_ENABLED {
-        COMPUTE_RESERVE_BYTES_PER_CTX_FLASH
-    } else {
-        COMPUTE_RESERVE_BYTES_PER_CTX_NO_FLASH
-    };
-    let compute_reserve = u64::from(planned_context).saturating_mul(per_ctx_bytes);
-    base_reserve.saturating_add(compute_reserve)
+    let floor = (available_vram_bytes / 20).max(COMPUTE_RESERVE_FLOOR_BYTES);
+    let attention_reserve =
+        if flash_attention_policy == llama_cpp_sys_2::LLAMA_FLASH_ATTN_TYPE_ENABLED {
+            0
+        } else {
+            u64::from(planned_context.max(1))
+                .saturating_mul(u64::from(n_batch.max(1)))
+                .saturating_mul(metadata.n_head_kv.max(1))
+                .saturating_mul(ATTENTION_SCORE_BYTES)
+                .saturating_mul(COMPUTE_BUFFER_SAFETY_FACTOR)
+        };
+    floor.saturating_add(attention_reserve)
 }
 
 fn candidate_gpu_layers(total_layers: u32, estimated_gpu_layers: u32) -> Vec<u32> {
@@ -272,6 +279,7 @@ pub(super) fn plan_smart_gpu_offload(
     available_memory_bytes: Option<u64>,
     available_vram_bytes: Option<u64>,
     requested_context: Option<u32>,
+    n_batch: u32,
     resolved_offload_kqv: Option<bool>,
     llama_kv_type: Option<&str>,
     flash_attention_policy: llama_flash_attn_type,
@@ -292,8 +300,13 @@ pub(super) fn plan_smart_gpu_offload(
 
     let available_vram = available_vram_bytes.unwrap_or(0);
     let effective_vram_budget_bytes = available_vram.saturating_mul(9) / 10;
-    let estimated_runtime_reserve_bytes =
-        estimated_runtime_reserve_bytes(available_vram, planned_context, flash_attention_policy);
+    let estimated_runtime_reserve_bytes = estimated_runtime_reserve_bytes(
+        &metadata,
+        available_vram,
+        planned_context,
+        n_batch,
+        flash_attention_policy,
+    );
     let bytes_per_layer = metadata
         .model_size_bytes
         .checked_add(u64::from(total_layers) - 1)
