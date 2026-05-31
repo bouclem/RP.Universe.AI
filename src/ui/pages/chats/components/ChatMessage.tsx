@@ -106,6 +106,7 @@ function BubbleHeaderWrap({
   header,
   aboveBubble,
   footer,
+  maxWidthClass,
   children,
 }: {
   above: boolean;
@@ -113,13 +114,15 @@ function BubbleHeaderWrap({
   header: React.ReactNode;
   aboveBubble?: React.ReactNode;
   footer?: React.ReactNode;
+  maxWidthClass: string;
   children: React.ReactNode;
 }) {
   if (!above && !aboveBubble && !footer) return <>{children}</>;
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-1 flex-col",
+        "flex min-w-0 flex-col",
+        maxWidthClass,
         rightAligned ? "items-end" : "items-start",
       )}
     >
@@ -724,6 +727,10 @@ function ChatMessageInner({
     messageInfoPlacement === "belowHeaderOutside" ? messageInfoNode : null;
   const infoInsideBubble = messageInfoPlacement === "insideBubble" ? messageInfoNode : null;
   const infoBelowBubble = messageInfoPlacement === "belowBubble" ? messageInfoNode : null;
+  const bubbleMaxWidthClass = chatAppearance
+    ? BUBBLE_MAX_WIDTH_MAP[chatAppearance.bubbleMaxWidth]
+    : "max-w-[82%]";
+  const bubbleColumnWrapped = headerAbove || !!infoBelowHeaderOutside || !!infoBelowBubble;
   const voiceConfig = character?.voiceConfig;
   const hasVoiceAssignment =
     voiceConfig?.source === "user"
@@ -885,6 +892,7 @@ function ChatMessageInner({
         header={messageHeaderNode}
         aboveBubble={infoBelowHeaderOutside}
         footer={infoBelowBubble}
+        maxWidthClass={bubbleMaxWidthClass}
       >
       <motion.div
         {...(computed.isLatestAssistant ? { "data-tour-id": "chat-message-bubble" } : {})}
@@ -892,7 +900,7 @@ function ChatMessageInner({
         animate={computed.shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
         transition={animTransition}
         className={cn(
-          chatAppearance ? BUBBLE_MAX_WIDTH_MAP[chatAppearance.bubbleMaxWidth] : "max-w-[82%]",
+          bubbleColumnWrapped ? "max-w-full" : bubbleMaxWidthClass,
           chatAppearance ? BUBBLE_PADDING_MAP[chatAppearance.bubblePadding] : "px-4 py-2.5",
           chatAppearance ? LINE_SPACING_MAP[chatAppearance.lineSpacing] : "leading-relaxed",
           chatAppearance ? BUBBLE_RADIUS_MAP[chatAppearance.bubbleRadius] : radius.lg,
