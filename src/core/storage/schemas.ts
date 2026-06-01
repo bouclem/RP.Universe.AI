@@ -3294,6 +3294,13 @@ export const CompanionSessionStateSchema = z.object({
   preferences: z
     .object({
       timeAwarenessEnabled: z.boolean().default(false),
+      timeOverride: z
+        .object({
+          mode: z.enum(["off", "frozen", "ticking"]).default("off"),
+          anchorMs: z.number().int().default(0),
+          setAtMs: z.number().int().default(0),
+        })
+        .optional(),
     })
     .default({
       timeAwarenessEnabled: false,
@@ -3301,6 +3308,9 @@ export const CompanionSessionStateSchema = z.object({
   updatedAt: z.number().int().default(0),
 });
 export type CompanionSessionState = z.infer<typeof CompanionSessionStateSchema>;
+export type CompanionTimeOverride = NonNullable<
+  CompanionSessionState["preferences"]["timeOverride"]
+>;
 
 export const CompanionTurnEffectSchema = z.object({
   id: z.string(),

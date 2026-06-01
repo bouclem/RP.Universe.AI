@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   Box as BoxIcon,
   Brain,
+  Clock,
   Dices,
   FileText,
   Gauge,
@@ -28,6 +29,7 @@ const TYPE_ORDER: WidgetType[] = [
   "character_info",
   "persona_info",
   "companion_state",
+  "time",
   "memory",
   "stat_tracker",
   "scratch_pad",
@@ -58,6 +60,7 @@ const TYPE_ICON: Record<WidgetType, LucideIcon> = {
   companion_state: Sparkles,
   session_info: Info,
   author_note: FileText,
+  time: Clock,
 };
 
 interface WidgetTypePickerSheetProps {

@@ -19,6 +19,7 @@ export const WIDGET_TYPE_LABEL: Record<WidgetType, string> = {
   companion_state: "Companion state",
   session_info: "Session info",
   author_note: "Author note",
+  time: "Time",
 };
 
 export const WIDGET_TYPE_DESC: Record<WidgetType, string> = {
@@ -37,6 +38,7 @@ export const WIDGET_TYPE_DESC: Record<WidgetType, string> = {
   companion_state: "Relationship and mood for companion characters.",
   session_info: "Message count, tokens, and current scene.",
   author_note: "Edit this chat's author note inline.",
+  time: "Show and set the time the companion sees.",
 };
 
 export function createWidgetNode(type: WidgetType): WidgetNode {
@@ -93,6 +95,15 @@ export function createWidgetNode(type: WidgetType): WidgetNode {
       return { id, type: "session_info", title: "Session" };
     case "author_note":
       return { id, type: "author_note", title: "Author note" };
+    case "time":
+      return {
+        id,
+        type: "time",
+        title: "Time",
+        hourFormat: "24h",
+        showSeconds: false,
+        showDate: true,
+      };
   }
 }
 
@@ -175,5 +186,7 @@ export function widgetSummary(node: WidgetNode): string {
       return node.title || "Session info";
     case "author_note":
       return node.title || "Author note";
+    case "time":
+      return node.title || "Time";
   }
 }

@@ -143,6 +143,14 @@ export interface AuthorNoteNode extends NodeBase {
   description?: string;
 }
 
+export interface TimeNode extends NodeBase {
+  type: "time";
+  title?: string;
+  hourFormat?: "12h" | "24h";
+  showSeconds?: boolean;
+  showDate?: boolean;
+}
+
 export type WidgetNode =
   | DividerNode
   | BoxNode
@@ -158,7 +166,8 @@ export type WidgetNode =
   | MemoryNode
   | CompanionStateNode
   | SessionInfoNode
-  | AuthorNoteNode;
+  | AuthorNoteNode
+  | TimeNode;
 
 const imageSourceSchema: z.ZodType<ImageSource> = z.union([
   z.object({ kind: z.literal("character_avatar") }),
@@ -306,6 +315,15 @@ export const widgetNodeSchema: z.ZodType<WidgetNode> = z.lazy(() =>
       type: z.literal("author_note"),
       title: z.string().optional(),
       description: z.string().optional(),
+    }),
+    z.object({
+      id: z.string(),
+      design: z.enum(["default", "minimal", "solid", "outline"]).optional(),
+      type: z.literal("time"),
+      title: z.string().optional(),
+      hourFormat: z.enum(["12h", "24h"]).optional(),
+      showSeconds: z.boolean().optional(),
+      showDate: z.boolean().optional(),
     }),
   ]),
 );

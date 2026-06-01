@@ -25,12 +25,16 @@ import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import type {
   AccessibilitySettings,
   Character,
+  CompanionTimeOverride,
   Model,
   Persona,
   Scene,
   StoredMessage,
 } from "../../../core/storage/schemas";
-import { createDefaultAccessibilitySettings } from "../../../core/storage/schemas";
+import {
+  createDefaultAccessibilitySettings,
+  CompanionSessionStateSchema,
+} from "../../../core/storage/schemas";
 import {
   abortAudioPreview,
   generateTtsForMessage,
@@ -717,6 +721,25 @@ export function ChatConversationPage() {
           },
         });
         reloadCharacter();
+      },
+      onUpdateCompanionTimeOverride: async (override: CompanionTimeOverride | null) => {
+        const current = chatController.session;
+        if (!current) return;
+        const nextCompanionState = CompanionSessionStateSchema.parse({
+          ...(current.companionState ?? {}),
+          preferences: {
+            ...(current.companionState?.preferences ?? {}),
+            timeOverride: override ?? undefined,
+          },
+          updatedAt: Date.now(),
+        });
+        const next = {
+          ...current,
+          companionState: nextCompanionState,
+          updatedAt: Date.now(),
+        };
+        await saveSession(next);
+        setSessionForHeader(next);
       },
       onInsertText: (text) => {
         const trimmed = draft.trimEnd();

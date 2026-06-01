@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type {
   Character,
+  CompanionTimeOverride,
   Model,
   Persona,
   Session,
@@ -39,6 +40,9 @@ export interface WidgetActionContext {
   onUpdateScratchPad: (nodeId: string, content: string) => void | Promise<void>;
   onUpdateAuthorNote: (content: string) => void | Promise<void>;
   onUpdateNode: (nodeId: string, patch: Record<string, unknown>) => void | Promise<void>;
+  onUpdateCompanionTimeOverride: (
+    override: CompanionTimeOverride | null,
+  ) => void | Promise<void>;
   onInsertText: (text: string) => void;
 }
 
