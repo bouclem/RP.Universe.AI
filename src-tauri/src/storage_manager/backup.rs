@@ -18,7 +18,9 @@ use super::db::open_db;
 use super::legacy::storage_root;
 use crate::utils::log_info;
 #[cfg(target_os = "android")]
-use tauri_plugin_android_fs::{AndroidFs, AndroidFsExt};
+use tauri_plugin_android_fs::{
+    AndroidFs, AndroidFsExt, PrivateDir, PrivateStorage, PublicGeneralPurposeDir, PublicStorage,
+};
 #[cfg(target_os = "android")]
 use tauri_plugin_fs::FilePath;
 #[cfg(target_os = "android")]
@@ -104,16 +106,55 @@ fn decrypt_data(data: &[u8], key: &[u8; 32], nonce: &[u8; 24]) -> Result<Vec<u8>
 }
 
 /// Get the downloads directory path
+#[cfg(not(target_os = "android"))]
 fn get_downloads_dir() -> Result<PathBuf, String> {
-    #[cfg(target_os = "android")]
-    {
-        Ok(PathBuf::from("/storage/emulated/0/Download"))
-    }
+    dirs::download_dir().ok_or_else(|| "Could not find Downloads directory".to_string())
+}
 
-    #[cfg(not(target_os = "android"))]
-    {
-        dirs::download_dir().ok_or_else(|| "Could not find Downloads directory".to_string())
+// Android cannot enumerate the public Downloads directory, so the app keeps an
+// index of the backups it has written (in app-private storage) to power the
+// in-app backup list.
+#[cfg(target_os = "android")]
+fn android_backup_index_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .android_fs()
+        .private_storage()
+        .resolve_path(PrivateDir::Data)
+        .map_err(|e| {
+            crate::utils::err_msg(
+                module_path!(),
+                line!(),
+                format!("Failed to resolve private storage dir: {}", e),
+            )
+        })?;
+    Ok(dir.join("backup_index.json"))
+}
+
+#[cfg(target_os = "android")]
+fn android_read_backup_index(app: &tauri::AppHandle) -> Result<Vec<JsonValue>, String> {
+    let path = android_backup_index_path(app)?;
+    if !path.exists() {
+        return Ok(Vec::new());
     }
+    let bytes = fs::read(&path).map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    match serde_json::from_slice::<JsonValue>(&bytes) {
+        Ok(JsonValue::Array(items)) => Ok(items),
+        _ => Ok(Vec::new()),
+    }
+}
+
+#[cfg(target_os = "android")]
+fn android_write_backup_index(app: &tauri::AppHandle, entries: &[JsonValue]) -> Result<(), String> {
+    let path = android_backup_index_path(app)?;
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent)
+                .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+        }
+    }
+    let json = serde_json::to_vec(&JsonValue::Array(entries.to_vec()))
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    fs::write(&path, json).map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))
 }
 
 fn archive_name_targets_media(name: &str) -> bool {
@@ -1315,16 +1356,11 @@ pub async fn backup_export(
     // Generate timestamp for filename
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
     let filename = format!("lettuce_backup_{}.lettuce", timestamp);
-    let downloads = get_downloads_dir()?;
-    let output_path = downloads.join(&filename);
 
     log_info(
         &app,
         "backup",
-        format!(
-            "Starting backup export (v2 JSON format) to {:?}",
-            output_path
-        ),
+        format!("Starting backup export (v2 JSON format): {}", filename),
     );
 
     let password = require_non_empty_password(
@@ -1338,14 +1374,13 @@ pub async fn backup_export(
     let key = derive_key_from_password(password, &salt);
     let encryption = Some((salt, nonce, key));
 
-    // Create the zip file
-    let file = File::create(&output_path)
-        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
-    let mut zip = ZipWriter::new(file);
+    // Build the zip in memory so the final bytes can be written through the
+    // platform-appropriate path (raw filesystem on desktop, MediaStore on Android)
+    let mut zip = ZipWriter::new(std::io::Cursor::new(Vec::<u8>::new()));
     let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
 
     // Helper to add JSON data to zip (with optional encryption)
-    let add_json_to_zip = |zip: &mut ZipWriter<File>,
+    let add_json_to_zip = |zip: &mut ZipWriter<std::io::Cursor<Vec<u8>>>,
                            name: &str,
                            data: &JsonValue,
                            enc: &Option<([u8; 16], [u8; 24], [u8; 32])>|
@@ -1637,16 +1672,65 @@ pub async fn backup_export(
     zip.write_all(manifest_json.as_bytes())
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
-    zip.finish()
-        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+    let buffer = zip
+        .finish()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
+        .into_inner();
 
-    log_info(
-        &app,
-        "backup",
-        format!("Backup export complete: {:?}", output_path),
-    );
+    #[cfg(target_os = "android")]
+    {
+        let relative_path = format!("LettuceAI/{}", filename);
+        let saved = app
+            .android_fs()
+            .public_storage()
+            .write(
+                PublicGeneralPurposeDir::Download,
+                &relative_path,
+                Some("application/octet-stream"),
+                &buffer,
+            )
+            .map_err(|e| {
+                crate::utils::err_msg(
+                    module_path!(),
+                    line!(),
+                    format!("Failed to save backup to Downloads: {}", e),
+                )
+            })?;
 
-    Ok(output_path.to_string_lossy().to_string())
+        let saved_path = saved.to_string();
+        let mut info = backup_get_info_from_bytes(buffer.clone())?;
+        if let Some(obj) = info.as_object_mut() {
+            obj.insert("path".to_string(), JsonValue::String(saved_path.clone()));
+            obj.insert("filename".to_string(), JsonValue::String(filename.clone()));
+        }
+        let mut index = android_read_backup_index(&app).unwrap_or_default();
+        index.retain(|entry| entry.get("path").and_then(|p| p.as_str()) != Some(saved_path.as_str()));
+        index.push(info);
+        android_write_backup_index(&app, &index)?;
+
+        log_info(
+            &app,
+            "backup",
+            format!("Backup export complete: Download/{}", relative_path),
+        );
+
+        Ok(saved_path)
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let output_path = get_downloads_dir()?.join(&filename);
+        fs::write(&output_path, &buffer)
+            .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
+
+        log_info(
+            &app,
+            "backup",
+            format!("Backup export complete: {:?}", output_path),
+        );
+
+        Ok(output_path.to_string_lossy().to_string())
+    }
 }
 
 /// Helper to add a directory recursively to zip (with optional encryption)
@@ -4057,6 +4141,24 @@ fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
 /// List available backups in downloads directory
 #[tauri::command]
 pub fn backup_list(app: tauri::AppHandle) -> Result<Vec<serde_json::Value>, String> {
+    #[cfg(target_os = "android")]
+    {
+        let mut backups = android_read_backup_index(&app)?;
+        backups.sort_by(|a, b| {
+            let a_time = a.get("createdAt").and_then(|v| v.as_u64()).unwrap_or(0);
+            let b_time = b.get("createdAt").and_then(|v| v.as_u64()).unwrap_or(0);
+            b_time.cmp(&a_time)
+        });
+        log_info(
+            &app,
+            "backup",
+            format!("Found {} backups in index", backups.len()),
+        );
+        return Ok(backups);
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
     let downloads = get_downloads_dir()?;
     let mut backups = Vec::new();
 
@@ -4130,18 +4232,45 @@ pub fn backup_list(app: tauri::AppHandle) -> Result<Vec<serde_json::Value>, Stri
     });
 
     Ok(backups)
+    }
 }
 
 /// Delete a backup file
 #[tauri::command]
-pub fn backup_delete(backup_path: String) -> Result<(), String> {
-    fs::remove_file(&backup_path).map_err(|e| {
-        crate::utils::err_msg(
-            module_path!(),
-            line!(),
-            format!("Failed to delete backup: {}", e),
-        )
-    })
+pub fn backup_delete(app: tauri::AppHandle, backup_path: String) -> Result<(), String> {
+    #[cfg(target_os = "android")]
+    {
+        let url = Url::parse(&backup_path).map_err(|e| {
+            crate::utils::err_msg(
+                module_path!(),
+                line!(),
+                format!("Invalid backup URI '{}': {}", backup_path, e),
+            )
+        })?;
+        if let Err(e) = app.android_fs().remove_file(&FilePath::Url(url)) {
+            log_info(
+                &app,
+                "backup",
+                format!("Could not remove backup file, pruning index anyway: {}", e),
+            );
+        }
+        let mut index = android_read_backup_index(&app)?;
+        index.retain(|entry| entry.get("path").and_then(|p| p.as_str()) != Some(backup_path.as_str()));
+        android_write_backup_index(&app, &index)?;
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let _ = &app;
+        fs::remove_file(&backup_path).map_err(|e| {
+            crate::utils::err_msg(
+                module_path!(),
+                line!(),
+                format!("Failed to delete backup: {}", e),
+            )
+        })
+    }
 }
 
 /// Get backup info from bytes (for Android content URI support)
