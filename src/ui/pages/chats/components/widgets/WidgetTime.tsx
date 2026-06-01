@@ -1,17 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Clock } from "lucide-react";
 import type { TimeNode } from "../../../../../core/storage/chatWidgetSchemas";
-import type { CompanionTimeOverride } from "../../../../../core/storage/schemas";
 import { cn, interactive } from "../../../../design-tokens";
 import { useWidgetContext } from "./WidgetContext";
 import { useWidgetEdit } from "./WidgetEditContext";
 import { widgetCardClass } from "./widgetSurface";
 import {
-  effectiveOverrideMs,
-  toLocalInputValue,
+  useCompanionTimeOverrideEditor,
+  type OverrideMode,
 } from "../../utils/companionTimeOverride";
-
-type OverrideMode = CompanionTimeOverride["mode"];
 
 const MODE_OPTIONS: { mode: OverrideMode; label: string }[] = [
   { mode: "off", label: "Live" },
@@ -25,23 +22,19 @@ export function WidgetTime({ node }: { node: TimeNode }) {
   const { editing: areaEditing } = useWidgetEdit();
 
   const override = session?.companionState?.preferences?.timeOverride;
-  const activeMode: OverrideMode = override?.mode ?? "off";
-
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const [selectedMode, setSelectedMode] = useState<OverrideMode>(activeMode);
-  const [draft, setDraft] = useState("");
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    setSelectedMode(activeMode);
-  }, [activeMode]);
-
-  const shownMs = effectiveOverrideMs(override, nowMs);
-  const isOverridden = activeMode !== "off";
+  const canEdit = !areaEditing && !!session;
+  const {
+    activeMode,
+    selectedMode,
+    selectMode,
+    draft,
+    setDraft,
+    beginEditing,
+    apply,
+    shownMs,
+    nowMs,
+    isOverridden,
+  } = useCompanionTimeOverrideEditor(override, onUpdateCompanionTimeOverride, canEdit);
 
   const timeFormatter = useMemo(
     () =>
@@ -64,31 +57,8 @@ export function WidgetTime({ node }: { node: TimeNode }) {
     [],
   );
 
-  const canEdit = !areaEditing && !!session;
   const isCompanion = character?.mode === "companion";
   const awarenessOff = !session?.companionState?.preferences?.timeAwarenessEnabled;
-
-  const selectMode = (mode: OverrideMode) => {
-    if (!canEdit) return;
-    setSelectedMode(mode);
-    if (mode === "off") {
-      void onUpdateCompanionTimeOverride(null);
-      return;
-    }
-    setDraft(toLocalInputValue(shownMs));
-  };
-
-  const apply = () => {
-    if (!canEdit || selectedMode === "off") return;
-    const anchorMs = new Date(draft).getTime();
-    if (Number.isNaN(anchorMs)) return;
-    void onUpdateCompanionTimeOverride({
-      mode: selectedMode,
-      anchorMs,
-      setAtMs: Date.now(),
-    });
-  };
-
   const showEditor = canEdit && selectedMode !== "off";
 
   return (
@@ -151,6 +121,7 @@ export function WidgetTime({ node }: { node: TimeNode }) {
           <input
             type="datetime-local"
             value={draft}
+            onFocus={beginEditing}
             onChange={(e) => setDraft(e.target.value)}
             className="w-full rounded-md border border-fg/12 bg-fg/5 px-2 py-1.5 text-[12px] text-fg/85 focus:border-accent/40 focus:outline-none"
           />

@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { History } from "lucide-react";
 import type { CompanionTimeOverride, Session } from "../../../../core/storage/schemas";
 import { cn, interactive, radius } from "../../../design-tokens";
 import {
-  effectiveOverrideMs,
-  toLocalInputValue,
+  useCompanionTimeOverrideEditor,
+  type OverrideMode,
 } from "../utils/companionTimeOverride";
-
-type OverrideMode = CompanionTimeOverride["mode"];
 
 const MODE_OPTIONS: { mode: OverrideMode; label: string }[] = [
   { mode: "off", label: "Live" },
@@ -27,24 +25,19 @@ export function CompanionTimeOverrideCard({
   disabled,
 }: CompanionTimeOverrideCardProps) {
   const override = session?.companionState?.preferences?.timeOverride;
-  const activeMode: OverrideMode = override?.mode ?? "off";
-
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const [selectedMode, setSelectedMode] = useState<OverrideMode>(activeMode);
-  const [draft, setDraft] = useState("");
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    setSelectedMode(activeMode);
-  }, [activeMode]);
-
-  const shownMs = effectiveOverrideMs(override, nowMs);
-  const isOverridden = activeMode !== "off";
   const canEdit = !disabled && !!session;
+  const {
+    activeMode,
+    selectedMode,
+    selectMode,
+    draft,
+    setDraft,
+    beginEditing,
+    apply,
+    shownMs,
+    nowMs,
+    isOverridden,
+  } = useCompanionTimeOverrideEditor(override, onApply, canEdit);
 
   const formatter = useMemo(
     () =>
@@ -57,23 +50,6 @@ export function CompanionTimeOverrideCard({
       }),
     [],
   );
-
-  const selectMode = (mode: OverrideMode) => {
-    if (!canEdit) return;
-    setSelectedMode(mode);
-    if (mode === "off") {
-      void onApply(null);
-      return;
-    }
-    setDraft(toLocalInputValue(shownMs));
-  };
-
-  const apply = () => {
-    if (!canEdit || selectedMode === "off") return;
-    const anchorMs = new Date(draft).getTime();
-    if (Number.isNaN(anchorMs)) return;
-    void onApply({ mode: selectedMode, anchorMs, setAtMs: Date.now() });
-  };
 
   const showEditor = canEdit && selectedMode !== "off";
 
@@ -147,6 +123,7 @@ export function CompanionTimeOverrideCard({
           <input
             type="datetime-local"
             value={draft}
+            onFocus={beginEditing}
             onChange={(e) => setDraft(e.target.value)}
             className={cn(
               "flex-1 border border-white/10 bg-[#0c0d13]/85 px-3 py-2 text-sm text-white focus:border-accent/40 focus:outline-none",
