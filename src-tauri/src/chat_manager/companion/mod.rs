@@ -456,12 +456,24 @@ pub async fn update_state_for_user_message(
     state.emotional_state.confidence = bundle.confidence;
     state.emotional_state.updated_at = now;
 
-    state.relationship_state.closeness =
-        clamp01(state.relationship_state.closeness + bundle.relationship_delta.closeness + 0.004);
-    state.relationship_state.trust =
-        clamp01(state.relationship_state.trust + bundle.relationship_delta.trust);
-    state.relationship_state.affection =
-        clamp01(state.relationship_state.affection + bundle.relationship_delta.affection + 0.003);
+    state.relationship_state.closeness = apply_bipolar_delta(
+        state.relationship_state.closeness,
+        bundle.relationship_delta.closeness,
+        config.relationship_defaults.closeness,
+        &CLOSENESS_DYN,
+    );
+    state.relationship_state.trust = apply_bipolar_delta(
+        state.relationship_state.trust,
+        bundle.relationship_delta.trust,
+        config.relationship_defaults.trust,
+        &TRUST_DYN,
+    );
+    state.relationship_state.affection = apply_bipolar_delta(
+        state.relationship_state.affection,
+        bundle.relationship_delta.affection,
+        config.relationship_defaults.affection,
+        &AFFECTION_DYN,
+    );
     state.relationship_state.tension =
         clamp01(state.relationship_state.tension + bundle.relationship_delta.tension);
     state.relationship_state.stability =
@@ -503,13 +515,14 @@ pub fn render_prompt_state(
             character.name, partner_name,
         ),
         "Do not apply these metrics to third-party people mentioned in character definitions, persona descriptions, lore, or memories unless that relationship is explicitly stated.".to_string(),
+        "Closeness, trust, and affection are bidirectional: they can run negative, meaning the character actively dislikes, distrusts, or wants distance from the partner, not merely feels neutral.".to_string(),
         format!(
-            "Current {} <-> {} relationship trend: closeness {:.0}%, trust {:.0}%, affection {:.0}%, tension {:.0}%.",
+            "Current {} <-> {} relationship stance: closeness {}, trust {}, affection {}; tension {:.0}%.",
             character.name,
             partner_name,
-            rel.closeness * 100.0,
-            rel.trust * 100.0,
-            rel.affection * 100.0,
+            closeness_band(rel.closeness),
+            trust_band(rel.trust),
+            affection_band(rel.affection),
             rel.tension * 100.0,
         ),
         format!(
@@ -799,7 +812,9 @@ fn apply_emotion_label(
             delta.warmth -= 0.06 * score;
             delta.trust -= 0.045 * score;
             rel.tension += 0.07 * score;
-            rel.trust -= 0.035 * score;
+            rel.trust -= 0.045 * score;
+            rel.affection -= 0.06 * score;
+            rel.closeness -= 0.03 * score;
             rel.stability -= 0.035 * score;
         }
         "embarrassment" => {
@@ -908,8 +923,89 @@ fn clamp01(value: f64) -> f64 {
     value.clamp(0.0, 1.0)
 }
 
+fn affection_band(value: f64) -> &'static str {
+    if value < -0.5 {
+        "hostile"
+    } else if value < -0.15 {
+        "cold/irritated"
+    } else if value <= 0.15 {
+        "neutral"
+    } else if value <= 0.5 {
+        "warm"
+    } else {
+        "deeply affectionate"
+    }
+}
+
+fn trust_band(value: f64) -> &'static str {
+    if value < -0.5 {
+        "distrustful/guarded"
+    } else if value < -0.15 {
+        "wary"
+    } else if value <= 0.15 {
+        "neutral"
+    } else if value <= 0.5 {
+        "trusting"
+    } else {
+        "deeply trusting"
+    }
+}
+
+fn closeness_band(value: f64) -> &'static str {
+    if value < -0.5 {
+        "withdrawing/wants distance"
+    } else if value < -0.15 {
+        "distant"
+    } else if value <= 0.15 {
+        "acquainted"
+    } else if value <= 0.5 {
+        "close"
+    } else {
+        "intimate"
+    }
+}
+
 fn clamp_signed(value: f64) -> f64 {
     value.clamp(-1.0, 1.0)
+}
+
+struct AxisDynamics {
+    neg_mult: f64,
+    leak_decay: f64,
+    leak_recover: f64,
+}
+
+const TRUST_DYN: AxisDynamics = AxisDynamics {
+    neg_mult: 1.6,
+    leak_decay: 0.04,
+    leak_recover: 0.012,
+};
+const AFFECTION_DYN: AxisDynamics = AxisDynamics {
+    neg_mult: 1.4,
+    leak_decay: 0.045,
+    leak_recover: 0.018,
+};
+const CLOSENESS_DYN: AxisDynamics = AxisDynamics {
+    neg_mult: 1.3,
+    leak_decay: 0.03,
+    leak_recover: 0.02,
+};
+
+fn apply_bipolar_delta(current: f64, raw_delta: f64, baseline: f64, cfg: &AxisDynamics) -> f64 {
+    let d = if raw_delta < 0.0 {
+        raw_delta * cfg.neg_mult
+    } else {
+        raw_delta
+    };
+    let headroom = if d >= 0.0 { 1.0 - current } else { 1.0 + current };
+    let v = current + d * headroom.max(0.0);
+    let gap = v - baseline;
+    let leak = if gap < 0.0 {
+        cfg.leak_recover
+    } else {
+        cfg.leak_decay
+    };
+    clamp_signed(v - leak * gap)
 }
 
 fn default_closeness() -> f64 {
@@ -967,5 +1063,75 @@ mod tests {
 
         assert!(state.hurt < 0.5);
         assert!(state.tension < 0.4);
+    }
+
+    fn anger_bundle() -> SignalBundle {
+        signals_from_classification(&EmotionClassification {
+            confidence: 0.8,
+            labels: vec![EmotionLabelScore {
+                label: "anger".into(),
+                score: 0.9,
+            }],
+        })
+    }
+
+    #[test]
+    fn hostile_input_produces_negative_relationship_deltas() {
+        let bundle = anger_bundle();
+        assert!(bundle.relationship_delta.affection < 0.0);
+        assert!(bundle.relationship_delta.closeness < 0.0);
+        assert!(bundle.relationship_delta.trust < 0.0);
+    }
+
+    #[test]
+    fn repeated_hostility_crosses_into_negative_and_stays_bounded() {
+        let baseline = 0.15;
+        let mut affection = baseline;
+        for _ in 0..200 {
+            affection = apply_bipolar_delta(affection, -0.06, baseline, &AFFECTION_DYN);
+        }
+        assert!(affection < -0.5);
+        assert!(affection >= -1.0);
+    }
+
+    #[test]
+    fn neutral_turns_leak_inflated_axis_toward_baseline() {
+        let baseline = 0.15;
+        let mut affection = 0.8;
+        for _ in 0..20 {
+            affection = apply_bipolar_delta(affection, 0.0, baseline, &AFFECTION_DYN);
+        }
+        assert!(affection < 0.8);
+        assert!(affection > baseline);
+    }
+
+    #[test]
+    fn grudge_recovers_slower_than_warmth_decays() {
+        let baseline = 0.3;
+        let recovered = apply_bipolar_delta(baseline - 0.4, 0.0, baseline, &TRUST_DYN);
+        let recover_step = recovered - (baseline - 0.4);
+        let decayed = apply_bipolar_delta(baseline + 0.4, 0.0, baseline, &TRUST_DYN);
+        let decay_step = (baseline + 0.4) - decayed;
+        assert!(recover_step > 0.0);
+        assert!(decay_step > 0.0);
+        assert!(recover_step < decay_step);
+    }
+
+    #[test]
+    fn saturation_shrinks_gain_near_rail() {
+        let baseline = 0.15;
+        let from_low = apply_bipolar_delta(0.0, 0.1, baseline, &AFFECTION_DYN) - 0.0;
+        let from_high = apply_bipolar_delta(0.9, 0.1, baseline, &AFFECTION_DYN) - 0.9;
+        assert!(from_high < from_low);
+    }
+
+    #[test]
+    fn hostility_moves_trust_more_than_equal_warmth() {
+        let baseline = 0.3;
+        let after_anger = apply_bipolar_delta(baseline, -0.045, baseline, &TRUST_DYN);
+        let after_care = apply_bipolar_delta(baseline, 0.045, baseline, &TRUST_DYN);
+        let down = baseline - after_anger;
+        let up = after_care - baseline;
+        assert!(down > up);
     }
 }
