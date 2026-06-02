@@ -301,6 +301,20 @@ impl ContinueFlow {
             .iter()
             .any(|scope| scope.eq_ignore_ascii_case("image"));
 
+        let time_stamp_enabled = companion_mode_enabled
+            && crate::chat_manager::temporal::companion_time_awareness_enabled(&session);
+        let time_frame_delta = if time_stamp_enabled {
+            let latest_created = pinned_msgs
+                .iter()
+                .chain(recent_msgs.iter())
+                .map(|msg| msg.created_at)
+                .max()
+                .unwrap_or(0);
+            crate::chat_manager::temporal::temporal_frame_delta(&session, latest_created)
+        } else {
+            0
+        };
+
         let mut chat_messages = Vec::new();
         for msg in &pinned_msgs {
             let msg_with_data = load_attachment_data(&app, msg);
@@ -311,6 +325,8 @@ impl ContinueFlow {
                 char_name,
                 persona_name,
                 allow_image_input,
+                time_frame_delta,
+                time_stamp_enabled,
             );
         }
 
@@ -323,6 +339,8 @@ impl ContinueFlow {
                 char_name,
                 persona_name,
                 allow_image_input,
+                time_frame_delta,
+                time_stamp_enabled,
             );
         }
         insert_in_chat_prompt_entries(&mut chat_messages, &system_role, &in_chat_entries);
@@ -559,6 +577,11 @@ impl ContinueFlow {
 
         let text = extract_text(api_response.data(), Some(&selected_credential.provider_id))
             .unwrap_or_default();
+        let text = if time_stamp_enabled {
+            crate::chat_manager::temporal::strip_leading_time_stamp(&text)
+        } else {
+            text
+        };
         let usage = extract_usage(api_response.data());
         let reasoning =
             extract_reasoning(api_response.data(), Some(&selected_credential.provider_id));

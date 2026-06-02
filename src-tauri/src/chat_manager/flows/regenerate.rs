@@ -340,6 +340,19 @@ impl RegenerateFlow {
                 .map(|(_, msg)| msg.clone())
                 .collect();
 
+            let time_stamp_enabled = companion_mode_enabled
+                && crate::chat_manager::temporal::companion_time_awareness_enabled(&session);
+            let time_frame_delta = if time_stamp_enabled {
+                let latest_created = messages_before_target
+                    .iter()
+                    .map(|msg| msg.created_at)
+                    .max()
+                    .unwrap_or(0);
+                crate::chat_manager::temporal::temporal_frame_delta(&session, latest_created)
+            } else {
+                0
+            };
+
             let mut chat_messages = Vec::new();
             if dynamic_memory_enabled {
                 let (pinned_msgs, recent_msgs) =
@@ -354,6 +367,8 @@ impl RegenerateFlow {
                         char_name,
                         persona_name,
                         allow_image_input,
+                        time_frame_delta,
+                        time_stamp_enabled,
                     );
                 }
 
@@ -366,6 +381,8 @@ impl RegenerateFlow {
                         char_name,
                         persona_name,
                         allow_image_input,
+                        time_frame_delta,
+                        time_stamp_enabled,
                     );
                 }
             } else {
@@ -388,6 +405,8 @@ impl RegenerateFlow {
                         char_name,
                         persona_name,
                         allow_image_input,
+                        time_frame_delta,
+                        time_stamp_enabled,
                     );
                 }
             }
@@ -635,6 +654,13 @@ impl RegenerateFlow {
 
         let text = extract_text(api_response.data(), Some(&selected_credential.provider_id))
             .unwrap_or_default();
+        let text = if companion_mode_enabled
+            && crate::chat_manager::temporal::companion_time_awareness_enabled(&session)
+        {
+            crate::chat_manager::temporal::strip_leading_time_stamp(&text)
+        } else {
+            text
+        };
         let usage = extract_usage(api_response.data());
         let reasoning =
             extract_reasoning(api_response.data(), Some(&selected_credential.provider_id));

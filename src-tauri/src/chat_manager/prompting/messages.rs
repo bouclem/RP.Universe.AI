@@ -1,5 +1,6 @@
 use serde_json::{json, Value};
 
+use crate::chat_manager::temporal::message_timestamp_prefix;
 use crate::chat_manager::types::{
     ImageAttachment, PromptEntryRole, StoredMessage, SystemPromptEntry,
 };
@@ -83,6 +84,8 @@ pub fn push_user_or_assistant_message_with_context(
     char_name: &str,
     persona_name: &str,
     allow_image_input: bool,
+    time_frame_delta: i64,
+    time_stamp_enabled: bool,
 ) {
     if message.role == "scene" {
         return;
@@ -93,10 +96,19 @@ pub fn push_user_or_assistant_message_with_context(
     } else {
         persona_name
     };
-    let text = super::request::message_text_for_api(message)
+    let mut text = super::request::message_text_for_api(message)
         .replace("{{char}}", char_name)
         .replace("{{persona}}", persona_name)
         .replace("{{user}}", persona_name);
+
+    if time_stamp_enabled {
+        let prefix = message_timestamp_prefix(message.created_at, time_frame_delta);
+        text = if text.is_empty() {
+            prefix
+        } else {
+            format!("{} {}", prefix, text)
+        };
+    }
 
     if allow_image_input && !message.attachments.is_empty() && message.role == "user" {
         let content = build_multimodal_content(&text, &message.attachments);

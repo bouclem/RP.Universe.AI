@@ -32,7 +32,10 @@ use crate::chat_manager::service::{
     record_failed_usage, record_usage_if_available, require_api_key, ChatService, PreparedChatTurn,
 };
 use crate::chat_manager::storage::recent_messages;
-use crate::chat_manager::temporal::{companion_effective_now, format_memory_for_prompt};
+use crate::chat_manager::temporal::{
+    companion_effective_now, companion_time_awareness_enabled, format_memory_for_prompt,
+    temporal_frame_delta,
+};
 use crate::chat_manager::turn_builder::{
     append_image_directive_instructions, build_enriched_query, conversation_window_with_pinned,
     insert_in_chat_prompt_entries, is_dynamic_memory_active, manual_window_size,
@@ -389,6 +392,20 @@ impl CompletionFlow {
             .iter()
             .any(|scope| scope.eq_ignore_ascii_case("image"));
 
+        let time_stamp_enabled =
+            companion_mode_enabled && companion_time_awareness_enabled(&session);
+        let time_frame_delta = if time_stamp_enabled {
+            let latest_created = pinned_msgs
+                .iter()
+                .chain(recent_msgs.iter())
+                .map(|msg| msg.created_at)
+                .max()
+                .unwrap_or(0);
+            temporal_frame_delta(&session, latest_created)
+        } else {
+            0
+        };
+
         let mut chat_messages = Vec::new();
         for msg in &pinned_msgs {
             let msg_with_data = load_attachment_data(&app, msg);
@@ -399,6 +416,8 @@ impl CompletionFlow {
                 char_name,
                 persona_name,
                 allow_image_input,
+                time_frame_delta,
+                time_stamp_enabled,
             );
         }
 
@@ -411,6 +430,8 @@ impl CompletionFlow {
                 char_name,
                 persona_name,
                 allow_image_input,
+                time_frame_delta,
+                time_stamp_enabled,
             );
         }
 
@@ -685,6 +706,11 @@ impl CompletionFlow {
 
         let text = extract_text(api_response.data(), Some(&selected_credential.provider_id))
             .unwrap_or_default();
+        let text = if time_stamp_enabled {
+            crate::chat_manager::temporal::strip_leading_time_stamp(&text)
+        } else {
+            text
+        };
         let usage = extract_usage(api_response.data());
         let reasoning =
             extract_reasoning(api_response.data(), Some(&selected_credential.provider_id));

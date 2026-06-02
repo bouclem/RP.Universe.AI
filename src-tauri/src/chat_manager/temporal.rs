@@ -174,32 +174,90 @@ pub fn companion_time_awareness_enabled(session: &Session) -> bool {
         .unwrap_or(false)
 }
 
-pub fn companion_effective_now(session: &Session) -> u64 {
-    let real_now = crate::utils::now_millis().unwrap_or_default();
-    let Some(override_value) = session
+struct TimeOverride {
+    mode: String,
+    anchor_ms: Option<u64>,
+    set_at_ms: Option<u64>,
+}
+
+fn read_time_override(session: &Session) -> Option<TimeOverride> {
+    let value = session
         .companion_state
         .as_ref()
         .and_then(|value| value.get("preferences"))
-        .and_then(|value| value.get("timeOverride"))
-    else {
+        .and_then(|value| value.get("timeOverride"))?;
+    Some(TimeOverride {
+        mode: value
+            .get("mode")
+            .and_then(|mode| mode.as_str())
+            .unwrap_or("off")
+            .to_string(),
+        anchor_ms: value.get("anchorMs").and_then(|anchor| anchor.as_u64()),
+        set_at_ms: value.get("setAtMs").and_then(|set_at| set_at.as_u64()),
+    })
+}
+
+pub fn companion_effective_now(session: &Session) -> u64 {
+    let real_now = crate::utils::now_millis().unwrap_or_default();
+    let Some(override_value) = read_time_override(session) else {
         return real_now;
     };
-    let mode = override_value
-        .get("mode")
-        .and_then(|value| value.as_str())
-        .unwrap_or("off");
-    let anchor = override_value.get("anchorMs").and_then(|value| value.as_u64());
-    match mode {
-        "frozen" => anchor.unwrap_or(real_now),
-        "ticking" => {
-            let set_at = override_value.get("setAtMs").and_then(|value| value.as_u64());
-            match (anchor, set_at) {
-                (Some(anchor), Some(set_at)) => anchor.saturating_add(real_now.saturating_sub(set_at)),
-                _ => real_now,
+    match override_value.mode.as_str() {
+        "frozen" => override_value.anchor_ms.unwrap_or(real_now),
+        "ticking" => match (override_value.anchor_ms, override_value.set_at_ms) {
+            (Some(anchor), Some(set_at)) => {
+                anchor.saturating_add(real_now.saturating_sub(set_at))
             }
-        }
+            _ => real_now,
+        },
         _ => real_now,
     }
+}
+
+/// Offset `delta` such that a message's effective-frame timestamp is
+/// `created_at + delta`, keeping the transcript consistent with
+/// `companion_effective_now`. `latest_window_created_ms` is the newest message
+/// timestamp in the batch being sent (used to anchor the frozen frame).
+pub fn temporal_frame_delta(session: &Session, latest_window_created_ms: u64) -> i64 {
+    let Some(override_value) = read_time_override(session) else {
+        return 0;
+    };
+    match override_value.mode.as_str() {
+        "frozen" => match override_value.anchor_ms {
+            Some(anchor) => anchor as i64 - latest_window_created_ms as i64,
+            None => 0,
+        },
+        "ticking" => match (override_value.anchor_ms, override_value.set_at_ms) {
+            (Some(anchor), Some(set_at)) => anchor as i64 - set_at as i64,
+            _ => 0,
+        },
+        _ => 0,
+    }
+}
+
+pub fn format_message_timestamp(effective_ms: u64) -> String {
+    let dt = local_datetime_from_ms(effective_ms);
+    format!("[{}]", dt.format("%a %-I:%M %p, %Y-%m-%d"))
+}
+
+pub fn message_timestamp_prefix(created_at: u64, frame_delta: i64) -> String {
+    let effective = (created_at as i64 + frame_delta).max(0) as u64;
+    format_message_timestamp(effective)
+}
+
+fn leading_timestamp_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r"(?i)^\s*\[\s*(?:[a-z]{3}\s+)?\d{1,2}:\d{2}\s*(?:am|pm)?[^\]]*\]\s*")
+            .expect("valid leading timestamp regex")
+    })
+}
+
+/// Removes a leading `[Tue 6:50 PM, 2026-03-12]`-style stamp that a model may
+/// echo back, so it is never persisted or re-stamped. Conservative: only matches
+/// brackets that contain a clock time, leaving roleplay brackets like `[she smiles]`.
+pub fn strip_leading_time_stamp(text: &str) -> String {
+    leading_timestamp_regex().replace(text, "").into_owned()
 }
 
 pub fn time_placeholder_values(reference_ms: u64) -> Vec<(&'static str, String)> {
