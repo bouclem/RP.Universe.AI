@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   Sparkles,
@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   RotateCcw,
   Volume2,
+  Copy,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { typography, radius, interactive, cn } from "../../design-tokens";
@@ -18,6 +19,7 @@ import {
   saveCharacter,
   savePersona,
   createSession,
+  cloneCharacterDeep,
   listCharacters,
   saveSession,
   saveLorebook,
@@ -41,6 +43,18 @@ export function DeveloperPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [cloneCharacters, setCloneCharacters] = useState<Character[]>([]);
+  const [cloneTargetId, setCloneTargetId] = useState<string>("");
+  const [cloning, setCloning] = useState(false);
+
+  useEffect(() => {
+    void listCharacters()
+      .then((list) => {
+        setCloneCharacters(list);
+        setCloneTargetId((prev) => prev || list[0]?.id || "");
+      })
+      .catch(() => {});
+  }, []);
 
   const showStatus = (message: string) => {
     setStatus(message);
@@ -51,6 +65,26 @@ export function DeveloperPage() {
   const showError = (message: string) => {
     setError(message);
     setStatus("");
+  };
+
+  const cloneSelectedCharacter = async () => {
+    if (cloning) return;
+    if (!cloneTargetId) {
+      showError("Pick a character to clone first.");
+      return;
+    }
+    setCloning(true);
+    setStatus("Cloning character with all sessions, messages, and memory...");
+    try {
+      const clone = await cloneCharacterDeep(cloneTargetId);
+      const refreshed = await listCharacters();
+      setCloneCharacters(refreshed);
+      showStatus(`✓ Cloned to "${clone.name}"`);
+    } catch (err) {
+      showError(`Clone failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setCloning(false);
+    }
   };
 
   const generateTestCharacter = async () => {
@@ -1631,6 +1665,39 @@ export function DeveloperPage() {
             title="Open Kokoro test bench"
             description="Temporary page for validating Kokoro assets, checking installed voices, and previewing local synthesis."
             onClick={() => navigate("/settings/developer/kokoro-test")}
+            variant="primary"
+          />
+        </section>
+
+        {/* Clone character (deep) */}
+        <section className="mt-8 space-y-3">
+          <h2 className={cn(typography.h2.size, typography.h2.weight, "text-fg mb-3")}>
+            Clone character (deep)
+          </h2>
+          <select
+            value={cloneTargetId}
+            onChange={(event) => setCloneTargetId(event.target.value)}
+            className={cn(
+              "w-full px-3 py-2.5",
+              radius.md,
+              "border border-fg/10 bg-fg/5 text-fg",
+              "focus:border-fg/30 focus:outline-none",
+            )}
+          >
+            {cloneCharacters.length === 0 ? (
+              <option value="">No characters yet</option>
+            ) : null}
+            {cloneCharacters.map((character) => (
+              <option key={character.id} value={character.id}>
+                {character.name}
+              </option>
+            ))}
+          </select>
+          <ActionButton
+            icon={<Copy />}
+            title={cloning ? "Cloning..." : "Clone selected character with everything"}
+            description="Deep-copies the character and every session, message, variant, embedding, and memory into an independent copy."
+            onClick={() => void cloneSelectedCharacter()}
             variant="primary"
           />
         </section>
