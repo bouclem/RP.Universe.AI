@@ -1,22 +1,19 @@
 <div align="center">
-  <img src="https://github.com/LettuceAI/.github/blob/main/profile/LettuceAI-banner.png" alt="LettuceAI Banner" />
 
-
-   
-  # LettuceAI
+  # RP.Universe.AI
   
-  Privacy-first AI roleplay & storytelling app with long-term memory, custom characters, and 20+ providers. Runs on Android, Windows, macOS, and Linux.
+  A fork of [LettuceAI](https://github.com/LettuceAI/app) - Privacy-first AI roleplay & storytelling app with long-term memory, custom characters, and 20+ providers. Runs on Android, Windows, macOS, and Linux.
   
   [Overview](#overview) • [Install](#install) • [Development](#development) • [Android](#android) • [iOS](#ios) • [Contributing](#contributing)
 </div>
 
 ## Overview
 
-LettuceAI is a privacy-focused, free and open-source AI character chat app for immersive roleplay, storytelling, and realistic AI companions with long-term memory that actually lasts.
+RP.Universe.AI is a privacy-focused, free and open-source AI character chat app for immersive roleplay, storytelling, and realistic AI companions with long-term memory that actually lasts.
 
 It is client-side first and supports 20+ AI providers with a bring-your-own-key setup, including OpenAI, Anthropic, Google Gemini, DeepSeek, Mistral, and Groq, plus local models through Ollama and `llama.cpp`.
 
-LettuceAI is fully free and open source with no paywalls or locked features. Your chats, characters, memories, and API keys stay on your device, so you control your data.
+RP.Universe.AI is fully free and open source with no paywalls or locked features. Your chats, characters, memories, and API keys stay on your device, so you control your data.
 
 ## Screenshots
 
@@ -54,8 +51,8 @@ Screenshots feature “King Cassian” by [jawawgf](https://character-tavern.com
 
 ```bash
 # Clone the repository
-git clone https://github.com/LettuceAI/mobile-app.git
-cd mobile-app
+git clone https://github.com/bouclem/RP.Universe.AI.git
+cd RP.Universe.AI
 
 # Install dependencies
 bun install

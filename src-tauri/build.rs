@@ -105,9 +105,9 @@ fn export_android_bridge_class() {
         .unwrap_or_else(|| {
             let identifier = read_tauri_identifier().unwrap_or_else(|err| {
                 println!(
-                    "cargo:warning=Could not read tauri.conf.json identifier ({err}); falling back to com.lettuceai.app for the Kokoro JNI bridge."
+                    "cargo:warning=Could not read tauri.conf.json identifier ({err}); falling back to com.bouclem.rp-universe-ai for the Kokoro JNI bridge."
                 );
-                "com.lettuceai.app".to_string()
+                "com.bouclem.rp-universe-ai".to_string()
             });
             // Dotted form — used with ClassLoader.loadClass() at runtime, since
             // env.find_class() can't see app classes from a Tauri jni_handle context.

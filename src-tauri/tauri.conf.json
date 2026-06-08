@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "lettuceai",
-  "version": "1.2.0",
-  "identifier": "com.lettuceai.app",
+  "productName": "RP.Universe.AI",
+  "version": "1.0.0",
+  "identifier": "com.bouclem.rp-universe-ai",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "LettuceAI",
+        "title": "RP.Universe.AI",
         "width": 1440,
         "height": 810,
         "minWidth": 1068,
@@ -36,36 +36,36 @@
       {
         "ext": ["uec"],
         "name": "Unified Entity Card",
-        "description": "LettuceAI Unified Entity Card",
+        "description": "RP.Universe.AI Unified Entity Card",
         "role": "Editor",
         "mimeType": "application/x-uec+json",
         "rank": "Owner",
         "exportedType": {
-          "identifier": "com.lettuceai.uec",
+          "identifier": "com.bouclem.rp-universe-ai.uec",
           "conformsTo": ["public.json"]
         }
       },
       {
         "ext": ["usc"],
         "name": "Unified System Card",
-        "description": "LettuceAI Unified System Card",
+        "description": "RP.Universe.AI Unified System Card",
         "role": "Editor",
         "mimeType": "application/x-usc+json",
         "rank": "Owner",
         "exportedType": {
-          "identifier": "com.lettuceai.usc",
+          "identifier": "com.bouclem.rp-universe-ai.usc",
           "conformsTo": ["public.json"]
         }
       },
       {
-        "ext": ["lettuce"],
-        "name": "LettuceAI Backup",
-        "description": "LettuceAI encrypted backup",
+        "ext": ["rpuniverse"],
+        "name": "RP.Universe.AI Backup",
+        "description": "RP.Universe.AI encrypted backup",
         "role": "Editor",
         "mimeType": "application/zip",
         "rank": "Owner",
         "exportedType": {
-          "identifier": "com.lettuceai.backup",
+          "identifier": "com.bouclem.rp-universe-ai.backup",
           "conformsTo": ["public.zip-archive", "public.data"]
         }
       }

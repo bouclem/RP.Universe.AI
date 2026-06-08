@@ -1,8 +1,8 @@
 [package]
-name = "lettuceai"
+name = "rp-universe-ai"
 version = "1.0.0"
-description = "LettuceAI mobile AI roleplaying app."
-authors = ["MegalithOfficial"]
+description = "RP.Universe.AI - AI desktop app for RP"
+authors = ["bouclem"]
 edition = "2021"
 
 [features]
@@ -24,7 +24,7 @@ llama-gpu-metal = ["llama-cpp-2/metal", "whisper-rs/metal"]
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "lettuceai_lib"
+name = "rp_universe_ai_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
