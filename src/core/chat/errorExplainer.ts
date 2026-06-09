@@ -217,7 +217,7 @@ const CATEGORY_TEMPLATES: Record<ExplainedChatError["category"], Template> = {
   content_blocked: {
     title: "Blocked by the provider's safety filter",
     explanation:
-      "The provider refused to generate a reply because the prompt or chat history tripped its content policy. This is decided by the provider, not by LettuceAI.",
+      "The provider refused to generate a reply because the prompt or chat history tripped its content policy. This is decided by the provider, not by RP.Universe.AI.",
     suggestion: "Try rephrasing the last message, pick a more permissive model, or switch providers.",
     retryable: false,
   },

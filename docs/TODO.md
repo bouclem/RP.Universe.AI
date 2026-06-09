@@ -4,15 +4,14 @@
 - [x] Remove All Languages Except English (US), French, Spanish
 - [x] Update i18n registry (removed 18 locale imports and entries)
 - [x] Update i18n strings in en.ts, es.ts, fr.ts (replace "LettuceAI" → "RP.Universe.AI")
-- [ ] Update UI strings in settings/help pages (`WhereToFind.tsx`, `HelpPage.tsx`, etc.)
-- [ ] Update remaining "LettuceAI" references in source code
-- [ ] Update GitHub URLs in CONTRIBUTING.md
+- [x] Update UI strings in settings/help pages (`WhereToFind.tsx`, `HelpPage.tsx`, etc.)
+- [x] Update remaining "LettuceAI" references in source code
+- [x] Update GitHub URLs in CONTRIBUTING.md
 
 ## 1.0.2 - Bug Fixes
 - [ ] Address any build issues from rename
 - [ ] Fix any broken links/references
-- [ ] Test desktop builds (Windows, macOS, Linux)
-- [ ] Test mobile builds (Android, iOS)
+- [ ] Test desktop build (Windows)
 
 ## 1.0.3 - Cleanup
 - [ ] Remove unused assets/references
