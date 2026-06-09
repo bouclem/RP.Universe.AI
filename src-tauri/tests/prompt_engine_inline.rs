@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/chat_manager/prompting/prompt_engine.rs.
 
-use lettuceai_lib::chat_manager::prompting::prompt_engine::render_with_context_internal;
-use lettuceai_lib::chat_manager::types::{
+use rp_universe_ai_lib::chat_manager::prompting::prompt_engine::render_with_context_internal;
+use rp_universe_ai_lib::chat_manager::types::{
     Character, Model, Persona, Scene, SceneVariant, Session, Settings, StoredMessage,
 };
 
@@ -40,7 +40,7 @@ fn make_settings() -> Settings {
         provider_credentials: vec![],
         models: vec![],
         app_state: serde_json::json!({}),
-        advanced_model_settings: lettuceai_lib::chat_manager::types::AdvancedModelSettings::default(
+        advanced_model_settings: rp_universe_ai_lib::chat_manager::types::AdvancedModelSettings::default(
         ),
         prompt_template_id: None,
         system_prompt: None,

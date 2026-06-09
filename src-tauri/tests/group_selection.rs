@@ -4,11 +4,11 @@
 //! These cover real-world inputs the LLM produces (often messy) plus the
 //! invariants the algorithms must hold (e.g., never pick a muted speaker).
 
-use lettuceai_lib::group_chat_manager::selection::{
+use rp_universe_ai_lib::group_chat_manager::selection::{
     heuristic_select_speaker, parse_mentions, parse_tool_call_response, round_robin_select_speaker,
 };
-use lettuceai_lib::group_chat_manager::{CharacterInfo, GroupChatContext};
-use lettuceai_lib::storage_manager::group_sessions::{
+use rp_universe_ai_lib::group_chat_manager::{CharacterInfo, GroupChatContext};
+use rp_universe_ai_lib::storage_manager::group_sessions::{
     GroupMessage, GroupParticipation, GroupSession,
 };
 

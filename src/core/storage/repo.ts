@@ -978,7 +978,7 @@ export async function saveCharacter(c: Partial<Character>): Promise<Character> {
     creatorNotes: c.creatorNotes,
     creator: c.creator,
     creatorNotesMultilingual: c.creatorNotesMultilingual,
-    source: ["lettuceai"],
+    source: ["rp-universe-ai"],
     tags: c.tags,
     scenes,
     defaultSceneId,

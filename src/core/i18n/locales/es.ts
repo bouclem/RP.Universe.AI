@@ -44,7 +44,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "engineSetup": "Configuración del motor",
       "llmProviders": "Proveedores LLM",
       "engineSettings": "Ajustes del motor",
-      "lettuceEngine": "Motor Lettuce",
+      "rpUniverseEngine": "Motor RP Universe",
       "create": "Crear",
       "setup": "Configuración",
       "welcome": "Bienvenida",
@@ -309,7 +309,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
   },
   "about": {
     "kicker": "Información de la app",
-    "appName": "LettuceAI",
+    "appName": "RP.Universe.AI",
     "description": "Detalles de la versión, comprobación de actualizaciones y enlaces útiles.",
     "info": {
       "version": "Versión",
@@ -325,7 +325,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "title": "Actualizaciones de la app",
       "description": "Comprueba manualmente si hay nuevas versiones o desactiva las comprobaciones automáticas al iniciar.",
       "autoChecks": "Comprobaciones automáticas de actualizaciones",
-      "autoChecksDescription": "Si está activado, LettuceAI buscará nuevas versiones al abrir la app.",
+      "autoChecksDescription": "Si está activado, RP.Universe.AI buscará nuevas versiones al abrir la app.",
       "checkNow": "Buscar actualizaciones",
       "checking": "Buscando actualizaciones...",
       "upToDateTitle": "Ya estás al día",
@@ -654,7 +654,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "designReferencesDescription": "Sube unas imágenes de referencia claras y una descripción visual canónica.",
       "designReferencesPlaceholder": "Describe la apariencia estable: cara, pelo, complexión, edad aparente, detalles de ropa, accesorios y dirección artística o de estilo.",
       "dismissAria": "Descartar",
-      "v3MessageFallback": "lettuce-emb-v4 ya está disponible y mejora drásticamente la recuperación de memoria de roleplay. Se recomienda actualizar.",
+      "v3MessageFallback": "rp-universe-emb-v4 ya está disponible y mejora drásticamente la recuperación de memoria de roleplay. Se recomienda actualizar.",
       "uploadButton": "Subir",
       "libraryButton": "Biblioteca",
       "companionSetupTitle": "El compañero necesita configuración",
@@ -853,7 +853,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
     "message": {
       "thinkingMessages": {
         "thinkingReallyHard": "Pensando muy fuerte…",
-        "lettuceCouncil": "Consultando al consejo de lechugas…",
+        "rpUniverseCouncil": "Consultando al consejo del Universo RP…",
         "stealingThoughts": "Robando pensamientos del vacío…",
         "warmingBrainCells": "Calentando las neuronas…",
         "forbiddenKnowledge": "Cargando conocimiento prohibido…",
@@ -1227,7 +1227,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
     },
     "message": {
       "thinkingHard": "Pensando muy fuerte…",
-      "thinkingLettuce": "Consultando al consejo de lechugas…",
+      "thinkingRPUniverse": "Consultando al consejo del Universo RP…",
       "thinkingVoid": "Robando pensamientos del vacío…",
       "thinkingBrainCells": "Calentando las neuronas…",
       "thinkingForbidden": "Cargando conocimiento prohibido…",
@@ -3009,7 +3009,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "browseFiles": "Explorar archivos",
       "noBackupsFound": "No se encontraron copias de seguridad",
       "noBackupsDesc": "Crea una copia de seguridad o toca \"Explorar archivos\" para encontrar una",
-      "browseDesc": "Buscar archivo .lettuce",
+      "browseDesc": "Buscar archivo .rpu",
       "restoreDialogTitle": "Restaurar copia de seguridad",
       "deleteDialogTitle": "Eliminar copia de seguridad",
       "embeddingPrompt": "Embedding de memoria dinámica",
@@ -3711,11 +3711,11 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
     },
     "setup": {
       "complete": "¡Configuración completa!",
-      "completeMessage": "Tu motor Lettuce está configurado y listo.",
+      "completeMessage": "Tu motor RP Universe está configurado y listo.",
       "openDashboard": "Abrir panel"
     },
     "welcome": {
-      "title": "Bienvenido al motor Lettuce",
+      "title": "Bienvenido al motor RP Universe",
       "subtitle": "Vamos a configurar tu motor de personajes de IA. Esto tomará unos 2 minutos.",
       "feature1": "El motor le da a tus personajes de IA memoria persistente, emociones, relaciones y una identidad real.",
       "feature2": "Primero, configuraremos un backend LLM, luego los ajustes del motor.",
@@ -4174,7 +4174,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "descriptions": {
         "chutes": "Inferencia compatible con OpenAI para los mejores modelos open-source",
         "openai": "Modelos GPT-5, GPT-4.1 y GPT-4o para RP expresivo",
-        "lettuceHost": "Conecta a tu propio Lettuce Host de escritorio por LAN con API estilo OpenAI",
+        "rpUniverseHost": "Conecta a tu propio RP Universe Host de escritorio por LAN con API estilo OpenAI",
         "anthropic": "Claude 4.5 Sonnet y Haiku para diálogo profundo y emotivo",
         "aggregator": "Accede a modelos como GPT-5, Claude 4.5, Grok-3, Mixtral y más",
         "openaiCompatible": "Usa cualquier endpoint de API estilo OpenAI",
@@ -4186,13 +4186,13 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
         "gemini": "Gemini 2.5 Flash, 2.5 Pro y más",
         "qwen": "Qwen3-VL y nuevos modelos Qwen",
         "nvidia": "Nemotron, Llama, DeepSeek y más vía NVIDIA NIM",
-        "custom": "Apunta LettuceAI a cualquier endpoint de modelo personalizado",
+        "custom": "Apunta RP.Universe.AI a cualquier endpoint de modelo personalizado",
         "fallback": "Proveedor de modelos de IA"
       },
       "descriptionsShort": {
         "chutes": "Inferencia de modelos open-source",
         "openai": "GPT-5, GPT-4o, GPT-4.1",
-        "lettuceHost": "Tu propio host LAN",
+        "rpUniverseHost": "Tu propio host LAN",
         "anthropic": "Claude 4.5 Sonnet y Haiku",
         "aggregator": "Agregador multi-modelo",
         "openaiCompatible": "Endpoint OpenAI personalizado",
@@ -4229,7 +4229,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "yourProviders": "Tus proveedores",
       "yourProvidersHint": "Selecciona qué proveedor usar",
       "setDefaultModel": "Configura tu modelo por defecto",
-      "setDefaultModelDesc": "Elige qué proveedor y modelo debe usar LettuceAI por defecto. Podrás añadir más después.",
+      "setDefaultModelDesc": "Elige qué proveedor y modelo debe usar RP.Universe.AI por defecto. Podrás añadir más después.",
       "setDefaultModelDescDesktop": "Selecciona un proveedor de la lista para configurar tu modelo.",
       "modelDetails": "Detalles del modelo",
       "modelDetailsDesc": "Define el identificador de la API y la etiqueta que verás dentro de la app.",
@@ -4297,7 +4297,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
       "stepLabelMemory": "Sistema de memoria"
     },
     "welcome": {
-      "appName": "LettuceAI",
+      "appName": "RP.Universe.AI",
       "tagline": "Tu compañero de IA personal. Privado, seguro y siempre en el dispositivo.",
       "features": {
         "onDevice": "Solo en el dispositivo",
@@ -4334,8 +4334,8 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
         "processing": "Procesando archivo...",
         "processingNote": "Las copias grandes pueden tomar un minuto",
         "noBackups": "No se encontraron copias de seguridad",
-        "noBackupsHint": "Toca explorar para seleccionar un archivo .lettuce",
-        "browseLettuce": "Buscar archivo .lettuce",
+        "noBackupsHint": "Toca explorar para seleccionar un archivo .rpu",
+        "browseRPU": "Buscar archivo .rpu",
         "passwordLabel": "Contraseña de la copia de seguridad",
         "passwordPlaceholder": "Ingresa la contraseña",
         "restoreButton": "Restaurar copia de seguridad",
@@ -4373,7 +4373,7 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
     "modelGuide": {
       "badge": "Guía de modelos",
       "title": "¿Cómo elijo un modelo?",
-      "intro": "LettuceAI no impone un único \"mejor\" modelo. Tú eliges lo que encaje con tu <0>caso de uso, presupuesto y vibe</0>. Usa esta guía para decidir qué probar y dónde mirar.",
+      "intro": "RP.Universe.AI no impone un único \"mejor\" modelo. Tú eliges lo que encaje con tu <0>caso de uso, presupuesto y vibe</0>. Usa esta guía para decidir qué probar y dónde mirar.",
       "askYourself": "Pregúntate:",
       "factors": {
         "quality": {
@@ -4420,13 +4420,13 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
         "title": "Reglas simples",
         "casual": "Para charla casual: elige un modelo de chat rápido y barato de tu proveedor o router.",
         "experiments": "Para experimentos o gran volumen: empieza por el modelo más barato que se sienta lo bastante bueno y sube si hace falta.",
-        "switch": "Si algo no encaja (muy lento / muy torpe / muy caro): siempre puedes cambiar de modelo después en LettuceAI."
+        "switch": "Si algo no encaja (muy lento / muy torpe / muy caro): siempre puedes cambiar de modelo después en RP.Universe.AI."
       },
       "disclaimer": "Consulta siempre la documentación oficial del proveedor para la lista de modelos, límites y precios al día. Esta página es sobre cómo pensar, no sobre qué comprar."
     },
     "whereToFind": {
       "badge": "Ayuda con la API Key",
-      "intro": "Sigue estos pasos para conseguir tu API key, luego vuelve a LettuceAI y pégala en los ajustes del proveedor.",
+      "intro": "Sigue estos pasos para conseguir tu API key, luego vuelve a RP.Universe.AI y pégala en los ajustes del proveedor.",
       "readyPrompt": "¿Listo para conseguir la key?",
       "openProviderSite": "Abrir sitio del proveedor",
       "keyWarning": "Nunca compartas tu API key públicamente. Cualquiera con esta key puede usar el saldo de tu cuenta.",
@@ -4438,112 +4438,112 @@ export const esMessages: DeepPartialMessageTree<LocaleMessages> = {
           "s1": "Ve a chutes.ai/app e inicia sesión.",
           "s2": "Abre el área de cuenta/ajustes y busca API Keys.",
           "s3": "Crea una nueva key (o copia una existente).",
-          "s4": "Pega la key en LettuceAI."
+          "s4": "Pega la key en RP.Universe.AI."
         },
         "openai": {
           "title": "Cómo encontrar tu API key de OpenAI",
           "s1": "Ve a platform.openai.com e inicia sesión.",
           "s2": "Haz clic en tu avatar arriba a la derecha y luego en API keys.",
           "s3": "Haz clic en Create new secret key y copia el valor mostrado.",
-          "s4": "Pega la key en LettuceAI y guárdala en un sitio seguro. No la volverás a ver."
+          "s4": "Pega la key en RP.Universe.AI y guárdala en un sitio seguro. No la volverás a ver."
         },
         "anthropic": {
           "title": "Cómo encontrar tu API key de Anthropic",
           "s1": "Ve a console.anthropic.com e inicia sesión.",
           "s2": "Abre Settings en la barra lateral izquierda.",
           "s3": "Selecciona API keys y haz clic en Create key.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "openrouter": {
           "title": "Cómo encontrar tu API key de OpenRouter",
           "s1": "Visita openrouter.ai e inicia sesión.",
           "s2": "Abre la página Keys desde el menú de tu perfil.",
           "s3": "Haz clic en Create key, dale un nombre y guárdala.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "mistral": {
           "title": "Cómo encontrar tu API key de Mistral",
           "s1": "Ve a console.mistral.ai e inicia sesión.",
           "s2": "Haz clic en API keys en la barra lateral.",
           "s3": "Haz clic en Create an API key.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "deepseek": {
           "title": "Cómo encontrar tu API key de DeepSeek",
           "s1": "Abre platform.deepseek.com e inicia sesión.",
           "s2": "Haz clic en API Keys en la navegación superior.",
           "s3": "Crea una nueva key si aún no tienes.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "groq": {
           "title": "Cómo encontrar tu API key de Groq",
           "s1": "Visita console.groq.com e inicia sesión.",
           "s2": "Abre API Keys desde la barra lateral.",
           "s3": "Crea una nueva key y luego cópiala.",
-          "s4": "Pega la key en LettuceAI."
+          "s4": "Pega la key en RP.Universe.AI."
         },
         "gemini": {
           "title": "Cómo encontrar tu API key de Google Gemini",
           "s1": "Ve a Google AI Studio en aistudio.google.com e inicia sesión.",
           "s2": "Haz clic en Get API key o Manage keys.",
           "s3": "Crea una nueva key si hace falta.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "xai": {
           "title": "Cómo encontrar tu API key de xAI",
           "s1": "Abre console.x.ai e inicia sesión.",
           "s2": "Navega a la sección API Keys en la consola.",
           "s3": "Crea una nueva key.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "zai": {
           "title": "Cómo encontrar tu API key de zAI (GLM)",
           "s1": "Ve a open.bigmodel.cn e inicia sesión.",
           "s2": "Abre User Center y luego ve a API Keys.",
           "s3": "Crea una nueva key si no tienes.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "moonshot": {
           "title": "Cómo encontrar tu API key de Moonshot (Kimi)",
           "s1": "Visita platform.moonshot.cn e inicia sesión.",
           "s2": "Abre la sección API Keys en la consola.",
           "s3": "Crea una nueva key y cópiala.",
-          "s4": "Pega la key en LettuceAI."
+          "s4": "Pega la key en RP.Universe.AI."
         },
         "qwen": {
           "title": "Cómo encontrar tu API key de Qwen",
           "s1": "Abre dashscope.aliyun.com e inicia sesión.",
           "s2": "Ve a la sección API Keys en la barra lateral.",
           "s3": "Crea una nueva key.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "nanogpt": {
           "title": "Cómo encontrar tu API key de NanoGPT",
           "s1": "Ve a nano-gpt.com e inicia sesión.",
           "s2": "Abre el panel y ve a la sección de API keys.",
           "s3": "Crea una nueva key si hace falta.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "featherless": {
           "title": "Cómo encontrar tu API key de Featherless",
           "s1": "Visita featherless.ai e inicia sesión.",
           "s2": "Abre tu cuenta o sección de API desde el panel.",
           "s3": "Crea una nueva key si no ves ninguna.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         },
         "anannas": {
           "title": "Cómo encontrar tu API key de Anannas",
           "s1": "Ve a dashboard.anannas.ai e inicia sesión.",
           "s2": "Navega a la sección API Keys.",
           "s3": "Crea una nueva key y cópiala.",
-          "s4": "Pega la key en LettuceAI."
+          "s4": "Pega la key en RP.Universe.AI."
         },
         "default": {
           "title": "Cómo encontrar tu API key",
           "s1": "Abre el panel de tu proveedor de IA en un navegador e inicia sesión.",
           "s2": "Busca los ajustes de API, Developer o Integrations.",
           "s3": "Crea una nueva API key o consulta una existente.",
-          "s4": "Copia la key y pégala en LettuceAI."
+          "s4": "Copia la key y pégala en RP.Universe.AI."
         }
       }
     },

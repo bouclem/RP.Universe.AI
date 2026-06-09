@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/chat_manager/provider_adapter/anthropic.rs.
 
-use lettuceai_lib::chat_manager::provider_adapter::anthropic::AnthropicAdapter;
-use lettuceai_lib::chat_manager::provider_adapter::ProviderAdapter;
+use rp_universe_ai_lib::chat_manager::provider_adapter::anthropic::AnthropicAdapter;
+use rp_universe_ai_lib::chat_manager::provider_adapter::ProviderAdapter;
 use serde_json::json;
 
 #[test]

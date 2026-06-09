@@ -401,7 +401,7 @@ export function ModelSetupPage() {
         <div className="text-center space-y-2 mb-6">
           <h1 className="text-[25px] font-bold text-white">Set your default model</h1>
           <p className="text-[15px] text-white/70 max-w-sm leading-relaxed">
-            Choose which provider and model name LettuceAI should use by default. You'll be able to
+            Choose which provider and model name RP.Universe.AI should use by default. You'll be able to
             add more later.
           </p>
           <button

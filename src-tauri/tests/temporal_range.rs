@@ -6,7 +6,7 @@
 //! timestamp so they're reproducible regardless of the wall clock.
 
 use chrono::{Local, TimeZone};
-use lettuceai_lib::chat_manager::temporal::detect_temporal_query_range;
+use rp_universe_ai_lib::chat_manager::temporal::detect_temporal_query_range;
 
 const DAY_MS: i64 = 24 * 60 * 60 * 1000;
 const WEEK_MS: i64 = 7 * DAY_MS;

@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/storage_manager/entity_transfer/mod.rs.
 
-use lettuceai_lib::storage_manager::entity_transfer::{
+use rp_universe_ai_lib::storage_manager::entity_transfer::{
     normalize_uec_for_read, parse_uec_character, stringify_v2_uec,
     UEC_SCHEMA_VERSION as SCHEMA_VERSION, UEC_SCHEMA_VERSION_V2 as SCHEMA_VERSION_V2,
 };

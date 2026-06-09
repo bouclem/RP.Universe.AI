@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/chat_manager/sse.rs.
 
-use lettuceai_lib::chat_manager::sse::SseDecoder;
-use lettuceai_lib::chat_manager::types::NormalizedEvent;
+use rp_universe_ai_lib::chat_manager::sse::SseDecoder;
+use rp_universe_ai_lib::chat_manager::types::NormalizedEvent;
 
 #[test]
 fn ollama_reasoning_stream_preserves_leading_spaces() {

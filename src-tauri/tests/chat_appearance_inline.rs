@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/chat_appearance/mod.rs.
 
-use lettuceai_lib::chat_appearance::{color_to_luminance, compute_text_color};
+use rp_universe_ai_lib::chat_appearance::{color_to_luminance, compute_text_color};
 
 #[test]
 fn test_hex_luminance() {

@@ -1,9 +1,9 @@
 //! Gathered from inline tests in src/content_filter/mod.rs.
 
-use lettuceai_lib::content_filter::adversarial_corpus::{
+use rp_universe_ai_lib::content_filter::adversarial_corpus::{
     ALLOWED_STANDARD_CASES, BLOCKED_STANDARD_CASES, LEVEL_EXPECTATION_CASES,
 };
-use lettuceai_lib::content_filter::*;
+use rp_universe_ai_lib::content_filter::*;
 
 #[test]
 fn test_clean_text_passes() {

@@ -37,7 +37,7 @@ export function CreateCharacterHeader({ onBack }: CreateCharacterHeaderProps) {
           {t("common.buttons.back")}
         </button>
         <div className="flex flex-col items-center">
-          <span className="text-[11px] uppercase tracking-[0.4em] text-fg/40">LettuceAI</span>
+          <span className="text-[11px] uppercase tracking-[0.4em] text-fg/40">RP.Universe.AI</span>
           <span className="text-sm font-semibold text-fg">{t("common.nav.create")}</span>
         </div>
       </div>

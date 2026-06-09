@@ -2,8 +2,8 @@
 //! boundaries and assert the reconstructed output is identical to the
 //! single-chunk parse. This catches regressions in the partial-line buffer.
 
-use lettuceai_lib::chat_manager::sse::SseDecoder;
-use lettuceai_lib::chat_manager::types::NormalizedEvent;
+use rp_universe_ai_lib::chat_manager::sse::SseDecoder;
+use rp_universe_ai_lib::chat_manager::types::NormalizedEvent;
 
 fn reconstruct(stream: &str, chunk_size: usize, provider: &str) -> (String, String, bool) {
     let mut dec = SseDecoder::new();

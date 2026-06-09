@@ -4,7 +4,7 @@
 //! and the evasion-resistance properties that are easy to break with a
 //! one-line "simplification".
 
-use lettuceai_lib::content_filter::{ContentFilter, PureModeLevel, StreamFilterContext};
+use rp_universe_ai_lib::content_filter::{ContentFilter, PureModeLevel, StreamFilterContext};
 
 fn off() -> ContentFilter {
     ContentFilter::new(PureModeLevel::Off)

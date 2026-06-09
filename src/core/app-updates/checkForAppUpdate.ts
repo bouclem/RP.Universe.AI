@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { DOWNLOADS_PAGE_LINK } from "../utils/links";
 import type { AppPlatform } from "../utils/platform";
 
-const RELEASES_API_URL = "https://api.github.com/repos/LettuceAI/app/releases?per_page=40";
+const RELEASES_API_URL = "https://api.github.com/repos/bouclem/RP.Universe.AI/releases?per_page=40";
 
 export type AppUpdateInfo = {
   currentVersion: string;

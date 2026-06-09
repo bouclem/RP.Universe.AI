@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/chat_manager/tooling.rs.
 
-use lettuceai_lib::chat_manager::tooling::{
+use rp_universe_ai_lib::chat_manager::tooling::{
     gemini_tool_config, gemini_tools, parse_tool_calls, parse_tool_calls_from_text,
     strip_tool_call_blocks, ToolChoice, ToolConfig, ToolDefinition,
 };

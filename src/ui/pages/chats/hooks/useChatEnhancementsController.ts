@@ -38,7 +38,7 @@ interface ImageGenConfig {
 }
 
 type SceneGenerationMode = "auto" | "askFirst" | "manual";
-export const SCENE_PROMPT_APPROVAL_EVENT = "lettuceai:scene-prompt-approval";
+export const SCENE_PROMPT_APPROVAL_EVENT = "rp-universe-ai:scene-prompt-approval";
 
 export interface ScenePromptApprovalDetail {
   sessionId: string;

@@ -1,9 +1,9 @@
 //! Gathered from inline tests in src/chat_manager/memory/structured_fallback.rs.
 
-use lettuceai_lib::chat_manager::memory::structured_fallback::{
+use rp_universe_ai_lib::chat_manager::memory::structured_fallback::{
     parse_memory_operations_from_text, parse_memory_tag_repairs_from_text,
 };
-use lettuceai_lib::chat_manager::types::DynamicMemoryStructuredFallbackFormat;
+use rp_universe_ai_lib::chat_manager::types::DynamicMemoryStructuredFallbackFormat;
 use serde_json::json;
 
 #[test]

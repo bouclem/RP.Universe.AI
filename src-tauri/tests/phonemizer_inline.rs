@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/tts_manager/kokoro/phonemizer.rs.
 
-use lettuceai_lib::tts_manager::kokoro::phonemizer::{
+use rp_universe_ai_lib::tts_manager::kokoro::phonemizer::{
     apply_stress_delta, normalize_input_text, split_text_parts, TextPart,
 };
 

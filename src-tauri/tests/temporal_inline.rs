@@ -1,7 +1,7 @@
 //! Moved from inline tests in src/chat_manager/temporal.rs.
 
 use chrono::{Local, TimeZone};
-use lettuceai_lib::chat_manager::temporal::detect_temporal_query_range;
+use rp_universe_ai_lib::chat_manager::temporal::detect_temporal_query_range;
 
 fn local_ms(year: i32, month: u32, day: u32, hour: u32) -> u64 {
     Local

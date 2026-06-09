@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/ollama/mod.rs.
 
-use lettuceai_lib::chat_manager::{sse::SseDecoder, types::NormalizedEvent};
-use lettuceai_lib::ollama::{
+use rp_universe_ai_lib::chat_manager::{sse::SseDecoder, types::NormalizedEvent};
+use rp_universe_ai_lib::ollama::{
     normalize_assistant_tool_calls, normalize_base_url, normalize_request_body,
 };
 use serde_json::json;

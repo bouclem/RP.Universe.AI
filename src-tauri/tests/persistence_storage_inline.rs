@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/chat_manager/persistence/storage.rs.
 
-use lettuceai_lib::chat_manager::persistence::storage::resolve_credential_for_model;
-use lettuceai_lib::chat_manager::types::{
+use rp_universe_ai_lib::chat_manager::persistence::storage::resolve_credential_for_model;
+use rp_universe_ai_lib::chat_manager::types::{
     AdvancedModelSettings, Model, ProviderCredential, Settings,
 };
 use serde_json::Value;

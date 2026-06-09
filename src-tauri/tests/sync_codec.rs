@@ -6,8 +6,8 @@
 //! full frame before yielding) and reject malformed frames.
 
 use bytes::BytesMut;
-use lettuceai_lib::sync::codec::P2PCodec;
-use lettuceai_lib::sync::protocol::P2PMessage;
+use rp_universe_ai_lib::sync::codec::P2PCodec;
+use rp_universe_ai_lib::sync::protocol::P2PMessage;
 use tokio_util::codec::{Decoder, Encoder};
 
 fn sample_handshake() -> P2PMessage {

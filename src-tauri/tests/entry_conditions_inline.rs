@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/chat_manager/prompting/entry_conditions.rs.
 
-use lettuceai_lib::chat_manager::prompting::entry_conditions::*;
-use lettuceai_lib::chat_manager::types::{
+use rp_universe_ai_lib::chat_manager::prompting::entry_conditions::*;
+use rp_universe_ai_lib::chat_manager::types::{
     PromptEntryChatMode, PromptEntryCondition, PromptEntryInfoSource, SystemPromptEntry,
 };
 

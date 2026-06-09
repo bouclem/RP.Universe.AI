@@ -1,9 +1,9 @@
 //! Integration tests for lorebook keyword activation logic.
 
-use lettuceai_lib::chat_manager::prompting::lorebook_matcher::{
+use rp_universe_ai_lib::chat_manager::prompting::lorebook_matcher::{
     activate_lorebook_entries, format_lorebook_for_prompt,
 };
-use lettuceai_lib::storage_manager::lorebook::{
+use rp_universe_ai_lib::storage_manager::lorebook::{
     LorebookEntry, LorebookEntryActivationContext, LorebookKeywordDetectionMode,
 };
 

@@ -1,7 +1,7 @@
 //! Integration tests for the SSE decoder and helpers.
 
-use lettuceai_lib::chat_manager::sse::{usage_from_sse, usage_from_value, SseDecoder};
-use lettuceai_lib::chat_manager::types::NormalizedEvent;
+use rp_universe_ai_lib::chat_manager::sse::{usage_from_sse, usage_from_value, SseDecoder};
+use rp_universe_ai_lib::chat_manager::types::NormalizedEvent;
 use serde_json::json;
 
 fn collect_text(events: &[NormalizedEvent]) -> String {

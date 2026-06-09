@@ -6,8 +6,8 @@
 //! tests assert the exact expected URL/header for each provider so a
 //! one-line edit can't go unnoticed.
 
-use lettuceai_lib::chat_manager::types::ProviderId;
-use lettuceai_lib::providers::util::{
+use rp_universe_ai_lib::chat_manager::types::ProviderId;
+use rp_universe_ai_lib::providers::util::{
     build_headers, build_verify_url, default_base_url, extract_error_message,
 };
 use serde_json::json;

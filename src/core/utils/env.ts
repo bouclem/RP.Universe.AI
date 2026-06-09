@@ -1,4 +1,4 @@
-export const DEVELOPER_MODE_OVERRIDE_STORAGE_KEY = "lettuceai:developer-mode-enabled";
+export const DEVELOPER_MODE_OVERRIDE_STORAGE_KEY = "rp-universe-ai:developer-mode-enabled";
 
 function readDeveloperModeOverride(): boolean {
   if (typeof window === "undefined") return false;

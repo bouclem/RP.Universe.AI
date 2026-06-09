@@ -1,8 +1,8 @@
 //! Gathered from inline tests in src/chat_manager/reply_helper/mod.rs.
 
-use lettuceai_lib::chat_manager::prompting::turn_builder::swapped_prompt_entities;
-use lettuceai_lib::chat_manager::reply_helper::help_me_reply_participant_names;
-use lettuceai_lib::chat_manager::types::{Character, Persona};
+use rp_universe_ai_lib::chat_manager::prompting::turn_builder::swapped_prompt_entities;
+use rp_universe_ai_lib::chat_manager::reply_helper::help_me_reply_participant_names;
+use rp_universe_ai_lib::chat_manager::types::{Character, Persona};
 
 fn make_character() -> Character {
     Character {

@@ -3,8 +3,8 @@
 //! accidental removal of `#[serde(default)]`, renamed fields, or required
 //! new fields that would silently break existing user data.
 
-use lettuceai_lib::chat_manager::types::{Character, MemoryEmbedding, Session, Settings};
-use lettuceai_lib::storage_manager::group_sessions::GroupSession;
+use rp_universe_ai_lib::chat_manager::types::{Character, MemoryEmbedding, Session, Settings};
+use rp_universe_ai_lib::storage_manager::group_sessions::GroupSession;
 use serde_json::json;
 
 #[test]

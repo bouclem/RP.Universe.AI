@@ -31,11 +31,11 @@ const SECTIONS: FaqSection[] = [
     title: "Getting started",
     items: [
       {
-        question: "What is LettuceAI?",
+        question: "What is RP.Universe.AI?",
         answer: (
           <p>
-            LettuceAI is a chat app for AI characters. Unlike apps that route your messages
-            through a single hosted service, LettuceAI lets you bring your own API key from
+            RP.Universe.AI is a chat app for AI characters. Unlike apps that route your messages
+            through a single hosted service, RP.Universe.AI lets you bring your own API key from
             providers like Mistral, Cerebras, Google AI Studio, OpenAI, Anthropic, or run
             models locally on your device. Your chats stay on your device.
           </p>
@@ -60,7 +60,7 @@ const SECTIONS: FaqSection[] = [
             <p>
               Most other AI chat apps hide this from you by running their own server in
               the middle: they hold one big key, you pay them a subscription, and your
-              conversations pass through their machines. LettuceAI doesn't do that. You
+              conversations pass through their machines. RP.Universe.AI doesn't do that. You
               put your own key in the app, and messages go straight from your device to
               the provider you picked. Nothing in between.
             </p>
@@ -104,7 +104,7 @@ const SECTIONS: FaqSection[] = [
           <p>
             Yes. If you've used an AI chat app where everything just worked but you
             couldn't pick your model, couldn't control your data, or felt limited by a
-            subscription, LettuceAI is built for that. You bring your own API key, pick
+            subscription, RP.Universe.AI is built for that. You bring your own API key, pick
             the model you want, and your chats stay on your device. The trade-off is a
             short one-time setup; the upside is total control over cost, quality, and
             privacy.
@@ -115,7 +115,7 @@ const SECTIONS: FaqSection[] = [
         question: "How much does it cost?",
         answer: (
           <p>
-            LettuceAI itself is free. You pay the model provider directly, usually a
+            RP.Universe.AI itself is free. You pay the model provider directly, usually a
             fraction of a cent per message. Free tiers exist on Mistral, Cerebras, and
             Google AI Studio. Heavy use of frontier models (Claude Opus 4.7, GPT-5.1,
             Gemini 3 Pro) can add up, so check the provider's pricing page before picking
@@ -133,7 +133,7 @@ const SECTIONS: FaqSection[] = [
         answer: (
           <p>
             Your API key is stored locally on your device and only ever sent to the
-            provider you configured it for. LettuceAI does not have a server that sees
+            provider you configured it for. RP.Universe.AI does not have a server that sees
             your key or your messages.
           </p>
         ),
@@ -154,7 +154,7 @@ const SECTIONS: FaqSection[] = [
         answer: (
           <p>
             No. Chats live in a local database on your device and only you can delete
-            them. They aren't synced to any LettuceAI server, so we can't wipe them, and
+            them. They aren't synced to any RP.Universe.AI server, so we can't wipe them, and
             no automatic cleanup runs in the background. The only ways your chats go
             away are: you delete them yourself, you uninstall the app, you reset the
             app, or your device storage is wiped.
@@ -165,15 +165,15 @@ const SECTIONS: FaqSection[] = [
         question: "Can someone edit my data remotely?",
         answer: (
           <p>
-            No. There's no remote admin panel, no LettuceAI account, and no server with
-            a copy of your characters, chats, or settings. Nobody at LettuceAI can push
+            No. There's no remote admin panel, no RP.Universe.AI account, and no server with
+            a copy of your characters, chats, or settings. Nobody at RP.Universe.AI can push
             a change to your data, lock you out, or reach into the app to modify
             anything. Your data only changes when you change it on your own device.
           </p>
         ),
       },
       {
-        question: "What happens to my data if LettuceAI shuts down?",
+        question: "What happens to my data if RP.Universe.AI shuts down?",
         answer: (
           <p>
             Your characters and chats keep working as long as the app is on your device.
@@ -187,7 +187,7 @@ const SECTIONS: FaqSection[] = [
         question: "Will providers train on my conversations?",
         answer: (
           <p>
-            That depends on the provider's policy, not on LettuceAI. Most paid API tiers
+            That depends on the provider's policy, not on RP.Universe.AI. Most paid API tiers
             (OpenAI, Anthropic, Mistral) do not train on API traffic by default. Free
             tiers sometimes do. If this matters to you, read the privacy page of whichever
             provider you use.
@@ -283,7 +283,7 @@ const SECTIONS: FaqSection[] = [
         answer: (
           <div className="space-y-3">
             <p>
-              This means either you haven't added any model to LettuceAI yet, or you
+              This means either you haven't added any model to RP.Universe.AI yet, or you
               added models but the character you're chatting with doesn't have one
               picked.
             </p>
@@ -340,7 +340,7 @@ const SECTIONS: FaqSection[] = [
         question: "Are the characters I create private?",
         answer: (
           <p>
-            Yes. Characters you create stay on your device. LettuceAI has no upload
+            Yes. Characters you create stay on your device. RP.Universe.AI has no upload
             button and no server to upload them to. They're only ever shared if you
             explicitly export a character card file and send it somewhere yourself.
           </p>
@@ -351,7 +351,7 @@ const SECTIONS: FaqSection[] = [
         answer: (
           <p>
             Settings <Crumb /> Backup & Restore lets you export everything to a file. To move to
-            a new phone or computer, install LettuceAI there and use the "Sync from
+            a new phone or computer, install RP.Universe.AI there and use the "Sync from
             another device" option on the welcome screen, or restore from a backup file.
           </p>
         ),
@@ -360,7 +360,7 @@ const SECTIONS: FaqSection[] = [
   },
 ];
 
-const DOCS_URL = "https://www.lettuceai.app/docs";
+const DOCS_URL = "";
 const DISCORD_URL = DISCORD_SERVER_LINK;
 
 function openExternal(url: string) {
@@ -452,7 +452,7 @@ export function HelpPage() {
             Help & FAQ
           </h1>
           <p className={cn("mt-1.5 max-w-prose text-[0.9rem] leading-[1.55] text-fg/55")}>
-            New to LettuceAI? Start here. The basics, BYOK explained, and answers to the
+            New to RP.Universe.AI? Start here. The basics, BYOK explained, and answers to the
             most common questions.
           </p>
         </div>

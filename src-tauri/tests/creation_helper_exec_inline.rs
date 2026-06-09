@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/creation_helper/agent/exec.rs.
 
-use lettuceai_lib::creation_helper::agent::exec::parse_args;
+use rp_universe_ai_lib::creation_helper::agent::exec::parse_args;
 
 #[test]
 fn parses_simple_kv() {

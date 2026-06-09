@@ -1,10 +1,10 @@
 //! Gathered from inline tests in src/chat_manager/provider_adapter/google_gemini.rs.
 
-use lettuceai_lib::chat_manager::provider_adapter::google_gemini::{
+use rp_universe_ai_lib::chat_manager::provider_adapter::google_gemini::{
     gemini_thinking_mode, GeminiThinkingMode, GoogleGeminiAdapter,
 };
-use lettuceai_lib::chat_manager::provider_adapter::ProviderAdapter;
-use lettuceai_lib::chat_manager::tooling::{ToolChoice, ToolConfig, ToolDefinition};
+use rp_universe_ai_lib::chat_manager::provider_adapter::ProviderAdapter;
+use rp_universe_ai_lib::chat_manager::tooling::{ToolChoice, ToolConfig, ToolDefinition};
 use serde_json::json;
 
 #[test]

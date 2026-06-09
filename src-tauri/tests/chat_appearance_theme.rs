@@ -3,7 +3,7 @@
 //! background, dark background, neutral assistant) has slightly different
 //! output — a refactor that flattens the branches will be caught here.
 
-use lettuceai_lib::chat_appearance::{compute_chat_theme, ChatAppearanceInput, ResolvedColors};
+use rp_universe_ai_lib::chat_appearance::{compute_chat_theme, ChatAppearanceInput, ResolvedColors};
 
 fn input(opacity: f64, text_mode: &str, assistant_token: &str) -> ChatAppearanceInput {
     ChatAppearanceInput {

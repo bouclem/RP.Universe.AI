@@ -3,8 +3,8 @@
 //! Catches regressions where someone "simplifies" the logic and breaks
 //! a safety property (e.g. evicting pinned memories).
 
-use lettuceai_lib::chat_manager::memory::dynamic;
-use lettuceai_lib::chat_manager::types::MemoryEmbedding;
+use rp_universe_ai_lib::chat_manager::memory::dynamic;
+use rp_universe_ai_lib::chat_manager::types::MemoryEmbedding;
 
 fn make_mem(id: &str, score: f32, pinned: bool, access_count: u32) -> MemoryEmbedding {
     MemoryEmbedding {

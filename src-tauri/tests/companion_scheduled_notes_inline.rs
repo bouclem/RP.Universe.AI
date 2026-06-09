@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/storage_manager/companion_scheduled_notes.rs.
 
-use lettuceai_lib::storage_manager::companion_scheduled_notes::{
+use rp_universe_ai_lib::storage_manager::companion_scheduled_notes::{
     is_note_active, local_datetime_to_ms, most_recent_occurrence_on_or_before,
     next_occurrence_after_ms, resolve_local_datetime, CompanionScheduledNote,
 };

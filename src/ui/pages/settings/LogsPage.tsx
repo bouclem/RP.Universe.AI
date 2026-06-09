@@ -1053,7 +1053,7 @@ function LogsPageInner() {
       const dynamicEnabled = dynamicSettings?.enabled ?? false;
 
       const lines: string[] = [];
-      lines.push("LettuceAI Diagnostics");
+      lines.push("RP.Universe.AI Diagnostics");
       lines.push(`Generated: ${new Date().toISOString()}`);
       lines.push("");
       lines.push("App");
@@ -1405,7 +1405,7 @@ function LogsPageInner() {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className={cn(typography.caption.size, "text-fg/50")}>Export folder</p>
-                <p className={cn(typography.caption.size, "text-fg/70 break-all")}>{exportDir || "Downloads/lettuceai/logs"}</p>
+                <p className={cn(typography.caption.size, "text-fg/70 break-all")}>{exportDir || "Downloads/rp-universe-ai/logs"}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button onClick={pickLogExportDir} className={cn(typography.caption.size, "text-info/70 hover:text-info", interactive.transition.default)}>Choose</button>

@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/chat_manager/thinking.rs.
 
-use lettuceai_lib::chat_manager::thinking::{
+use rp_universe_ai_lib::chat_manager::thinking::{
     normalize_thinking_content, split_thinking_tags, ThinkingTagStreamParser,
 };
 

@@ -457,7 +457,7 @@ function getProviderDescription(providerId: string): string {
     case "qwen":
       return "Qwen3-VL and newer Qwen models";
     case "custom":
-      return "Point LettuceAI to any custom model endpoint";
+      return "Point RP.Universe.AI to any custom model endpoint";
     default:
       return "AI model provider";
   }

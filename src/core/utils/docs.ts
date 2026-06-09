@@ -1,4 +1,4 @@
-export const BASE_DOCS_URL = "https://www.lettuceai.app/docs";
+export const BASE_DOCS_URL = "https://www.rp-universe-ai.app/docs";
 
 interface Docs {
     installation: string;
@@ -39,7 +39,7 @@ export const DOCS: Docs = {
     helpMeReply: `${BASE_DOCS_URL}/help-me-reply`,
     textToSpeech: `${BASE_DOCS_URL}/tts`,
     creationHelper: `${BASE_DOCS_URL}/creation-helper`,
-    faq: `https://www.lettuceai.app/faq`,
+    faq: `https://www.rp-universe-ai.app/faq`,
 }
 
 export async function openDocs(key: DocsKey, section?: string) {

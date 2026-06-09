@@ -132,7 +132,7 @@ function getProviderDescription(providerId: string): string {
     case "nvidia":
       return "Nemotron, Llama, DeepSeek, and more via NVIDIA NIM";
     case "custom":
-      return "Point LettuceAI to any custom model endpoint";
+      return "Point RP.Universe.AI to any custom model endpoint";
     default:
       return "AI model provider";
   }

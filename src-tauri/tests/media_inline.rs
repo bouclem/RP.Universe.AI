@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/storage_manager/media.rs.
 
-use lettuceai_lib::storage_manager::media::{
+use rp_universe_ai_lib::storage_manager::media::{
     validate_avatar_filename, validate_simple_id, validate_single_component,
 };
 

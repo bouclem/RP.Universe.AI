@@ -90,7 +90,7 @@ export function ModelRecommendations({ onBack }: ModelRecommendationsProps) {
       {/* Title & intro */}
       <h1 className="text-[25px] font-semibold leading-tight text-white">How do I choose a model?</h1>
       <p className="mt-2 text-[15px] text-white/65">
-        LettuceAI doesn&apos;t force a single &quot;best&quot; model. Instead, you pick what fits
+        RP.Universe.AI doesn&apos;t force a single &quot;best&quot; model. Instead, you pick what fits
         your <span className="font-medium text-white/80">use case, budget, and vibe</span>. Use this
         guide to decide what to try and where to look.
       </p>
@@ -175,7 +175,7 @@ export function ModelRecommendations({ onBack }: ModelRecommendationsProps) {
           </li>
           <li>
             • If something feels off (too slow / too dumb / too expensive) → you can always switch
-            models later in LettuceAI.
+            models later in RP.Universe.AI.
           </li>
         </ul>
       </div>

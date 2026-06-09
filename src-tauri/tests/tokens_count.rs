@@ -5,7 +5,7 @@
 //! reverse), all budget math silently shifts. These tests pin the o200k_base
 //! tokenizer's count for a handful of canonical strings.
 
-use lettuceai_lib::tokens::tokens_count_batch;
+use rp_universe_ai_lib::tokens::tokens_count_batch;
 
 fn count(text: &str) -> u32 {
     tokens_count_batch(vec![text.to_string()])

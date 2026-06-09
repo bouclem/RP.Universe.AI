@@ -1,9 +1,9 @@
 //! Additional integration tests for cost calculation.
 
-use lettuceai_lib::models::pricing::calc::{
+use rp_universe_ai_lib::models::pricing::calc::{
     calculate_openrouter_request_cost, calculate_request_cost, OpenRouterCostInput,
 };
-use lettuceai_lib::models::ModelPricing;
+use rp_universe_ai_lib::models::ModelPricing;
 
 fn pricing(prompt: &str, completion: &str) -> ModelPricing {
     ModelPricing {

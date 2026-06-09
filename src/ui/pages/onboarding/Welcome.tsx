@@ -48,7 +48,7 @@ export function WelcomePage({ onContinue, onGoToSync }: WelcomePageProps = {}) {
     return () => window.removeEventListener("keydown", handler);
   }, [navigate]);
 
-  // Load brand fonts (Fraunces for display, Noto Sans for body — same as lettuceai.app)
+  // Load brand fonts (Fraunces for display, Noto Sans for body — same as rp-universe-ai.app)
   useEffect(() => {
     const id = "lai-brand-fonts";
     if (document.getElementById(id)) return;
@@ -96,7 +96,7 @@ export function WelcomePage({ onContinue, onGoToSync }: WelcomePageProps = {}) {
       >
         <div className="flex items-center gap-2.5">
           <img src={logoSvg} alt="" className="h-7 w-7" />
-          <span className="lai-wordmark-sm">LettuceAI</span>
+          <span className="lai-wordmark-sm">RP.Universe.AI</span>
         </div>
 
         {/* Mobile-only language selector — bare text + icon */}

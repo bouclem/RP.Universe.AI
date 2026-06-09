@@ -241,7 +241,7 @@ const CATEGORY_TEMPLATES: Record<ExplainedChatError["category"], Template> = {
   },
   unknown: {
     title: "Something went wrong",
-    explanation: "The provider returned an error LettuceAI doesn't have a specific explanation for.",
+    explanation: "The provider returned an error RP.Universe.AI doesn't have a specific explanation for.",
     suggestion: "Check the raw error below for clues, then try again or switch model.",
     retryable: true,
   },

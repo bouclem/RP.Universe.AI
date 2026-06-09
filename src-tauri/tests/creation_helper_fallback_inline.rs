@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/creation_helper/agent/structured_fallback.rs.
 
-use lettuceai_lib::creation_helper::agent::structured_fallback::{
+use rp_universe_ai_lib::creation_helper::agent::structured_fallback::{
     parse, CreationHelperFallbackFormat,
 };
 

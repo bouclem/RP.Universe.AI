@@ -741,10 +741,10 @@ function AppUpdateNotifier() {
         detail?.currentVersion ?? (await invoke<string>("get_app_version").catch(() => "1.0.0"));
       const channel = detail?.channel ?? detectUpdateChannel(currentVersion);
       const latestVersion = detail?.latestVersion ?? "999.0.0";
-      const releaseUrl = detail?.releaseUrl ?? "https://github.com/LettuceAI/app/releases";
+      const releaseUrl = detail?.releaseUrl ?? "https://github.com/bouclem/RP.Universe.AI/releases";
       const downloadUrl =
         detail?.downloadUrl ??
-        `https://www.lettuceai.app/download?platform=${encodeURIComponent(platform.os)}&source=in-app-update-test`;
+        `https://www.rp-universe-ai.app/download?platform=${encodeURIComponent(platform.os)}&source=in-app-update-test`;
       const releaseTag =
         detail?.releaseTag ??
         `forced-update-${platform.os}-${latestVersion.replace(/[^\w.-]+/g, "-")}`;

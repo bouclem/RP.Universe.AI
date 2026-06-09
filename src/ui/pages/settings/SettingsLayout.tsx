@@ -264,7 +264,7 @@ export function SettingsLayout() {
         icon: <ArrowLeftRight />,
         label: t("settings.items.convert.title"),
         onSelect: async () => {
-          const url = "https://www.lettuceai.app/convert";
+          const url = "https://www.rp-universe-ai.app/convert";
           try {
             const { openUrl } = await import("@tauri-apps/plugin-opener");
             await openUrl(url);
@@ -371,10 +371,10 @@ export function SettingsLayout() {
         onSelect: async () => {
           try {
             const { openUrl } = await import("@tauri-apps/plugin-opener");
-            await openUrl("https://www.lettuceai.app/changelog");
+            await openUrl("https://www.rp-universe-ai.app/changelog");
           } catch (error) {
             console.error("Failed to open URL:", error);
-            window.open("https://www.lettuceai.app/changelog", "_blank");
+            window.open("https://www.rp-universe-ai.app/changelog", "_blank");
           }
         },
       },
@@ -386,10 +386,10 @@ export function SettingsLayout() {
         onSelect: async () => {
           try {
             const { openUrl } = await import("@tauri-apps/plugin-opener");
-            await openUrl("https://www.lettuceai.app/docs");
+            await openUrl("https://www.rp-universe-ai.app/docs");
           } catch (error) {
             console.error("Failed to open URL:", error);
-            window.open("https://www.lettuceai.app/docs", "_blank");
+            window.open("https://www.rp-universe-ai.app/docs", "_blank");
           }
         },
       },

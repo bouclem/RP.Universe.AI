@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/providers/config.rs.
 
-use lettuceai_lib::chat_manager::types::ProviderId;
-use lettuceai_lib::providers::config::{build_endpoint_url, resolve_base_url};
+use rp_universe_ai_lib::chat_manager::types::ProviderId;
+use rp_universe_ai_lib::providers::config::{build_endpoint_url, resolve_base_url};
 
 #[test]
 fn test_resolve_base_url_with_custom() {

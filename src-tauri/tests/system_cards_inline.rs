@@ -1,11 +1,11 @@
 //! Gathered from inline tests in src/storage_manager/system_cards.rs.
 
-use lettuceai_lib::chat_manager::types::{
+use rp_universe_ai_lib::chat_manager::types::{
     AdvancedModelSettings, Model, PromptTemplateType, SystemPromptEntry, SystemPromptTemplate,
 };
-use lettuceai_lib::storage_manager::lorebook::{Lorebook, LorebookEntry};
-use lettuceai_lib::storage_manager::system_cards::*;
-use lettuceai_lib::sync::models::{ChatTemplate, ChatTemplateMessage};
+use rp_universe_ai_lib::storage_manager::lorebook::{Lorebook, LorebookEntry};
+use rp_universe_ai_lib::storage_manager::system_cards::*;
+use rp_universe_ai_lib::sync::models::{ChatTemplate, ChatTemplateMessage};
 
 #[test]
 fn parse_rejects_non_usc_schema() {
@@ -164,7 +164,7 @@ fn create_lorebook_omits_internal_lorebook_id_from_entries() {
         name: "World".into(),
         avatar_path: None,
         keyword_detection_mode:
-            lettuceai_lib::storage_manager::lorebook::LorebookKeywordDetectionMode::RecentMessageWindow,
+            rp_universe_ai_lib::storage_manager::lorebook::LorebookKeywordDetectionMode::RecentMessageWindow,
         created_at: 1,
         updated_at: 2,
     };

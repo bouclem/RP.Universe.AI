@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/infra/abort_manager.rs.
 
-use lettuceai_lib::infra::abort_manager::AbortRegistry;
+use rp_universe_ai_lib::infra::abort_manager::AbortRegistry;
 use tokio::sync::oneshot::error::TryRecvError;
 
 #[test]

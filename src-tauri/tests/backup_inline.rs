@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/storage_manager/backup.rs.
 
-use lettuceai_lib::storage_manager::backup::{
+use rp_universe_ai_lib::storage_manager::backup::{
     disable_dynamic_memory_in_advanced_settings, require_encrypted_backup,
     sanitize_media_archive_name, BackupManifest,
 };
@@ -32,7 +32,7 @@ fn sanitize_media_archive_name_rejects_traversal() {
 #[test]
 fn require_encrypted_backup_rejects_plaintext_archives() {
     let manifest = BackupManifest {
-        version: lettuceai_lib::storage_manager::backup::BACKUP_VERSION,
+        version: rp_universe_ai_lib::storage_manager::backup::BACKUP_VERSION,
         created_at: 0,
         app_version: "test".to_string(),
         encrypted: false,

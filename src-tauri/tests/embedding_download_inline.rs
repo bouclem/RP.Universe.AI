@@ -1,6 +1,6 @@
 //! Gathered from inline tests in src/embedding/download.rs.
 
-use lettuceai_lib::embedding::download::apply_embedding_version_preference;
+use rp_universe_ai_lib::embedding::download::apply_embedding_version_preference;
 
 #[test]
 fn sets_embedding_version_preference_in_advanced_settings() {

@@ -219,7 +219,7 @@ export function AboutPage() {
   };
 
   const openChangelog = () => {
-    void openExternal("https://www.lettuceai.app/changelog");
+    void openExternal("https://www.rp-universe-ai.app/changelog");
   };
 
   const handleEnableDeveloperMode = async () => {
@@ -255,7 +255,7 @@ export function AboutPage() {
               />
               <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-5">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-fg/10 bg-surface/60 shadow-sm">
-                  <img src={logoSvg} alt="LettuceAI" className="h-10 w-10" />
+                  <img src={logoSvg} alt="RP.Universe.AI" className="h-10 w-10" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

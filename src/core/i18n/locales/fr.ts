@@ -44,7 +44,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
       "engineSetup": "Configuration du moteur",
       "llmProviders": "Fournisseurs LLM",
       "engineSettings": "Paramètres du moteur",
-      "lettuceEngine": "Moteur Lettuce",
+      "rpUniverseEngine": "Moteur RP Universe",
       "create": "Créer",
       "setup": "Configuration",
       "welcome": "Bienvenue",
@@ -309,7 +309,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
   },
   "about": {
     "kicker": "Infos sur l’app",
-    "appName": "LettuceAI",
+    "appName": "RP.Universe.AI",
     "description": "Détails de version, vérification des mises à jour et liens utiles.",
     "info": {
       "version": "Version",
@@ -325,7 +325,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
       "title": "Mises à jour de l’app",
       "description": "Vérifiez manuellement les nouvelles versions ou désactivez les vérifications automatiques au démarrage.",
       "autoChecks": "Vérifications automatiques des mises à jour",
-      "autoChecksDescription": "Lorsque cette option est activée, LettuceAI recherche de nouvelles versions à l’ouverture de l’app.",
+      "autoChecksDescription": "Lorsque cette option est activée, RP.Universe.AI recherche de nouvelles versions à l’ouverture de l’app.",
       "checkNow": "Vérifier les mises à jour",
       "checking": "Vérification des mises à jour...",
       "upToDateTitle": "Vous êtes à jour",
@@ -3715,7 +3715,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
       "openDashboard": "Ouvrir le tableau de bord"
     },
     "welcome": {
-      "title": "Bienvenue dans le moteur Lettuce",
+      "title": "Bienvenue dans le moteur RP Universe",
       "subtitle": "Configurons votre moteur de personnages IA. Cela prendra environ 2 minutes.",
       "feature1": "Le moteur donne à vos personnages IA une mémoire persistante, des émotions, des relations et une véritable identité.",
       "feature2": "D'abord, nous configurerons un backend LLM, puis les paramètres du moteur.",
@@ -4186,7 +4186,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
         "gemini": "Gemini 2.5 Flash, 2.5 Pro et plus",
         "qwen": "Qwen3-VL et les modèles Qwen plus récents",
         "nvidia": "Nemotron, Llama, DeepSeek et plus via NVIDIA NIM",
-        "custom": "Pointe LettuceAI vers n'importe quel endpoint de modèle personnalisé",
+        "custom": "Pointe RP.Universe.AI vers n'importe quel endpoint de modèle personnalisé",
         "fallback": "Fournisseur de modèle d'IA"
       },
       "descriptionsShort": {
@@ -4229,7 +4229,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
       "yourProviders": "Tes fournisseurs",
       "yourProvidersHint": "Sélectionne quel fournisseur utiliser",
       "setDefaultModel": "Définis ton modèle par défaut",
-      "setDefaultModelDesc": "Choisis le fournisseur et le nom du modèle que LettuceAI doit utiliser par défaut. Tu pourras en ajouter d'autres plus tard.",
+      "setDefaultModelDesc": "Choisis le fournisseur et le nom du modèle que RP.Universe.AI doit utiliser par défaut. Tu pourras en ajouter d'autres plus tard.",
       "setDefaultModelDescDesktop": "Sélectionne un fournisseur dans la liste pour configurer ton modèle.",
       "modelDetails": "Détails du modèle",
       "modelDetailsDesc": "Définis l'identifiant API et le libellé que tu verras dans l'app.",
@@ -4297,7 +4297,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
       "stepLabelMemory": "Système de mémoire"
     },
     "welcome": {
-      "appName": "LettuceAI",
+      "appName": "RP.Universe.AI",
       "tagline": "Votre compagnon IA personnel. Privé, sécurisé, et toujours sur l'appareil.",
       "features": {
         "onDevice": "Sur l'appareil uniquement",
@@ -4334,8 +4334,8 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
         "processing": "Traitement du fichier...",
         "processingNote": "Les grandes sauvegardes peuvent prendre une minute",
         "noBackups": "Aucune sauvegarde trouvée",
-        "noBackupsHint": "Appuyez sur parcourir pour sélectionner un fichier .lettuce",
-        "browseLettuce": "Rechercher un fichier .lettuce",
+        "noBackupsHint": "Appuyez sur parcourir pour sélectionner un fichier .rpu",
+        "browseRPU": "Rechercher un fichier .rpu",
         "passwordLabel": "Mot de passe de la sauvegarde",
         "passwordPlaceholder": "Entrez le mot de passe",
         "restoreButton": "Restaurer la sauvegarde",
@@ -4373,7 +4373,7 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
     "modelGuide": {
       "badge": "Guide des modèles",
       "title": "Comment choisir un modèle ?",
-      "intro": "LettuceAI ne force pas un seul \"meilleur\" modèle. À la place, tu choisis ce qui correspond à ton <0>cas d'usage, budget et ambiance</0>. Utilise ce guide pour décider quoi essayer et où chercher.",
+      "intro": "RP.Universe.AI ne force pas un seul \"meilleur\" modèle. À la place, tu choisis ce qui correspond à ton <0>cas d'usage, budget et ambiance</0>. Utilise ce guide pour décider quoi essayer et où chercher.",
       "askYourself": "Pose-toi la question :",
       "factors": {
         "quality": {
@@ -4420,13 +4420,13 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
         "title": "Règles simples",
         "casual": "Pour un chat décontracté : choisis un modèle de chat rapide et bon marché chez ton fournisseur/router.",
         "experiments": "Pour des expériences ou un gros volume : commence par le modèle le moins cher qui te convient, puis monte en gamme si besoin.",
-        "switch": "Si quelque chose ne va pas (trop lent / trop bête / trop cher) : tu peux toujours changer de modèle plus tard dans LettuceAI."
+        "switch": "Si quelque chose ne va pas (trop lent / trop bête / trop cher) : tu peux toujours changer de modèle plus tard dans RP.Universe.AI."
       },
       "disclaimer": "Vérifie toujours la documentation officielle du fournisseur pour la dernière liste de modèles, les limites et les prix. Cette page parle de comment réfléchir, pas de quoi acheter."
     },
     "whereToFind": {
       "badge": "Aide pour la clé API",
-      "intro": "Suis ces étapes pour récupérer ta clé API, puis reviens dans LettuceAI et colle-la dans les paramètres du fournisseur.",
+      "intro": "Suis ces étapes pour récupérer ta clé API, puis reviens dans RP.Universe.AI et colle-la dans les paramètres du fournisseur.",
       "readyPrompt": "Prêt à récupérer la clé ?",
       "openProviderSite": "Ouvrir le site du fournisseur",
       "keyWarning": "Ne partage jamais ta clé API publiquement. Quiconque possède cette clé peut utiliser le solde de ton compte.",
@@ -4438,112 +4438,112 @@ export const frMessages: DeepPartialMessageTree<LocaleMessages> = {
           "s1": "Va sur chutes.ai/app et connecte-toi.",
           "s2": "Ouvre la zone compte/paramètres et trouve les clés API.",
           "s3": "Crée une nouvelle clé (ou copie-en une existante).",
-          "s4": "Colle la clé dans LettuceAI."
+          "s4": "Colle la clé dans RP.Universe.AI."
         },
         "openai": {
           "title": "Comment trouver ta clé API OpenAI",
           "s1": "Va sur platform.openai.com et connecte-toi.",
           "s2": "Clique sur ton avatar de profil en haut à droite, puis choisis API keys.",
           "s3": "Clique sur Create new secret key et copie la valeur affichée.",
-          "s4": "Colle la clé dans LettuceAI et garde-la en lieu sûr. Elle ne sera plus affichée."
+          "s4": "Colle la clé dans RP.Universe.AI et garde-la en lieu sûr. Elle ne sera plus affichée."
         },
         "anthropic": {
           "title": "Comment trouver ta clé API Anthropic",
           "s1": "Va sur console.anthropic.com et connecte-toi.",
           "s2": "Ouvre Settings depuis la barre latérale gauche.",
           "s3": "Sélectionne API keys et clique sur Create key.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "openrouter": {
           "title": "Comment trouver ta clé API OpenRouter",
           "s1": "Visite openrouter.ai et connecte-toi.",
           "s2": "Ouvre la page Keys depuis ton menu de profil.",
           "s3": "Clique sur Create key, donne-lui un nom et enregistre.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "mistral": {
           "title": "Comment trouver ta clé API Mistral",
           "s1": "Va sur console.mistral.ai et connecte-toi.",
           "s2": "Clique sur API keys dans la barre latérale.",
           "s3": "Clique sur Create an API key.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "deepseek": {
           "title": "Comment trouver ta clé API DeepSeek",
           "s1": "Ouvre platform.deepseek.com et connecte-toi.",
           "s2": "Clique sur API Keys dans la navigation du haut.",
           "s3": "Crée une nouvelle clé si tu n'en as pas déjà une.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "groq": {
           "title": "Comment trouver ta clé API Groq",
           "s1": "Visite console.groq.com et connecte-toi.",
           "s2": "Ouvre API Keys depuis la barre latérale.",
           "s3": "Crée une nouvelle clé, puis copie-la.",
-          "s4": "Colle la clé dans LettuceAI."
+          "s4": "Colle la clé dans RP.Universe.AI."
         },
         "gemini": {
           "title": "Comment trouver ta clé API Google Gemini",
           "s1": "Va sur Google AI Studio à aistudio.google.com et connecte-toi.",
           "s2": "Clique sur Get API key ou Manage keys.",
           "s3": "Crée une nouvelle clé si nécessaire.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "xai": {
           "title": "Comment trouver ta clé API xAI",
           "s1": "Ouvre console.x.ai et connecte-toi.",
           "s2": "Va dans la section API Keys de la console.",
           "s3": "Crée une nouvelle clé.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "zai": {
           "title": "Comment trouver ta clé API zAI (GLM)",
           "s1": "Va sur open.bigmodel.cn et connecte-toi.",
           "s2": "Ouvre User Center, puis va dans API Keys.",
           "s3": "Crée une nouvelle clé si tu n'en as pas.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "moonshot": {
           "title": "Comment trouver ta clé API Moonshot (Kimi)",
           "s1": "Visite platform.moonshot.cn et connecte-toi.",
           "s2": "Ouvre la section API Keys dans la console.",
           "s3": "Crée une nouvelle clé et copie-la.",
-          "s4": "Colle la clé dans LettuceAI."
+          "s4": "Colle la clé dans RP.Universe.AI."
         },
         "qwen": {
           "title": "Comment trouver ta clé API Qwen",
           "s1": "Ouvre dashscope.aliyun.com et connecte-toi.",
           "s2": "Va dans la section API Keys de la barre latérale.",
           "s3": "Crée une nouvelle clé.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "nanogpt": {
           "title": "Comment trouver ta clé API NanoGPT",
           "s1": "Va sur nano-gpt.com et connecte-toi.",
           "s2": "Ouvre le tableau de bord et va dans la section des clés API.",
           "s3": "Crée une nouvelle clé si nécessaire.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "featherless": {
           "title": "Comment trouver ta clé API Featherless",
           "s1": "Visite featherless.ai et connecte-toi.",
           "s2": "Ouvre ta section compte ou API depuis le tableau de bord.",
           "s3": "Crée une nouvelle clé si tu n'en vois pas.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         },
         "anannas": {
           "title": "Comment trouver ta clé API Anannas",
           "s1": "Va sur dashboard.anannas.ai et connecte-toi.",
           "s2": "Va dans la section API Keys.",
           "s3": "Crée une nouvelle clé et copie-la.",
-          "s4": "Colle la clé dans LettuceAI."
+          "s4": "Colle la clé dans RP.Universe.AI."
         },
         "default": {
           "title": "Comment trouver ta clé API",
           "s1": "Ouvre le tableau de bord de ton fournisseur d'IA dans un navigateur et connecte-toi.",
           "s2": "Cherche les paramètres API, Developer ou Integrations.",
           "s3": "Crée une nouvelle clé API ou consulte une clé existante.",
-          "s4": "Copie la clé et colle-la dans LettuceAI."
+          "s4": "Copie la clé et colle-la dans RP.Universe.AI."
         }
       }
     },

@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/providers/util.rs.
 
-use lettuceai_lib::chat_manager::types::ProviderId;
-use lettuceai_lib::providers::util::build_headers;
+use rp_universe_ai_lib::chat_manager::types::ProviderId;
+use rp_universe_ai_lib::providers::util::build_headers;
 use reqwest::header::{HeaderValue, AUTHORIZATION};
 
 #[test]

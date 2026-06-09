@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    lettuceai_lib::run()
+    rp_universe_ai_lib::run()
 }

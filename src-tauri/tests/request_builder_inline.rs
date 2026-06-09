@@ -1,7 +1,7 @@
 //! Gathered from inline tests in src/chat_manager/prompting/request_builder.rs.
 
-use lettuceai_lib::chat_manager::prompting::request_builder::*;
-use lettuceai_lib::chat_manager::types::ProviderCredential;
+use rp_universe_ai_lib::chat_manager::prompting::request_builder::*;
+use rp_universe_ai_lib::chat_manager::types::ProviderCredential;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 

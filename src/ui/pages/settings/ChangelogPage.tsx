@@ -215,7 +215,7 @@ export const changelog: ChangelogEntry[] = [
       },
       {
         type: "improvement",
-        description: 'Redirected the Settings "Convert Files" entry to lettuceai.app/convert.',
+        description: 'Redirected the Settings "Convert Files" entry to rp-universe-ai.app/convert.',
       },
       {
         type: "bugfix",
@@ -1017,7 +1017,7 @@ export const changelog: ChangelogEntry[] = [
     changes: [
       {
         type: "feature",
-        description: "First public beta release of LettuceAI focused on privacy-first AI role-play",
+        description: "First public beta release of RP.Universe.AI focused on privacy-first AI role-play",
       },
       {
         type: "feature",
@@ -1341,7 +1341,7 @@ export function ChangelogPage() {
           className="px-4 pt-8 pb-4"
         >
           <a
-            href="https://github.com/LettuceAI/mobile-app"
+            href="https://github.com/bouclem/RP.Universe.AI"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(

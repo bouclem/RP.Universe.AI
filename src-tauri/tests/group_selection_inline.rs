@@ -1,8 +1,8 @@
 //! Gathered from inline tests in src/group_chat_manager/selection.rs.
 
-use lettuceai_lib::group_chat_manager::selection::*;
-use lettuceai_lib::group_chat_manager::{CharacterInfo, GroupChatContext};
-use lettuceai_lib::storage_manager::group_sessions::GroupSession;
+use rp_universe_ai_lib::group_chat_manager::selection::*;
+use rp_universe_ai_lib::group_chat_manager::{CharacterInfo, GroupChatContext};
+use rp_universe_ai_lib::storage_manager::group_sessions::GroupSession;
 
 fn test_characters() -> Vec<CharacterInfo> {
     vec![
@@ -151,7 +151,7 @@ fn test_build_selection_prompt_truncates_utf8_safely() {
     content.push('—');
     content.push_str("tail");
     context.recent_messages = vec![
-        lettuceai_lib::storage_manager::group_sessions::GroupMessage {
+        rp_universe_ai_lib::storage_manager::group_sessions::GroupMessage {
             id: "m1".to_string(),
             session_id: "session-1".to_string(),
             role: "assistant".to_string(),
@@ -187,7 +187,7 @@ fn test_heuristic_ignores_muted_participants() {
 fn test_round_robin_ignores_muted_participants() {
     let mut context = test_context(vec!["char-2"]);
     context.recent_messages = vec![
-        lettuceai_lib::storage_manager::group_sessions::GroupMessage {
+        rp_universe_ai_lib::storage_manager::group_sessions::GroupMessage {
             id: "m1".to_string(),
             session_id: "session-1".to_string(),
             role: "assistant".to_string(),
@@ -216,7 +216,7 @@ fn test_heuristic_does_not_treat_plain_name_as_forced_selection() {
     let mut context = test_context(vec![]);
     context.user_message = "Alice should maybe answer this.".to_string();
     context.participation_stats = vec![
-        lettuceai_lib::storage_manager::group_sessions::GroupParticipation {
+        rp_universe_ai_lib::storage_manager::group_sessions::GroupParticipation {
             id: "p1".to_string(),
             session_id: "session-1".to_string(),
             character_id: "char-1".to_string(),
@@ -224,7 +224,7 @@ fn test_heuristic_does_not_treat_plain_name_as_forced_selection() {
             last_spoke_turn: Some(4),
             last_spoke_at: Some(0),
         },
-        lettuceai_lib::storage_manager::group_sessions::GroupParticipation {
+        rp_universe_ai_lib::storage_manager::group_sessions::GroupParticipation {
             id: "p2".to_string(),
             session_id: "session-1".to_string(),
             character_id: "char-2".to_string(),
@@ -234,7 +234,7 @@ fn test_heuristic_does_not_treat_plain_name_as_forced_selection() {
         },
     ];
     context.recent_messages = vec![
-        lettuceai_lib::storage_manager::group_sessions::GroupMessage {
+        rp_universe_ai_lib::storage_manager::group_sessions::GroupMessage {
             id: "m1".to_string(),
             session_id: "session-1".to_string(),
             role: "assistant".to_string(),

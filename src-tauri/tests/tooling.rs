@@ -1,6 +1,6 @@
 //! Additional integration tests for tool-call parsing.
 
-use lettuceai_lib::chat_manager::tooling::{
+use rp_universe_ai_lib::chat_manager::tooling::{
     parse_tool_calls, parse_tool_calls_from_text, strip_tool_call_blocks,
 };
 use serde_json::json;
