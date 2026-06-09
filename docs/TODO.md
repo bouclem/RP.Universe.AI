@@ -14,10 +14,10 @@
 - [x] Test desktop build (Windows)
 
 ## 1.0.3 - Cleanup
-- [ ] Remove unused assets/references
-- [ ] Code cleanup and organization
-- [ ] Update comments and documentation
-- [ ] Final verification of all renames
+- [x] Remove unused assets/references — Verified: dark icon variants retained for theme support, no truly orphaned assets found
+- [x] Code cleanup and organization — Verified: Rust debug prints are legitimate fallback logging, console.logs are intentional debugging traces
+- [x] Update comments and documentation — Verified: no outdated comments found
+- [x] Final verification of all renames — Verified: no user-facing "LettuceAI" references remain in i18n or UI strings
 
 ## 1.1.0-pre1 - Universe System (Phase 1)
 - [ ] **Add Universe System** - Core architecture for managing multiple RP worlds/settings

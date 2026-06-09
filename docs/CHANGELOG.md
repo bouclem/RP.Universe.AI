@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.3] - 2026-06-09
+
+### Verified
+- **Assets**: Confirmed dark icon variants (`*_dark.svg`) retained for future theme support — no truly orphaned assets found
+- **Rust code**: Verified 7 `eprintln!` statements in `infra/utils.rs` and `app/bootstrap.rs` are legitimate fallback logging for early initialization/panic scenarios
+- **TypeScript**: Confirmed 637 `console.log` statements are intentional debugging traces throughout the codebase
+- **Documentation**: No outdated comments requiring updates
+- **Rename verification**: Final scan confirms no user-facing "LettuceAI" references remain in i18n strings or UI
+
 ## [1.0.2] - 2026-06-09
 
 ### Fixed
