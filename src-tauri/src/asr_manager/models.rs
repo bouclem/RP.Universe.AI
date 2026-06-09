@@ -199,7 +199,7 @@ fn validate_model_id(model_id: &str) -> Result<(), String> {
 
 async fn fetch_remote_whisper_models() -> Result<Vec<AsrWhisperModelPreset>, String> {
     let client = reqwest::Client::builder()
-        .user_agent("LettuceAI/1.0")
+        .user_agent("RP.Universe.AI/1.0")
         .redirect(reqwest::redirect::Policy::limited(10))
         .build()
         .map_err(|e| crate::utils::err_msg(module_path!(), line!(), e.to_string()))?;

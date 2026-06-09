@@ -34,7 +34,7 @@ impl ProviderAdapter for FeatherlessAdapter {
         out.insert("Accept".into(), "text/event-stream".into());
         // Recommended but not strictly required by Featherless:
         out.insert("HTTP-Referer".into(), "<your app URL>".into());
-        out.insert("X-Title".into(), "LettuceAI".into());
+        out.insert("X-Title".into(), "RP.Universe.AI".into());
         out
     }
 
@@ -48,12 +48,12 @@ impl ProviderAdapter for FeatherlessAdapter {
         out.insert("Content-Type".into(), "application/json".into());
         out.insert("Accept".into(), "text/event-stream".into());
         out.entry("User-Agent".into())
-            .or_insert_with(|| "LettuceAI/0.1".into());
+            .or_insert_with(|| "RP.Universe.AI/0.1".into());
         // Default attribution as recommended by Featherless
         out.entry("HTTP-Referer".into())
-            .or_insert_with(|| "https://www.lettuceai.app/".into());
+            .or_insert_with(|| "https://www.rp-universe-ai.app/".into());
         out.entry("X-Title".into())
-            .or_insert_with(|| "LettuceAI".into());
+            .or_insert_with(|| "RP.Universe.AI".into());
 
         if let Some(extra) = extra {
             for (k, v) in extra.iter() {

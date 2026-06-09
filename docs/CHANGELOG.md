@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.0.2] - 2026-06-09
+
+### Fixed
+- **Critical**: Fixed 27 instances of `.map(|r| r.unwrap())` in `sync/db.rs` that could panic on database deserialization errors - now properly returns error instead of crashing
+- Fixed Android backup storage path from "LettuceAI/" to "RP.Universe.AI/"
+- Fixed Android log path from "lettuceai/logs/" to "rp-universe-ai/logs/"
+- Fixed broken eSpeak Android bundle download URL (was pointing to old LettuceAI repo)
+- Updated all User-Agent headers from "LettuceAI" to "RP.Universe.AI" across all provider adapters
+- Updated HTTP-Referer and X-Title headers from "lettuceai.app" to "rp-universe-ai.app"
+
+### Removed
+- **Deleted entire `gen/android/` directory** (401 items) - Android project files no longer needed for Windows-only build
+- **Removed Android target dependencies from Cargo.toml:**
+  - `tauri-plugin-android-fs`
+  - `jni`
+  - Mobile-specific `ort` features (nnapi)
+  - `tauri-plugin-barcode-scanner`
+  - `tauri-plugin-haptics`
+- **Removed macOS and Linux target dependencies** - project is Windows-only
+- **Removed Android conditional code blocks** from:
+  - `storage_manager/backup.rs` - Android backup export/import
+  - `storage_manager/jsonl.rs` - Android file handling
+  - `tts_manager/kokoro/runtime.rs` - Android eSpeak bridge
+  - `tts_manager/kokoro/phonemizer.rs` - Android native phonemizer
+  - `infra/logger.rs` - Android log export
+- The remaining `#[cfg(target_os = "android")]` blocks in other files are dead code that won't compile on Windows
+
 ## [1.0.1] - 2026-06-09
 
 ### Changed

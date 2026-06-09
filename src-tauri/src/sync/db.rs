@@ -2047,8 +2047,8 @@ fn fetch_group_sessions_full(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     for session in &mut sessions {
         session.memory_embeddings = canonical_memory_embeddings_json(
@@ -3075,8 +3075,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn.prepare("SELECT id, default_provider_credential_id, default_model_id, app_state, advanced_model_settings, prompt_template_id, system_prompt, advanced_settings, migration_version, created_at, updated_at FROM settings").map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
     let settings_iter = stmt
@@ -3096,7 +3096,9 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
-    let settings: Vec<Settings> = settings_iter.map(|r| r.unwrap()).collect();
+    let settings: Vec<Settings> = settings_iter
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn
         .prepare("SELECT id, title, description, nickname, avatar_path, avatar_crop_x, avatar_crop_y, avatar_crop_scale, design_description, design_reference_image_ids, COALESCE(active_lorebook_ids, '[]'), is_default, created_at, updated_at FROM personas")
@@ -3121,8 +3123,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn.prepare("SELECT id, name, provider_id, provider_credential_id, provider_label, display_name, created_at, model_type, input_scopes, output_scopes, advanced_model_settings, prompt_template_id, system_prompt FROM models").map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
     let models: Vec<Model> = stmt
@@ -3144,8 +3146,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn
         .prepare("SELECT service, account, value, created_at, updated_at FROM secrets")
@@ -3161,8 +3163,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn.prepare("SELECT id, provider_id, label, api_key_ref, api_key, base_url, default_model, headers, config FROM provider_credentials").map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
     let creds: Vec<ProviderCredential> = stmt
@@ -3180,8 +3182,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn.prepare("SELECT id, name, prompt_type, content, entries, condense_prompt_entries, created_at, updated_at FROM prompt_templates").map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
     let templates: Vec<PromptTemplate> = stmt
@@ -3198,8 +3200,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn
         .prepare("SELECT id, provider_type, label, api_key, project_id, location, base_url, request_path, kokoro_variant, asset_root, created_at, updated_at FROM audio_providers")
@@ -3222,8 +3224,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let mut stmt = conn
         .prepare("SELECT id, provider_id, name, model_id, voice_id, prompt, created_at, updated_at FROM user_voices")
@@ -3242,8 +3244,8 @@ fn fetch_global_core(conn: &DbConnection) -> Result<GlobalCoreData, String> {
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     Ok((
         meta,
@@ -3285,8 +3287,8 @@ fn fetch_lorebooks(conn: &DbConnection, ids: &[String]) -> Result<Vec<u8>, Strin
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_ent = format!("SELECT id, lorebook_id, title, enabled, always_active, keywords, case_sensitive, content, priority, display_order, created_at, updated_at FROM lorebook_entries WHERE lorebook_id IN ({})", placeholders);
     let mut stmt = conn
@@ -3310,8 +3312,8 @@ fn fetch_lorebooks(conn: &DbConnection, ids: &[String]) -> Result<Vec<u8>, Strin
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     bincode::serialize(&(lorebooks, entries))
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))
@@ -3394,8 +3396,8 @@ fn fetch_characters_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_rules = format!(
         "SELECT character_id, idx, rule FROM character_rules WHERE character_id IN ({})",
@@ -3414,8 +3416,8 @@ fn fetch_characters_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_scenes = format!("SELECT id, character_id, content, direction, background_image_path, created_at, selected_variant_id FROM scenes WHERE character_id IN ({})", placeholders);
     let mut stmt = conn
@@ -3434,8 +3436,8 @@ fn fetch_characters_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_vars = format!("SELECT id, scene_id, content, direction, created_at FROM scene_variants WHERE scene_id IN (SELECT id FROM scenes WHERE character_id IN ({}))", placeholders);
     let mut stmt = conn
@@ -3452,8 +3454,8 @@ fn fetch_characters_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_templates = format!(
         "SELECT id, character_id, name, scene_id, prompt_template_id, lorebook_ids_override, created_at FROM chat_templates WHERE character_id IN ({})",
@@ -3475,8 +3477,8 @@ fn fetch_characters_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_template_msgs = format!(
         "SELECT id, template_id, idx, role, content FROM chat_template_messages WHERE template_id IN (SELECT id FROM chat_templates WHERE character_id IN ({}))",
@@ -3496,8 +3498,8 @@ fn fetch_characters_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     Ok((chars, rules, scenes, variants, templates, template_messages))
 }
@@ -3561,8 +3563,8 @@ fn fetch_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     for session in &mut sessions {
         session.memory_embeddings = canonical_memory_embeddings_json(
@@ -3599,8 +3601,8 @@ fn fetch_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_var = format!("SELECT id, message_id, content, created_at, prompt_tokens, completion_tokens, total_tokens, reasoning FROM message_variants WHERE message_id IN (SELECT id FROM messages WHERE session_id IN ({}))", placeholders);
     let mut stmt = conn
@@ -3620,8 +3622,8 @@ fn fetch_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_usage = format!("SELECT id, timestamp, session_id, character_id, character_name, model_id, model_name, provider_id, provider_label, operation_type, finish_reason, prompt_tokens, completion_tokens, total_tokens, memory_tokens, summary_tokens, reasoning_tokens, image_tokens, prompt_cost, completion_cost, total_cost, success, error_message FROM usage_records WHERE session_id IN ({})", placeholders);
     let mut stmt = conn
@@ -3656,8 +3658,8 @@ fn fetch_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_meta = format!("SELECT usage_id, key, value FROM usage_metadata WHERE usage_id IN (SELECT id FROM usage_records WHERE session_id IN ({}))", placeholders);
     let mut stmt = conn
@@ -3672,8 +3674,8 @@ fn fetch_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     Ok((sessions, messages, variants, usages, metadata))
 }
@@ -3781,8 +3783,8 @@ fn fetch_group_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     for session in &mut sessions {
         session.memory_embeddings = canonical_memory_embeddings_json(
@@ -3809,8 +3811,8 @@ fn fetch_group_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_msg = format!("SELECT id, session_id, role, content, speaker_character_id, turn_number, created_at, prompt_tokens, completion_tokens, total_tokens, selected_variant_id, is_pinned, attachments, used_lorebook_entries, reasoning, selection_reasoning, model_id FROM group_messages WHERE session_id IN ({})", placeholders);
     let mut stmt = conn
@@ -3839,8 +3841,8 @@ fn fetch_group_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_var = format!("SELECT id, message_id, content, speaker_character_id, created_at, prompt_tokens, completion_tokens, total_tokens, reasoning, selection_reasoning, model_id FROM group_message_variants WHERE message_id IN (SELECT id FROM group_messages WHERE session_id IN ({}))", placeholders);
     let mut stmt = conn
@@ -3863,8 +3865,8 @@ fn fetch_group_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_usage = format!("SELECT id, timestamp, session_id, character_id, character_name, model_id, model_name, provider_id, provider_label, operation_type, finish_reason, prompt_tokens, completion_tokens, total_tokens, memory_tokens, summary_tokens, reasoning_tokens, image_tokens, prompt_cost, completion_cost, total_cost, success, error_message FROM usage_records WHERE session_id IN ({})", placeholders);
     let mut stmt = conn
@@ -3899,8 +3901,8 @@ fn fetch_group_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     let sql_meta = format!("SELECT usage_id, key, value FROM usage_metadata WHERE usage_id IN (SELECT id FROM usage_records WHERE session_id IN ({}))", placeholders);
     let mut stmt = conn
@@ -3915,8 +3917,8 @@ fn fetch_group_sessions_data(
             })
         })
         .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?
-        .map(|r| r.unwrap())
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| crate::utils::err_to_string(module_path!(), line!(), e))?;
 
     Ok((
         sessions,

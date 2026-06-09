@@ -7,7 +7,7 @@ use std::process::Command;
 
 const ORT_VERSION: &str = "1.22.0";
 const DEFAULT_KOKORO_ESPEAK_ANDROID_BUNDLE_URL: &str =
-    "https://github.com/LettuceAI/app/releases/download/espeak-android-bundle-v2/kokoro-espeak-android-bundle.tar.gz";
+    "https://github.com/bouclem/RP.Universe.AI/releases/download/espeak-android-bundle-v2/kokoro-espeak-android-bundle.tar.gz";
 
 fn macos_primary_dylib_name() -> String {
     format!("libonnxruntime.{}.dylib", ORT_VERSION)

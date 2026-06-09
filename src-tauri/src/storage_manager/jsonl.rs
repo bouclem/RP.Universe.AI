@@ -9,14 +9,6 @@ use tauri::State;
 use uuid::Uuid;
 
 use super::db::{now_ms, open_db, SwappablePool};
-#[cfg(target_os = "android")]
-use std::io::Read;
-#[cfg(target_os = "android")]
-use tauri_plugin_android_fs::{AndroidFs, AndroidFsExt};
-#[cfg(target_os = "android")]
-use tauri_plugin_fs::FilePath;
-#[cfg(target_os = "android")]
-use url::Url;
 
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -33,15 +25,7 @@ struct JsonlInspectParticipant {
 }
 
 fn get_downloads_dir() -> Result<PathBuf, String> {
-    #[cfg(target_os = "android")]
-    {
-        Ok(PathBuf::from("/storage/emulated/0/Download"))
-    }
-
-    #[cfg(not(target_os = "android"))]
-    {
-        dirs::download_dir().ok_or_else(|| "Could not find Downloads directory".to_string())
-    }
+    dirs::download_dir().ok_or_else(|| "Could not find Downloads directory".to_string())
 }
 
 fn sanitize_filename(input: &str) -> String {

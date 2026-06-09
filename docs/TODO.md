@@ -9,9 +9,9 @@
 - [x] Update GitHub URLs in CONTRIBUTING.md
 
 ## 1.0.2 - Bug Fixes
-- [ ] Address any build issues from rename
-- [ ] Fix any broken links/references
-- [ ] Test desktop build (Windows)
+- [x] Address any build issues from rename
+- [x] Fix any broken links/references
+- [x] Test desktop build (Windows)
 
 ## 1.0.3 - Cleanup
 - [ ] Remove unused assets/references

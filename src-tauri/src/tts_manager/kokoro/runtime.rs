@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-#[cfg(not(target_os = "android"))]
 use std::{env, process::Command};
 
 use tauri::AppHandle;
@@ -16,16 +15,8 @@ pub fn resolve_espeak_config(
         return Ok(config);
     }
 
-    #[cfg(target_os = "android")]
-    {
-        return android::resolve_bundled_espeak(app);
-    }
-
-    #[cfg(not(target_os = "android"))]
-    {
-        let _ = app;
-        resolve_desktop_espeak()
-    }
+    let _ = app;
+    resolve_desktop_espeak()
 }
 
 fn explicit_espeak_config(
@@ -60,7 +51,6 @@ fn explicit_espeak_config(
     }))
 }
 
-#[cfg(not(target_os = "android"))]
 fn resolve_desktop_espeak() -> Result<EspeakConfig, KokoroError> {
     if command_available("espeak-ng") {
         return Ok(EspeakConfig::default());
@@ -69,7 +59,6 @@ fn resolve_desktop_espeak() -> Result<EspeakConfig, KokoroError> {
     Err(KokoroError::EspeakUnavailable(espeak_install_guide()))
 }
 
-#[cfg(not(target_os = "android"))]
 fn command_available(command: &str) -> bool {
     Command::new(command)
         .arg("--version")
@@ -78,7 +67,6 @@ fn command_available(command: &str) -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(not(target_os = "android"))]
 fn espeak_install_guide() -> String {
     let install = match env::consts::OS {
         "windows" => "Install eSpeak NG, then restart the app:\n\nwinget install eSpeak-NG.eSpeak-NG",
@@ -94,86 +82,3 @@ fn espeak_install_guide() -> String {
     )
 }
 
-#[cfg(target_os = "android")]
-mod android {
-    use std::path::PathBuf;
-    use std::sync::mpsc;
-
-    use jni::objects::{JClass, JString, JValue};
-    use tauri::{AppHandle, Manager};
-
-    use super::{EspeakConfig, KokoroError};
-
-    pub fn resolve_bundled_espeak(app: &AppHandle) -> Result<EspeakConfig, KokoroError> {
-        let window = app.get_webview_window("main").ok_or_else(|| {
-            KokoroError::EspeakUnavailable(
-                "Kokoro Android phonemizer bridge is unavailable because the main WebView is not initialized."
-                    .to_string(),
-            )
-        })?;
-
-        let (tx, rx) = mpsc::channel();
-        window
-            .with_webview(move |webview| {
-                webview.jni_handle().exec(move |env, activity, _webview| {
-                    let result = (|| -> Result<String, jni::errors::Error> {
-                        let class_loader = env
-                            .call_method(
-                                activity,
-                                "getClassLoader",
-                                "()Ljava/lang/ClassLoader;",
-                                &[],
-                            )?
-                            .l()?;
-                        let class_name = env.new_string(env!("KOKORO_ANDROID_BRIDGE_CLASS"))?;
-                        let class_obj = env
-                            .call_method(
-                                &class_loader,
-                                "loadClass",
-                                "(Ljava/lang/String;)Ljava/lang/Class;",
-                                &[JValue::Object(&class_name)],
-                            )?
-                            .l()?;
-                        let class: JClass = class_obj.into();
-                        let value = env.call_static_method(
-                            &class,
-                            "resolve",
-                            "(Landroid/content/Context;)Ljava/lang/String;",
-                            &[JValue::Object(activity)],
-                        )?;
-                        let object = value.l()?;
-                        let output: String = env.get_string(&JString::from(object))?.into();
-                        Ok(output)
-                    })();
-                    let _ = tx.send(result.map_err(|err: jni::errors::Error| err.to_string()));
-                });
-            })
-            .map_err(|err| KokoroError::EspeakUnavailable(err.to_string()))?;
-
-        let data_path = rx
-            .recv()
-            .map_err(|err| KokoroError::EspeakUnavailable(err.to_string()))?
-            .map_err(KokoroError::EspeakUnavailable)?;
-        parse_bridge_payload(&data_path)
-    }
-
-    fn parse_bridge_payload(payload: &str) -> Result<EspeakConfig, KokoroError> {
-        let data_path = payload.lines().next().map(PathBuf::from).ok_or_else(|| {
-            KokoroError::EspeakUnavailable(
-                "Android Kokoro phonemizer bridge returned an empty data path.".to_string(),
-            )
-        })?;
-
-        if !data_path.is_dir() {
-            return Err(KokoroError::EspeakUnavailable(format!(
-                "Bundled Android eSpeak NG data directory is missing: {}",
-                data_path.display()
-            )));
-        }
-
-        Ok(EspeakConfig {
-            bin_path: None,
-            data_path: Some(data_path),
-        })
-    }
-}

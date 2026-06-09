@@ -123,11 +123,11 @@ pub(crate) fn apply_headers(
         }
         header_map.insert(
             HeaderName::from_bytes(b"HTTP-Referer").unwrap(),
-            HeaderValue::from_static("https://github.com/LettuceAI/"),
+            HeaderValue::from_static("https://github.com/bouclem/RP.Universe.AI/"),
         );
         header_map.insert(
             HeaderName::from_bytes(b"X-Title").unwrap(),
-            HeaderValue::from_static("LettuceAI"),
+            HeaderValue::from_static("RP.Universe.AI"),
         );
         log_info(app, "api_request", "All headers set");
 
@@ -136,11 +136,11 @@ pub(crate) fn apply_headers(
         let mut header_map = HeaderMap::new();
         header_map.insert(
             HeaderName::from_bytes(b"HTTP-Referer").unwrap(),
-            HeaderValue::from_static("https://github.com/LettuceAI/"),
+            HeaderValue::from_static("https://github.com/bouclem/RP.Universe.AI/"),
         );
         header_map.insert(
             HeaderName::from_bytes(b"X-Title").unwrap(),
-            HeaderValue::from_static("LettuceAI"),
+            HeaderValue::from_static("RP.Universe.AI"),
         );
         log_info(app, "api_request", "[api_request] using default headers");
         builder.headers(header_map)

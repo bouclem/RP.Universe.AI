@@ -1733,7 +1733,7 @@ fn extract_quantization(filename: &str) -> String {
 
 fn build_client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
-        .user_agent("LettuceAI/1.0")
+        .user_agent("RP.Universe.AI/1.0")
         .timeout(std::time::Duration::from_secs(30))
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {}", e))
@@ -2169,7 +2169,7 @@ async fn do_queue_download(app: &AppHandle, item: &QueuedDownload) -> Result<Str
     );
 
     let client = reqwest::Client::builder()
-        .user_agent("LettuceAI/1.0")
+        .user_agent("RP.Universe.AI/1.0")
         .redirect(reqwest::redirect::Policy::limited(10))
         .build()
         .map_err(|e| format!("Failed to build client: {}", e))?;
@@ -2573,7 +2573,7 @@ async fn fetch_gguf_meta(
     );
 
     let client = reqwest::Client::builder()
-        .user_agent("LettuceAI/1.0")
+        .user_agent("RP.Universe.AI/1.0")
         .redirect(reqwest::redirect::Policy::limited(10))
         .timeout(std::time::Duration::from_secs(15))
         .build()

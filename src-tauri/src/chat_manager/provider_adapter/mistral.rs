@@ -43,7 +43,7 @@ impl ProviderAdapter for MistralAdapter {
         out.insert("Content-Type".into(), "application/json".into());
         out.insert("Accept".into(), "text/event-stream".into());
         out.entry("User-Agent".into())
-            .or_insert_with(|| "LettuceAI/0.1".into());
+            .or_insert_with(|| "RP.Universe.AI/0.1".into());
         if let Some(extra) = extra {
             for (k, v) in extra.iter() {
                 out.insert(k.clone(), v.clone());

@@ -1,18 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
 use tauri::{AppHandle, Manager};
-
-#[cfg(target_os = "android")]
-use std::path::Path;
-#[cfg(target_os = "android")]
-use tauri_plugin_android_fs::{
-    convert_dir_path_to_string, convert_file_path_to_string, convert_string_to_dir_path, AndroidFs,
-    AndroidFsExt, PersistableAccessMode, PublicGeneralPurposeDir, PublicStorage,
-};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEntry {
@@ -38,13 +30,6 @@ pub struct LogSearchResult {
 pub struct LogManager {
     file: Mutex<Option<File>>,
     log_dir: PathBuf,
-}
-
-#[cfg(target_os = "android")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct AndroidLogExportDirConfig {
-    dir_path_json: String,
-    display_name: String,
 }
 
 static GLOBAL_APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
@@ -760,7 +745,9 @@ pub async fn save_log_to_downloads(
     let logger = app_handle.state::<LogManager>();
     let content = logger.read_log_file(&filename)?;
 
+    // Android code removed - Windows desktop only
     #[cfg(target_os = "android")]
+    { unreachable!() }
     {
         let safe_filename = Path::new(&filename)
             .file_name()
@@ -810,7 +797,7 @@ pub async fn save_log_to_downloads(
             .public_storage()
             .write(
                 PublicGeneralPurposeDir::Download,
-                format!("lettuceai/logs/{safe_filename}"),
+                format!("rp-universe-ai/logs/{safe_filename}"),
                 Some("text/plain"),
                 content.as_bytes(),
             )
@@ -826,7 +813,7 @@ pub async fn save_log_to_downloads(
         let saved_uri = convert_file_path_to_string(&saved_path);
 
         Ok(format!(
-            "Downloads/lettuceai/logs/{saved_name}\n{saved_uri}"
+            "Downloads/rp-universe-ai/logs/{saved_name}\n{saved_uri}"
         ))
     }
 
